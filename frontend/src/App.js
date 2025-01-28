@@ -1,6 +1,3 @@
-const BACKEND_URL = process.env.BACKEND_URL || "https://instagram-caption-backend.onrender.com";
-console.log("Backend URL:", process.env.BACKEND_URL);
-
 import React, { useState, useRef } from 'react';
 import ImageUpload from './components/ImageUpload';
 import SongSearch from './components/SongSearch';
@@ -18,6 +15,7 @@ function App() {
   const [error, setError] = useState('');
   const fileInputRef = useRef();
 
+  const BACKEND_URL = process.env.BACKEND_URL || "https://instagram-caption-backend.onrender.com";
   const searchTracks = async (query) => {
     try {
       const response = await fetch(
@@ -63,7 +61,7 @@ function App() {
     formData.append('trackId', selectedTrack.id);
 
     try {
-      const response = await fetch(`${process.env.BACKEND_URL}/api/generate-caption`, {
+      const response = await fetch(`${BACKEND_URL}/api/generate-caption`, {
         method: 'POST',
         body: formData,
       });
