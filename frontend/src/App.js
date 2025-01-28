@@ -1,4 +1,6 @@
-// 9. Update src/App.js:
+const BACKEND_URL = process.env.BACKEND_URL || "https://instagram-caption-backend.onrender.com";
+console.log("Backend URL:", process.env.BACKEND_URL);
+
 import React, { useState, useRef } from 'react';
 import ImageUpload from './components/ImageUpload';
 import SongSearch from './components/SongSearch';
@@ -19,7 +21,7 @@ function App() {
   const searchTracks = async (query) => {
     try {
       const response = await fetch(
-          `${process.env.BACKEND_URL}/api/search-tracks?query=${encodeURIComponent(query)}`
+          `${BACKEND_URL}/api/search-tracks?query=${encodeURIComponent(query)}`
       );
       const data = await response.json();
       setSearchResults(data.tracks);
