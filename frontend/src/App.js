@@ -19,7 +19,7 @@ function App() {
   const searchTracks = async (query) => {
     try {
       const response = await fetch(
-          `http://localhost:3001/api/search-tracks?query=${encodeURIComponent(query)}`
+          `${process.env.BACKEND_URL}/api/search-tracks?query=${encodeURIComponent(query)}`
       );
       const data = await response.json();
       setSearchResults(data.tracks);
@@ -61,7 +61,7 @@ function App() {
     formData.append('trackId', selectedTrack.id);
 
     try {
-      const response = await fetch('http://localhost:3001/api/generate-caption', {
+      const response = await fetch(`${process.env.BACKEND_URL}/api/generate-caption`, {
         method: 'POST',
         body: formData,
       });
