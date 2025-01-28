@@ -28,6 +28,26 @@ const spotifyApi = new SpotifyWebApi({
     redirectUri: process.env.SPOTIFY_REDIRECT_URI
 });
 
+// Token management
+let spotifyTokenExpirationTime = null;
+
+async function ensureSpotifyToken() {
+    // Check if token is expired or will expire in the next minute
+    if (!spotifyTokenExpirationTime || Date.now() >= spotifyTokenExpirationTime - 60000) {
+        try {
+            const data = await spotifyApi.clientCredentialsGrant();
+            spotifyApi.setAccessToken(data.body['access_token']);
+
+            // Set expiration time (convert seconds to milliseconds)
+            spotifyTokenExpirationTime = Date.now() + (data.body['expires_in'] * 1000);
+            console.log('Spotify token refreshed successfully');
+        } catch (error) {
+            console.error('Failed to refresh Spotify token:', error);
+            throw new Error('Failed to authenticate with Spotify');
+        }
+    }
+}
+
 // Refresh Spotify access token
 async function refreshSpotifyToken() {
     try {
@@ -123,7 +143,7 @@ async function analyzeImage(base64Image) {
     return response.choices[0].message.content;
 }
 
-async function analyzeSong(trackId) {
+async function analyzeSongOld(trackId) {
     const trackInfo = await spotifyApi.getTrack(trackId);
     console.log("track info is coming as: %j", trackInfo);
     const audioFeatures = await spotifyApi.getAudioFeaturesForTrack(trackId);
@@ -138,6 +158,46 @@ async function analyzeSong(trackId) {
 
     const description = await generateSongDescription(songData);
     return { ...songData, description };
+}
+
+// Update the analyzeSong function with better error handling
+async function analyzeSong(trackId) {
+    try {
+        // Ensure valid token before making API calls
+        await ensureSpotifyToken();
+
+        // Get track info
+        const trackInfo = await spotifyApi.getTrack(trackId);
+
+        let audioFeatures = null;
+        try {
+            // Get audio features
+            const featuresResponse = await spotifyApi.getAudioFeaturesForTrack(trackId);
+            audioFeatures = featuresResponse.body;
+        } catch (featuresError) {
+            console.warn('Could not fetch audio features:', featuresError);
+            // Continue without audio features
+        }
+
+        const songData = {
+            name: trackInfo.body.name,
+            artist: trackInfo.body.artists[0].name,
+            album: trackInfo.body.album.name,
+            features: audioFeatures || {
+                energy: 0.5,
+                valence: 0.5,
+                danceability: 0.5
+            }
+        };
+
+        // Generate description even without audio features
+        const description = await generateSongDescription(songData);
+        return { ...songData, description };
+
+    } catch (error) {
+        console.error('Error in analyzeSong:', error);
+        throw new Error(`Failed to analyze song: ${error.message}`);
+    }
 }
 
 async function generateSongDescription(songData) {
