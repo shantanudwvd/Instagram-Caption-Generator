@@ -1,7 +1,11 @@
+// 9. Update src/App.js:
 import React, { useState, useRef } from 'react';
-import { Search, Upload, Loader2 } from 'lucide-react';
+import ImageUpload from './components/ImageUpload';
+import SongSearch from './components/SongSearch';
+import GeneratedCaption from './components/GeneratedCaption';
+import LoadingSpinner from './components/LoadingSpinner';
 
-const CaptionGenerator = () => {
+function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [selectedTrack, setSelectedTrack] = useState(null);
@@ -81,99 +85,21 @@ const CaptionGenerator = () => {
           Instagram Caption Generator
         </h1>
 
-        {/* Image Upload Section */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">1. Upload Image</h2>
-          <div
-              onClick={() => fileInputRef.current.click()}
-              className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition-colors"
-          >
-            {imagePreview ? (
-                <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="max-h-64 mx-auto rounded"
-                />
-            ) : (
-                <div className="space-y-2">
-                  <Upload className="w-12 h-12 mx-auto text-gray-400" />
-                  <p>Click to upload an image</p>
-                </div>
-            )}
-            <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleImageSelect}
-                accept="image/*"
-                className="hidden"
-            />
-          </div>
-        </div>
+        <ImageUpload
+            imagePreview={imagePreview}
+            onImageSelect={handleImageSelect}
+            fileInputRef={fileInputRef}
+        />
 
-        {/* Song Search Section */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">2. Select Song</h2>
-          <div className="relative">
-            <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  if (e.target.value.length > 2) {
-                    searchTracks(e.target.value);
-                  }
-                }}
-                placeholder="Search for a song..."
-                className="w-full p-3 pr-10 border rounded-lg"
-            />
-            <Search className="absolute right-3 top-3 text-gray-400" />
-          </div>
+        <SongSearch
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            searchResults={searchResults}
+            selectedTrack={selectedTrack}
+            onTrackSelect={handleTrackSelect}
+            onSearch={searchTracks}
+        />
 
-          {/* Search Results */}
-          {searchResults.length > 0 && (
-              <div className="border rounded-lg divide-y max-h-64 overflow-y-auto">
-                {searchResults.map((track) => (
-                    <div
-                        key={track.id}
-                        onClick={() => handleTrackSelect(track)}
-                        className="p-3 hover:bg-gray-50 cursor-pointer flex items-center space-x-3"
-                    >
-                      {track.albumArt && (
-                          <img
-                              src={track.albumArt}
-                              alt={track.album}
-                              className="w-12 h-12 rounded"
-                          />
-                      )}
-                      <div>
-                        <p className="font-medium">{track.name}</p>
-                        <p className="text-sm text-gray-600">{track.artist}</p>
-                      </div>
-                    </div>
-                ))}
-              </div>
-          )}
-
-          {/* Selected Track */}
-          {selectedTrack && (
-              <div className="border rounded-lg p-4 flex items-center space-x-4">
-                {selectedTrack.albumArt && (
-                    <img
-                        src={selectedTrack.albumArt}
-                        alt={selectedTrack.album}
-                        className="w-16 h-16 rounded"
-                    />
-                )}
-                <div>
-                  <p className="font-medium">{selectedTrack.name}</p>
-                  <p className="text-gray-600">{selectedTrack.artist}</p>
-                  <p className="text-sm text-gray-500">{selectedTrack.album}</p>
-                </div>
-              </div>
-          )}
-        </div>
-
-        {/* Generate Button */}
         <button
             onClick={handleSubmit}
             disabled={loading || !selectedImage || !selectedTrack}
@@ -181,7 +107,7 @@ const CaptionGenerator = () => {
         >
           {loading ? (
               <>
-                <Loader2 className="animate-spin" />
+                <LoadingSpinner />
                 <span>Generating...</span>
               </>
           ) : (
@@ -189,28 +115,13 @@ const CaptionGenerator = () => {
           )}
         </button>
 
-        {/* Error Message */}
         {error && (
             <div className="p-4 bg-red-50 text-red-600 rounded-lg">{error}</div>
         )}
 
-        {/* Generated Caption */}
-        {caption && (
-            <div className="space-y-2">
-              <h2 className="text-xl font-semibold">Generated Caption</h2>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p>{caption}</p>
-              </div>
-              <button
-                  onClick={() => navigator.clipboard.writeText(caption)}
-                  className="text-blue-600 text-sm hover:underline"
-              >
-                Copy to clipboard
-              </button>
-            </div>
-        )}
+        {caption && <GeneratedCaption caption={caption} />}
       </div>
   );
-};
+}
 
-export default CaptionGenerator;
+export default App;
