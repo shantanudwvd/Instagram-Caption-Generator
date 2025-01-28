@@ -1,4 +1,3 @@
-// server.js
 const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
@@ -57,9 +56,11 @@ app.post('/api/generate-caption', upload.single('image'), async (req, res) => {
         // Analyze image using GPT-4 Vision
         const imageBase64 = fs.readFileSync(imageFile.path, { encoding: 'base64' });
         const imageAnalysis = await analyzeImage(imageBase64);
+        console.log("image analysis is coming as: %j", imageAnalysis);
 
         // Get song details and analysis
         const songAnalysis = await analyzeSong(trackId);
+        console.log("song analysis is coming as: %j", songAnalysis);
 
         // Generate caption
         const caption = await generateCaption(imageAnalysis, songAnalysis);
@@ -95,7 +96,7 @@ app.get('/api/search-tracks', async (req, res) => {
 // Helper functions
 async function analyzeImage(base64Image) {
     const response = await openai.chat.completions.create({
-        model: "gpt-4-vision-preview-v2",
+        model: "gpt-4o-2024-11-20",
         messages: [
             {
                 role: "user",
@@ -106,7 +107,12 @@ async function analyzeImage(base64Image) {
                     },
                     {
                         type: "image_url",
-                        image_url: `data:image/jpeg;base64,${base64Image}`
+                        // Format the base64 string correctly with the proper MIME type prefix
+                        image_url: {
+                            url: base64Image.startsWith('data:')
+                                ? base64Image
+                                : `data:image/jpeg;base64,${base64Image}`
+                        }
                     }
                 ]
             }
@@ -119,7 +125,9 @@ async function analyzeImage(base64Image) {
 
 async function analyzeSong(trackId) {
     const trackInfo = await spotifyApi.getTrack(trackId);
+    console.log("track info is coming as: %j", trackInfo);
     const audioFeatures = await spotifyApi.getAudioFeaturesForTrack(trackId);
+    console.log("audio features is coming as: %j", audioFeatures);
 
     const songData = {
         name: trackInfo.body.name,
@@ -134,7 +142,7 @@ async function analyzeSong(trackId) {
 
 async function generateSongDescription(songData) {
     const response = await openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-4o-2024-11-20",
         messages: [
             {
                 role: "user",
@@ -162,7 +170,7 @@ async function generateSongDescription(songData) {
 
 async function generateCaption(imageAnalysis, songAnalysis) {
     const response = await openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-4o-2024-11-20",
         messages: [
             {
                 role: "user",
