@@ -12,8 +12,19 @@ dotenv.config();
 const app = express();
 const upload = multer({ dest: 'uploads/' });
 
+const corsOptions = {
+    origin: "https://instagram-caption-generator-tau.vercel.app", // Replace with your Vercel frontend URL
+    methods: "GET,POST,OPTIONS",
+    allowedHeaders: "Content-Type,Authorization",
+    credentials: true
+};
+
+app.use(cors(corsOptions));
+
+app.options("*", cors(corsOptions));
+
 // Middleware
-app.use(cors());
+// app.use(cors());
 app.use(express.json());
 
 // Initialize OpenAI
