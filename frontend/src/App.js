@@ -15,7 +15,7 @@ function App() {
   const [error, setError] = useState('');
   const fileInputRef = useRef();
 
-  const BACKEND_URL = process.env.BACKEND_URL || "https://instagram-caption-backend.onrender.com";
+  const BACKEND_URL = process.env.BACKEND_URL || "https://instagram-caption-generator-backend.onrender.com";
   const searchTracks = async (query) => {
     try {
       const response = await fetch(
