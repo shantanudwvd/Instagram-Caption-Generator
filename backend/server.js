@@ -13,7 +13,7 @@ const app = express();
 const upload = multer({ dest: 'uploads/' });
 
 const corsOptions = {
-    origin: "https://instagram-caption-generator-tau.vercel.app", // Replace with your Vercel frontend URL
+    origin: "instagram-caption-generator-shantanudwvds-projects.vercel.app", // Replace with your Vercel frontend URL
     methods: "GET,POST,OPTIONS",
     allowedHeaders: "Content-Type,Authorization",
     credentials: true
