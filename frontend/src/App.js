@@ -19,13 +19,13 @@ function App() {
   const fileInputRef = useRef();
   const [imageAnalysis, setImageAnalysis] = useState('');
 
-  const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
-  console.log("backend url is coming as: %s", BACKEND_URL);
+  const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+  console.log("backend url is coming as: %s", REACT_APP_BACKEND_URL);
 
   const searchTracks = async (query) => {
     try {
       const response = await fetch(
-          `${BACKEND_URL}/api/search-tracks?query=${encodeURIComponent(query)}`
+          `${REACT_APP_BACKEND_URL}/api/search-tracks?query=${encodeURIComponent(query)}`
       );
       const data = await response.json();
       setSearchResults(data.tracks);
@@ -67,7 +67,7 @@ function App() {
       console.log('Sending image for analysis...');
 
       // Get image analysis
-      const analysisResponse = await fetch(`${BACKEND_URL}/api/analyze-image`, {
+      const analysisResponse = await fetch(`${REACT_APP_BACKEND_URL}/api/analyze-image`, {
         method: 'POST',
         body: formData,
       });
@@ -91,7 +91,7 @@ function App() {
       console.log('Requesting recommendations based on image analysis...');
 
       // Get recommendations based on image analysis
-      const recommendationsResponse = await fetch(`${BACKEND_URL}/api/get-recommendations`, {
+      const recommendationsResponse = await fetch(`${REACT_APP_BACKEND_URL}/api/get-recommendations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -154,7 +154,7 @@ function App() {
     try {
       console.log('Requesting recommendations for track:', track.name);
 
-      const response = await fetch(`${BACKEND_URL}/api/get-recommendations`, {
+      const response = await fetch(`${REACT_APP_BACKEND_URL}/api/get-recommendations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -200,7 +200,7 @@ function App() {
     formData.append('trackId', selectedTrack.id);
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/generate-caption`, {
+      const response = await fetch(`${REACT_APP_BACKEND_URL}/api/generate-caption`, {
         method: 'POST',
         body: formData,
       });
