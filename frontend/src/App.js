@@ -19,7 +19,7 @@ function App() {
   const fileInputRef = useRef();
   const [imageAnalysis, setImageAnalysis] = useState('');
 
-  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:3001";
+  const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
 
   const searchTracks = async (query) => {
     try {
