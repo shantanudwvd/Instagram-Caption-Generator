@@ -20,6 +20,7 @@ function App() {
   const [imageAnalysis, setImageAnalysis] = useState('');
 
   const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
+  console.log("backend url is coming as: %s", BACKEND_URL);
 
   const searchTracks = async (query) => {
     try {
