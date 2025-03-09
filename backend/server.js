@@ -13,7 +13,10 @@ const app = express();
 const upload = multer({dest: 'uploads/'});
 
 const corsOptions = {
-    origin: "http://localhost:3000", // Replace with your Vercel frontend URL
+    origin: [
+        "https://instagram-caption-generator-shantanudwvds-projects.vercel.app",
+        "http://localhost:3000", // Replace with your Vercel frontend URL
+    ],
     methods: "GET,POST,OPTIONS",
     allowedHeaders: "Content-Type,Authorization",
     credentials: true
@@ -361,10 +364,10 @@ FORMAT THE OUTPUT AS:
 
 app.post('/api/get-recommendations', async (req, res) => {
     try {
-        const { imageAnalysis, currentTrack } = req.body;
+        const {imageAnalysis, currentTrack} = req.body;
 
         if (!imageAnalysis) {
-            return res.status(400).json({ error: 'Image analysis is required' });
+            return res.status(400).json({error: 'Image analysis is required'});
         }
 
         console.log('Getting recommendations for image analysis');
@@ -378,7 +381,7 @@ app.post('/api/get-recommendations', async (req, res) => {
 
         console.log(`Found ${recommendations.length} recommendations`);
 
-        res.json({ recommendations });
+        res.json({recommendations});
     } catch (error) {
         console.error('Error getting recommendations:', error);
 
