@@ -3,6 +3,7 @@ import ImageUpload from './components/ImageUpload';
 import SongSearch from './components/SongSearch';
 import GeneratedCaption from './components/GeneratedCaption';
 import LoadingSpinner from './components/LoadingSpinner';
+import SongRecommendations from './components/SongRecommendations';
 
 function App() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -11,11 +12,15 @@ function App() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [caption, setCaption] = useState('');
+  const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef();
+  const [imageAnalysis, setImageAnalysis] = useState('');
 
-  const BACKEND_URL = process.env.BACKEND_URL || "https://instagram-caption-generator-backend.onrender.com";
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:3001";
+
   const searchTracks = async (query) => {
     try {
       const response = await fetch(
@@ -29,15 +34,100 @@ function App() {
     }
   };
 
-  const handleImageSelect = (event) => {
+  const handleImageSelect = async (event) => {
     const file = event.target.files[0];
     if (file) {
       setSelectedImage(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
+        getRecommendationsFromImage(reader.result);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const getRecommendationsFromImage = async (imageData) => {
+    // First analyze the image before getting recommendations
+    setRecommendationsLoading(true);
+
+    try {
+      // Create FormData for image analysis
+      const formData = new FormData();
+
+      // Convert dataURL to Blob
+      const fetchResponse = await fetch(imageData);
+      if (!fetchResponse.ok) {
+        throw new Error('Failed to process image data');
+      }
+      const blob = await fetchResponse.blob();
+      formData.append('image', blob);
+
+      console.log('Sending image for analysis...');
+
+      // Get image analysis
+      const analysisResponse = await fetch(`${BACKEND_URL}/api/analyze-image`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!analysisResponse.ok) {
+        const errorData = await analysisResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to analyze image');
+      }
+
+      const analysisData = await analysisResponse.json();
+      console.log('Image analysis received');
+
+      // Save the image analysis
+      setImageAnalysis(analysisData.analysis);
+
+      // Make sure we have analysis data before requesting recommendations
+      if (!analysisData.analysis) {
+        throw new Error('Image analysis returned empty results');
+      }
+
+      console.log('Requesting recommendations based on image analysis...');
+
+      // Get recommendations based on image analysis
+      const recommendationsResponse = await fetch(`${BACKEND_URL}/api/get-recommendations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          imageAnalysis: analysisData.analysis,
+          // Only include currentTrack if it's not null
+          ...(selectedTrack && { currentTrack: selectedTrack })
+        }),
+      });
+
+      if (!recommendationsResponse.ok) {
+        const errorData = await recommendationsResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to get recommendations');
+      }
+
+      const recommendationsData = await recommendationsResponse.json();
+      console.log(`Received ${recommendationsData.recommendations?.length || 0} recommendations`);
+
+      if (recommendationsData.recommendations && recommendationsData.recommendations.length > 0) {
+        setRecommendations(recommendationsData.recommendations);
+      } else {
+        console.log('No recommendations received');
+      }
+    } catch (error) {
+      console.error('Error in recommendation process:', error);
+      // Optionally show a non-intrusive message to the user
+      setError(prevError => {
+        // Only show error if there's no other error already
+        if (!prevError) {
+          setTimeout(() => setError(''), 5000); // Clear after 5 seconds
+          return 'Could not load recommendations. Try selecting a song first.';
+        }
+        return prevError;
+      });
+    } finally {
+      setRecommendationsLoading(false);
     }
   };
 
@@ -45,6 +135,54 @@ function App() {
     setSelectedTrack(track);
     setSearchResults([]);
     setSearchQuery('');
+
+    // Get new recommendations based on the selected track if we have image analysis
+    if (imageAnalysis) {
+      getRecommendationsForTrack(track);
+    }
+  };
+
+  const getRecommendationsForTrack = async (track) => {
+    if (!imageAnalysis) {
+      console.log('No image analysis available, skipping recommendations');
+      return;
+    }
+
+    setRecommendationsLoading(true);
+
+    try {
+      console.log('Requesting recommendations for track:', track.name);
+
+      const response = await fetch(`${BACKEND_URL}/api/get-recommendations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          imageAnalysis,
+          currentTrack: track
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to get recommendations');
+      }
+
+      const data = await response.json();
+      console.log(`Received ${data.recommendations?.length || 0} recommendations for track`);
+
+      if (data.recommendations && data.recommendations.length > 0) {
+        setRecommendations(data.recommendations);
+      } else {
+        console.log('No recommendations received for track');
+      }
+    } catch (error) {
+      console.error('Error getting recommendations for track:', error);
+      // Don't show error to user, just log it
+    } finally {
+      setRecommendationsLoading(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -71,6 +209,11 @@ function App() {
         throw new Error(data.error);
       }
       setCaption(data.caption);
+
+      // If recommendations are included in response, update them
+      if (data.recommendations) {
+        setRecommendations(data.recommendations);
+      }
     } catch (error) {
       setError('Error generating caption');
       console.error('Error:', error);
@@ -120,6 +263,12 @@ function App() {
         )}
 
         {caption && <GeneratedCaption caption={caption} />}
+
+        <SongRecommendations
+            recommendations={recommendations}
+            onTrackSelect={handleTrackSelect}
+            loading={recommendationsLoading}
+        />
       </div>
   );
 }
