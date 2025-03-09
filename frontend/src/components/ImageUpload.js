@@ -1,4 +1,3 @@
-// 6. Create src/components/ImageUpload.js:
 import React from 'react';
 import { Upload } from 'lucide-react';
 

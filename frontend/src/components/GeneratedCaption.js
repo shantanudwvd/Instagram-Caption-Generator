@@ -1,4 +1,3 @@
-// 8. Create src/components/GeneratedCaption.js:
 import React from 'react';
 
 const GeneratedCaption = ({ caption }) => {

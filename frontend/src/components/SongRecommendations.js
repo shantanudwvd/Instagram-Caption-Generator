@@ -1,4 +1,3 @@
-// src/components/SongRecommendations.js
 import React from 'react';
 import { Music } from 'lucide-react';
 

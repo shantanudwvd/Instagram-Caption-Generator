@@ -1,4 +1,3 @@
-// songRecommendationService.js
 const OpenAI = require('openai');
 const dotenv = require('dotenv');
 

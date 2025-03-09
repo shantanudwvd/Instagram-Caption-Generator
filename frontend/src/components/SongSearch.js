@@ -1,4 +1,3 @@
-// 7. Create src/components/SongSearch.js:
 import React from 'react';
 import { Search } from 'lucide-react';
 
