@@ -10,10 +10,10 @@ const fs = require('fs');
 dotenv.config();
 
 const app = express();
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({dest: 'uploads/'});
 
 const corsOptions = {
-    origin: "https://instagram-caption-generator-tau.vercel.app", // Replace with your Vercel frontend URL
+    origin: "http://localhost:3000", // Replace with your Vercel frontend URL
     methods: "GET,POST,OPTIONS",
     allowedHeaders: "Content-Type,Authorization",
     credentials: true
@@ -38,6 +38,12 @@ const spotifyApi = new SpotifyWebApi({
     clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
     redirectUri: process.env.SPOTIFY_REDIRECT_URI
 });
+
+// Add this after the existing imports
+const SongRecommendationService = require('./songRecommendationService');
+
+// Initialize the recommendation service after initializing Spotify API
+const recommendationService = new SongRecommendationService(spotifyApi);
 
 // Token management
 let spotifyTokenExpirationTime = null;
@@ -77,15 +83,15 @@ setInterval(refreshSpotifyToken, 50 * 60 * 1000);
 // Routes
 app.post('/api/generate-caption', upload.single('image'), async (req, res) => {
     try {
-        const { trackId } = req.body;
+        const {trackId} = req.body;
         const imageFile = req.file;
 
         if (!imageFile || !trackId) {
-            return res.status(400).json({ error: 'Image and track ID are required' });
+            return res.status(400).json({error: 'Image and track ID are required'});
         }
 
         // Analyze image using GPT-4 Vision
-        const imageBase64 = fs.readFileSync(imageFile.path, { encoding: 'base64' });
+        const imageBase64 = fs.readFileSync(imageFile.path, {encoding: 'base64'});
         const imageAnalysis = await analyzeImage(imageBase64);
         console.log("image analysis is coming as: %j", imageAnalysis);
 
@@ -96,20 +102,31 @@ app.post('/api/generate-caption', upload.single('image'), async (req, res) => {
         // Generate caption
         const caption = await generateCaption(imageAnalysis, songAnalysis);
 
+        // Get song recommendations based on the image analysis
+        const recommendations = await recommendationService.getRecommendations(imageAnalysis, {
+            id: trackId,
+            name: songAnalysis.name,
+            artist: songAnalysis.artist,
+            album: songAnalysis.album
+        });
+
         // Clean up uploaded file
         fs.unlinkSync(imageFile.path);
 
-        res.json({ caption });
+        res.json({
+            caption,
+            recommendations
+        });
     } catch (error) {
         console.error('Error generating caption:', error);
-        res.status(500).json({ error: 'Error generating caption' });
+        res.status(500).json({error: 'Error generating caption'});
     }
 });
 
 app.get('/api/search-tracks', async (req, res) => {
     try {
-        const { query } = req.query;
-        const data = await spotifyApi.searchTracks(query, { limit: 10 });
+        const {query} = req.query;
+        const data = await spotifyApi.searchTracks(query, {limit: 10});
         const tracks = data.body.tracks.items.map(track => ({
             id: track.id,
             name: track.name,
@@ -117,10 +134,50 @@ app.get('/api/search-tracks', async (req, res) => {
             album: track.album.name,
             albumArt: track.album.images[0]?.url
         }));
-        res.json({ tracks });
+        res.json({tracks});
     } catch (error) {
         console.error('Error searching tracks:', error);
-        res.status(500).json({ error: 'Error searching tracks' });
+        res.status(500).json({error: 'Error searching tracks'});
+    }
+});
+
+
+app.post('/api/analyze-image', upload.single('image'), async (req, res) => {
+    try {
+        const imageFile = req.file;
+
+        if (!imageFile) {
+            return res.status(400).json({error: 'Image is required'});
+        }
+
+        console.log('Analyzing image:', imageFile.originalname || 'uploaded image');
+
+        // Analyze image using GPT-4 Vision
+        const imageBase64 = fs.readFileSync(imageFile.path, {encoding: 'base64'});
+        const imageAnalysis = await analyzeImage(imageBase64);
+
+        console.log('Image analysis complete');
+
+        // Clean up uploaded file
+        fs.unlinkSync(imageFile.path);
+
+        res.json({analysis: imageAnalysis});
+    } catch (error) {
+        console.error('Error analyzing image:', error);
+
+        // Try to clean up the file if it exists
+        try {
+            if (req.file) {
+                fs.unlinkSync(req.file.path);
+            }
+        } catch (cleanupError) {
+            console.error('Error cleaning up file:', cleanupError);
+        }
+
+        res.status(500).json({
+            error: 'Error analyzing image',
+            message: error.message
+        });
     }
 });
 
@@ -168,7 +225,7 @@ async function analyzeSongOld(trackId) {
     };
 
     const description = await generateSongDescription(songData);
-    return { ...songData, description };
+    return {...songData, description};
 }
 
 // Update the analyzeSong function with better error handling
@@ -203,7 +260,7 @@ async function analyzeSong(trackId) {
 
         // Generate description even without audio features
         const description = await generateSongDescription(songData);
-        return { ...songData, description };
+        return {...songData, description};
 
     } catch (error) {
         console.error('Error in analyzeSong:', error);
@@ -246,20 +303,53 @@ async function generateCaption(imageAnalysis, songAnalysis) {
             {
                 role: "user",
                 content: `
-          Based on the following inputs, create an engaging Instagram caption:
-          
-          Image Analysis: ${imageAnalysis}
-          Song Details: ${songAnalysis.description}
-          Song: ${songAnalysis.name} by ${songAnalysis.artist}
-          
-          Create a caption that:
-          1. Connects the mood of the image with the song's energy and emotion
-          2. Includes relevant emojis
-          3. Includes 3-5 relevant hashtags
-          4. Is engaging and authentic
-          5. Is no longer than 2-3 sentences
-          6. Includes the song credit
-        `
+Create a magnetic Instagram caption that weaves together the following elements:
+
+IMAGE CONTEXT:
+${imageAnalysis}
+• What's the dominant emotion/mood?
+• What are the key visual elements?
+• What's the overall aesthetic/style?
+• What time of day/setting is shown?
+
+MUSIC ELEMENTS:
+• Song: "${songAnalysis.name}" by ${songAnalysis.artist}
+• Genre: ${songAnalysis.genre}
+• Key themes: ${songAnalysis.description}
+• Mood/Energy: ${songAnalysis.mood}
+• Notable lyrics: ${songAnalysis.lyrics}
+
+CAPTION REQUIREMENTS:
+1. Opening Hook:
+   - Start with an attention-grabbing line that connects the image's mood to the song's emotion
+   - Use sensory language or vivid description
+   
+2. Story/Connection:
+   - Create a brief narrative that explains why this song perfectly matches this moment
+   - Make it personal and relatable
+   
+3. Technical Specifications:
+   - Length: 2-3 impactful sentences
+   - Include 2-3 strategically placed emojis that enhance (don't repeat) the message
+   - Add 3-5 relevant hashtags that mix popular and niche terms
+   - Credit format: 🎵: [Song] - [Artist]
+   
+4. Style Guidelines:
+   - Write in a conversational, authentic tone
+   - Avoid clichés and overused phrases
+   - Mix short and medium-length sentences
+   - Use specific details from both image and song
+   
+5. Engagement Elements:
+   - End with either a subtle call-to-action or thought-provoking question
+   - Make it easy for viewers to connect with the emotion/moment
+
+FORMAT THE OUTPUT AS:
+[Caption with emojis]
+
+[Hashtags]
+
+[Song credit]`
             }
         ],
         max_tokens: 150
@@ -267,6 +357,53 @@ async function generateCaption(imageAnalysis, songAnalysis) {
 
     return response.choices[0].message.content;
 }
+
+
+app.post('/api/get-recommendations', async (req, res) => {
+    try {
+        const { imageAnalysis, currentTrack } = req.body;
+
+        if (!imageAnalysis) {
+            return res.status(400).json({ error: 'Image analysis is required' });
+        }
+
+        console.log('Getting recommendations for image analysis');
+        console.log('Current track:', currentTrack || 'None');
+
+        // Ensure Spotify token is valid
+        await ensureSpotifyToken();
+
+        // Get recommendations - explicitly pass null if currentTrack is undefined
+        const recommendations = await recommendationService.getRecommendations(imageAnalysis, currentTrack || null);
+
+        console.log(`Found ${recommendations.length} recommendations`);
+
+        res.json({ recommendations });
+    } catch (error) {
+        console.error('Error getting recommendations:', error);
+
+        try {
+            // Return default recommendations if there's an error
+            console.log('Using default queries for recommendations due to error');
+            const defaultQueries = ["chill music", "relaxing songs", "popular hits", "mood music", "vibes"];
+
+            // Ensure token before fallback search
+            await ensureSpotifyToken();
+
+            const defaultRecommendations = await recommendationService.searchTracksWithQueries(defaultQueries);
+            res.json({
+                recommendations: defaultRecommendations.slice(0, 5),
+                note: "Using default recommendations due to an error"
+            });
+        } catch (fallbackError) {
+            console.error('Error with fallback recommendations:', fallbackError);
+            res.status(500).json({
+                error: 'Error getting song recommendations',
+                message: error.message
+            });
+        }
+    }
+});
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
