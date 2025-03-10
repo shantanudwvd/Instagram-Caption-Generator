@@ -186,32 +186,63 @@ app.post('/api/analyze-image', upload.single('image'), async (req, res) => {
 
 // Helper functions
 async function analyzeImage(base64Image) {
-    const response = await openai.chat.completions.create({
-        model: "gpt-4o-2024-11-20",
-        messages: [
-            {
-                role: "user",
-                content: [
-                    {
-                        type: "text",
-                        text: "Please analyze this image and describe its key elements, mood, and atmosphere in a way that would be relevant for an Instagram caption."
-                    },
-                    {
-                        type: "image_url",
-                        // Format the base64 string correctly with the proper MIME type prefix
-                        image_url: {
-                            url: base64Image.startsWith('data:')
-                                ? base64Image
-                                : `data:image/jpeg;base64,${base64Image}`
-                        }
-                    }
-                ]
-            }
-        ],
-        max_tokens: 300
-    });
+    try {
+        console.log('Starting image analysis with OpenAI');
 
-    return response.choices[0].message.content;
+        if (!process.env.OPENAI_API_KEY) {
+            throw new Error('OpenAI API key is not configured');
+        }
+
+        // Format the base64 string correctly with the proper MIME type prefix
+        const imageUrl = base64Image.startsWith('data:')
+            ? base64Image
+            : `data:image/jpeg;base64,${base64Image}`;
+
+        console.log('Making request to OpenAI API');
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                {
+                    role: "system",
+                    content: "You are an observant friend with a good eye for detail. You notice things in photos that others might miss, and you describe scenes in a relatable, personal way."
+                },
+                {
+                    role: "user",
+                    content: [
+                        {
+                            type: "text",
+                            text: "My friend sent me this image. Can you tell me what you notice about it? Focus on what stands out to you personally, specific details that catch your eye, the mood or vibe it gives off, and what feelings or memories it might evoke. Don't be overly formal or analytical - just describe it the way a friend would when looking at someone's photo. Mention 3-4 key elements or details that would be good to reference in an Instagram caption."
+                        },
+                        {
+                            type: "image_url",
+                            image_url: {
+                                url: imageUrl
+                            }
+                        }
+                    ]
+                }
+            ],
+            max_tokens: 300,
+            temperature: 0.7  // Slightly more creative to get varied human-like responses
+        });
+
+        console.log('Received OpenAI response');
+        return response.choices[0].message.content;
+    } catch (error) {
+        console.error('Error in image analysis API call:', error);
+
+        if (error.response) {
+            console.error('OpenAI API error details:', error.response.data);
+        }
+
+        // Provide a fallback analysis when in production
+        if (process.env.NODE_ENV === 'production') {
+            console.log('Using fallback analysis due to error');
+            return "This image has a really interesting vibe to it. There's something about the lighting and composition that gives it a unique feel. It's the kind of scene that would go perfectly with the right soundtrack.";
+        }
+
+        throw error;
+    }
 }
 
 async function analyzeSongOld(trackId) {
@@ -299,63 +330,157 @@ async function generateSongDescription(songData) {
     return response.choices[0].message.content;
 }
 
-async function generateCaption(imageAnalysis, songAnalysis) {
+// Update the generateCaption function in server.js with improved human-like prompting
+async function generateCaption(imageAnalysis, songAnalysis, customization = {}) {
+    // Set default values if customization options are not provided
+    const options = {
+        tone: customization.tone || 'casual',
+        length: customization.length || 'medium',
+        language: customization.language || 'english',
+        emoji: customization.emoji || 'moderate',
+        hashtags: customization.hashtags || 'moderate',
+        style: customization.style || 'balanced',
+        focus: customization.focus || 'balanced'
+    };
+
+
+    // Define length parameters
+    const lengthMap = {
+        'very-short': {description: 'very brief, just 1 sentence', maxWords: 20},
+        'short': {description: 'concise', maxWords: 40},
+        'medium': {description: 'standard length', maxWords: 70},
+        'long': {description: 'detailed', maxWords: 120},
+        'very-long': {description: 'extended and elaborate', maxWords: 200}
+    };
+
+    const lengthParams = lengthMap[options.length] || lengthMap.medium;
+
+    // Define emoji parameters
+    const emojiMap = {
+        'none': 'Do not use any emojis',
+        'minimal': 'Use 1-2 emojis at most, only where they naturally fit',
+        'moderate': 'Use a few well-placed emojis that enhance the message',
+        'abundant': 'Use emojis generously throughout to express emotion'
+    };
+
+    const emojiParams = emojiMap[options.emoji] || emojiMap.moderate;
+
+    // Define hashtag parameters
+    const hashtagMap = {
+        'none': 'No hashtags',
+        'minimal': '1-3 highly relevant hashtags',
+        'moderate': '4-7 well-chosen hashtags',
+        'abundant': '8+ diverse and comprehensive hashtags'
+    };
+
+    const hashtagParams = hashtagMap[options.hashtags] || hashtagMap.moderate;
+
+    // Define tone context and examples
+    const toneExamples = {
+        'casual': {
+            description: 'relaxed, conversational, everyday language',
+            example: 'Just vibing to this track while taking in the view. Sometimes the simplest moments hit different.'
+        },
+        'professional': {
+            description: 'polished, sophisticated, refined language',
+            example: 'Exploring the intersection of visual aesthetics and musical composition, finding harmony in both art forms.'
+        },
+        'friendly': {
+            description: 'warm, approachable, personable',
+            example: 'Hey friends! This song has been my absolute go-to lately - it just matches the energy of these beautiful surroundings perfectly! Who else feels this?'
+        },
+        'humorous': {
+            description: 'witty, playful, amusing',
+            example: "When the song hits just right and you pretend you're in a music video but really you're just waiting for your coffee to brew. #MainCharacterMoment"
+        },
+        'inspirational': {
+            description: 'uplifting, motivational, encouraging',
+            example: 'Every step forward is progress. Let this view remind you that the journey is just as beautiful as the destination.'
+        },
+        'thoughtful': {
+            description: 'reflective, contemplative, insightful',
+            example: 'In the quiet moments between the notes, I find myself reflecting on how music colors our perceptions of the world around us.'
+        },
+        'poetic': {
+            description: 'lyrical, metaphorical, artistic',
+            example: "Whispers of melody dance across sunlit waters, each ripple a verse in nature's endless song."
+        },
+        'sarcastic': {
+            description: 'ironic, dry humor, subtle mockery',
+            example: 'Oh sure, just another average day listening to life-changing music while witnessing breathtaking scenery. No big deal.'
+        },
+        'enthusiastic': {
+            description: 'excited, energetic, passionate',
+            example: "I AM ABSOLUTELY OBSESSED with this song right now!! It matches this incredible scene so perfectly I can't even handle it!!!"
+        },
+        'mysterious': {
+            description: 'intriguing, enigmatic, subtle',
+            example: 'Some moments defy explanation... the music knows what the eyes see but the words cannot express.'
+        }
+    };
+
+    const toneParams = toneExamples[options.tone] || toneExamples.casual;
+
+    // Extract key elements of image and song to help with natural connections
+    // This helps focus the model on key elements instead of generic analysis
     const response = await openai.chat.completions.create({
-        model: "gpt-4o-2024-11-20",
+        model: "gpt-4o",
         messages: [
+            {
+                role: "system",
+                content: `You are a skilled social media copywriter who creates authentic, human Instagram captions. Your captions never feel AI-generated or formulaic. Instead, they capture the genuine voice of a real person expressing themselves naturally on social media.`
+            },
             {
                 role: "user",
                 content: `
-Create a magnetic Instagram caption that weaves together the following elements:
+I need a natural-sounding Instagram caption for a post. I want it to feel authentic and human, not AI-generated.
 
-IMAGE CONTEXT:
+THE IMAGE SHOWS:
 ${imageAnalysis}
-• What's the dominant emotion/mood?
-• What are the key visual elements?
-• What's the overall aesthetic/style?
-• What time of day/setting is shown?
 
-MUSIC ELEMENTS:
-• Song: "${songAnalysis.name}" by ${songAnalysis.artist}
-• Genre: ${songAnalysis.genre}
-• Key themes: ${songAnalysis.description}
-• Mood/Energy: ${songAnalysis.mood}
-• Notable lyrics: ${songAnalysis.lyrics}
+THE SONG I'M FEATURING:
+"${songAnalysis.name}" by ${songAnalysis.artist}
+From: ${songAnalysis.album}
+Vibe: ${songAnalysis.description}
 
-CAPTION REQUIREMENTS:
-1. Opening Hook:
-   - Start with an attention-grabbing line that connects the image's mood to the song's emotion
-   - Use sensory language or vivid description
-   
-2. Story/Connection:
-   - Create a brief narrative that explains why this song perfectly matches this moment
-   - Make it personal and relatable
-   
-3. Technical Specifications:
-   - Length: 2-3 impactful sentences
-   - Include 2-3 strategically placed emojis that enhance (don't repeat) the message
-   - Add 3-5 relevant hashtags that mix popular and niche terms
-   - Credit format: 🎵: [Song] - [Artist]
-   
-4. Style Guidelines:
-   - Write in a conversational, authentic tone
-   - Avoid clichés and overused phrases
-   - Mix short and medium-length sentences
-   - Use specific details from both image and song
-   
-5. Engagement Elements:
-   - End with either a subtle call-to-action or thought-provoking question
-   - Make it easy for viewers to connect with the emotion/moment
+CAPTION STYLE:
+- Tone: ${toneParams.description}
+- Length: ${lengthParams.description} (around ${lengthParams.maxWords} words max)
+- Emoji usage: ${emojiParams}
+- Hashtags: ${hashtagParams}
+- Language: ${options.language}
 
-FORMAT THE OUTPUT AS:
-[Caption with emojis]
+WHAT MAKES HUMAN CAPTIONS DIFFERENT FROM AI CAPTIONS:
+1. Humans are subjective and speak from personal experience
+2. Humans use imperfect language with natural flow
+3. Humans make specific observations rather than generic descriptions
+4. Humans express authentic emotions and vulnerability
+5. Humans make unexpected connections between ideas
+6. Humans use varied sentence structure and conversational patterns
+7. Humans sometimes include casual interjections or asides
 
-[Hashtags]
+For reference, here's an example of the TONE I want (but create a totally new caption specific to my image and song):
+"${toneParams.example}"
 
-[Song credit]`
+Please write a caption that:
+1. Makes a natural, specific connection between the image and the song
+2. Includes personal perspective and subjective feelings
+3. Feels like something a real person would actually post on Instagram
+4. Avoids clichéd phrases and overly formal language
+5. Sounds relaxed and authentic, not formulaic
+6. Includes the song credit at the end
+
+FORMAT:
+[Main caption text]
+
+[Hashtags if requested, placed below the main caption]
+
+🎵: "${songAnalysis.name}" - ${songAnalysis.artist}
+`
             }
         ],
-        max_tokens: 150
+        max_tokens: 500,
+        temperature: 0.85  // Slightly higher temperature for more creative, varied results
     });
 
     return response.choices[0].message.content;
