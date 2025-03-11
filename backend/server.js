@@ -103,8 +103,8 @@ app.post('/api/generate-caption', upload.fields([
         const imageFile = req.files.image ? req.files.image[0] : null;
         const audioFile = req.files.audio ? req.files.audio[0] : null;
 
-        if (!imageFile || !trackId) {
-            return res.status(400).json({ error: 'Image and track ID are required' });
+        if (!imageFile) {
+            return res.status(400).json({ error: 'Image is required' });
         }
 
         // User context from either text or transcribed audio
@@ -133,10 +133,6 @@ app.post('/api/generate-caption', upload.fields([
         const imageAnalysis = await analyzeImage(imageBase64);
         console.log("Image analysis complete");
 
-        // Get song details and analysis
-        const songAnalysis = await analyzeSong(trackId);
-        console.log("Song analysis complete");
-
         // Setup customization options
         const customization = {
             tone: tone || 'casual',
@@ -148,7 +144,19 @@ app.post('/api/generate-caption', upload.fields([
 
         console.log("Using caption options:", customization);
 
-        // Generate caption with the additional context and customization options
+        // Get song details and analysis if trackId is provided
+        let songAnalysis = null;
+        if (trackId) {
+            try {
+                songAnalysis = await analyzeSong(trackId);
+                console.log("Song analysis complete");
+            } catch (songError) {
+                console.error('Error analyzing song:', songError);
+                // Continue without song analysis if it fails
+            }
+        }
+
+        // Generate caption
         const caption = await generateCaption(imageAnalysis, songAnalysis, userContext, customization);
         console.log("Caption generated successfully");
 
@@ -386,7 +394,6 @@ async function generateSongDescription(songData) {
 }
 
 // Update the generateCaption function in server.js to incorporate user context and customization options
-// Update the generateCaption function in server.js to incorporate user context and customization options
 async function generateCaption(imageAnalysis, songAnalysis, userContext = '', customization = {}) {
     // Set default values if customization options are not provided
     const options = {
@@ -488,6 +495,29 @@ ${userContext}
 `
         : '';
 
+    // Prepare song information - only include if song is provided
+    const songSection = songAnalysis
+        ? `
+THE SONG I'M FEATURING:
+"${songAnalysis.name}" by ${songAnalysis.artist}
+From: ${songAnalysis.album}
+Vibe: ${songAnalysis.description}
+`
+        : '';
+
+    // Modify the formatting instructions based on whether a song is included
+    const formatInstructions = songAnalysis
+        ? `FORMAT:
+[Main caption text in ${options.language}${options.language === 'hinglish' ? ' (mix of Hindi and English)' : ''}]
+
+[Hashtags if requested, placed below the main caption]
+
+🎵: "${songAnalysis.name}" - ${songAnalysis.artist}`
+        : `FORMAT:
+[Main caption text in ${options.language}${options.language === 'hinglish' ? ' (mix of Hindi and English)' : ''}]
+
+[Hashtags if requested, placed below the main caption]`;
+
     // Generate caption with image analysis, song info, and user context
     const response = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -504,11 +534,7 @@ I need a natural-sounding Instagram caption for a post. I want it to feel authen
 THE IMAGE SHOWS:
 ${imageAnalysis}
 ${userContextSection}
-THE SONG I'M FEATURING:
-"${songAnalysis.name}" by ${songAnalysis.artist}
-From: ${songAnalysis.album}
-Vibe: ${songAnalysis.description}
-
+${songSection}
 CAPTION STYLE:
 - Tone: ${toneParams.description}
 - Length: ${lengthParams.description} (around ${lengthParams.maxWords} words max)
@@ -555,23 +581,18 @@ SPECIFIC GUIDELINES FOR DARK HUMOR TONE:
 - Focus on relatable dark humor about everyday life struggles
 ` : ''}
 
-For reference, here's an example of the TONE I want (but create a totally new caption specific to my image and song):
+For reference, here's an example of the TONE I want (but create a totally new caption specific to my image${songAnalysis ? ' and song' : ''}):
 "${toneParams.example}"
 
 Please write a caption that:
-1. Makes a natural, specific connection between the image and the song
+1. Makes a natural, specific connection ${songAnalysis ? 'between the image and the song' : 'to the image'}
 2. Includes personal perspective and subjective feelings${userContext ? "\n3. Incorporates the personal context I've shared about the image" : ""}
 ${userContext ? "4" : "3"}. Feels like something a real person would actually post on Instagram
 ${userContext ? "5" : "4"}. Avoids clichéd phrases and overly formal language
 ${userContext ? "6" : "5"}. Sounds relaxed and authentic, not formulaic
-${userContext ? "7" : "6"}. Includes the song credit at the end
+${songAnalysis ? (userContext ? "7" : "6") + ". Includes the song credit at the end" : ""}
 
-FORMAT:
-[Main caption text in ${options.language}${options.language === 'hinglish' ? ' (mix of Hindi and English)' : ''}]
-
-[Hashtags if requested, placed below the main caption]
-
-🎵: "${songAnalysis.name}" - ${songAnalysis.artist}
+${formatInstructions}
 `
             }
         ],
