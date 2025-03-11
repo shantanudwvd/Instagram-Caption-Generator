@@ -340,7 +340,7 @@ async function analyzeSong(trackId) {
             const featuresResponse = await spotifyApi.getAudioFeaturesForTrack(trackId);
             audioFeatures = featuresResponse.body;
         } catch (featuresError) {
-            console.warn('Could not fetch audio features:', featuresError);
+            // console.warn('Could not fetch audio features:', featuresError);
             // Continue without audio features
         }
 

@@ -4,8 +4,9 @@ import SongSearch from './components/SongSearch';
 import GeneratedCaption from './components/GeneratedCaption';
 import LoadingSpinner from './components/LoadingSpinner';
 import SongRecommendations from './components/SongRecommendations';
-import ImageContext from './components/ImageContext'; // Import the ImageContext component
-import CaptionOptions from './components/CaptionOptions'; // Import the CaptionOptions component
+import ImageContext from './components/ImageContext';
+import CaptionOptions from './components/CaptionOptions';
+import SpotifyPlayer from './components/SpotifyPlayer'; // Import the SpotifyPlayer component
 
 function App() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -20,7 +21,6 @@ function App() {
   const [error, setError] = useState('');
   const fileInputRef = useRef();
   const [imageAnalysis, setImageAnalysis] = useState('');
-  // New state variables for context and caption options
   const [imageContext, setImageContext] = useState(null);
   const [captionOptions, setCaptionOptions] = useState({
     tone: 'casual',
@@ -29,9 +29,9 @@ function App() {
     emoji: 'moderate',
     hashtags: 'moderate'
   });
+  const [musicIsOptional, setMusicIsOptional] = useState(true); // New state to track if music is optional
 
   const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-  console.log("backend url is coming as: %s", REACT_APP_BACKEND_URL);
 
   // Handle context changes from the ImageContext component
   const handleContextChange = (contextData) => {
@@ -209,10 +209,15 @@ function App() {
     }
   };
 
-  // Update the handleSubmit function to make music selection optional
   const handleSubmit = async () => {
     if (!selectedImage) {
       setError('Please upload an image');
+      return;
+    }
+
+    // If music is required but not selected, show error
+    if (!musicIsOptional && !selectedTrack) {
+      setError('Please select a song to continue');
       return;
     }
 
@@ -265,22 +270,6 @@ function App() {
     }
   };
 
-// Update the button to enable it even without a selected track
-  <button
-      onClick={handleSubmit}
-      disabled={loading || !selectedImage}
-      className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
-  >
-    {loading ? (
-        <>
-          <LoadingSpinner />
-          <span>Generating...</span>
-        </>
-    ) : (
-        <span>Generate Caption{selectedTrack ? ' with Music' : ''}</span>
-    )}
-  </button>
-
   return (
       <div className="max-w-4xl mx-auto p-6 space-y-8">
         <h1 className="text-3xl font-bold text-center mb-8">
@@ -298,23 +287,45 @@ function App() {
             <ImageContext onContextChange={handleContextChange} />
         )}
 
-        <SongSearch
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            searchResults={searchResults}
-            selectedTrack={selectedTrack}
-            onTrackSelect={handleTrackSelect}
-            onSearch={searchTracks}
-        />
+        {/* Optional Music Selection */}
+        <div className="border-b pb-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">2. Add Music (Optional)</h2>
+            <div className="flex items-center">
+              <input
+                  type="checkbox"
+                  id="musicToggle"
+                  checked={!musicIsOptional}
+                  onChange={() => setMusicIsOptional(!musicIsOptional)}
+                  className="h-4 w-4 text-blue-600 rounded"
+              />
+              <label htmlFor="musicToggle" className="ml-2 text-sm text-gray-600">
+                {musicIsOptional ? "Music is optional" : "Music is required"}
+              </label>
+            </div>
+          </div>
+
+          <SongSearch
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              searchResults={searchResults}
+              selectedTrack={selectedTrack}
+              onTrackSelect={handleTrackSelect}
+              onSearch={searchTracks}
+          />
+
+          {/* Show Spotify Player when a track is selected */}
+          {selectedTrack && <SpotifyPlayer track={selectedTrack} />}
+        </div>
 
         {/* Add the Caption Options component */}
-        {selectedImage && selectedTrack && (
+        {selectedImage && (
             <CaptionOptions onOptionsChange={handleOptionsChange} />
         )}
 
         <button
             onClick={handleSubmit}
-            disabled={loading || !selectedImage || !selectedTrack}
+            disabled={loading || !selectedImage || (!musicIsOptional && !selectedTrack)}
             className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
         >
           {loading ? (
@@ -323,7 +334,7 @@ function App() {
                 <span>Generating...</span>
               </>
           ) : (
-              <span>Generate Caption</span>
+              <span>Generate Caption{selectedTrack ? ' with Music' : ''}</span>
           )}
         </button>
 
