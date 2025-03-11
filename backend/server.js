@@ -90,7 +90,16 @@ app.post('/api/generate-caption', upload.fields([
     { name: 'audio', maxCount: 1 }
 ]), async (req, res) => {
     try {
-        const { trackId, textContext } = req.body;
+        const {
+            trackId,
+            textContext,
+            tone,
+            length,
+            language,
+            emoji,
+            hashtags
+        } = req.body;
+
         const imageFile = req.files.image ? req.files.image[0] : null;
         const audioFile = req.files.audio ? req.files.audio[0] : null;
 
@@ -104,12 +113,15 @@ app.post('/api/generate-caption', upload.fields([
         // Process text context if provided
         if (textContext) {
             userContext = textContext;
+            console.log('Using text context:', textContext.substring(0, 100) + (textContext.length > 100 ? '...' : ''));
         }
 
         // Process audio file if provided (transcribe with OpenAI)
         if (audioFile) {
             try {
+                console.log('Transcribing audio file...');
                 userContext = await transcribeAudio(audioFile.path);
+                console.log('Audio transcription:', userContext.substring(0, 100) + (userContext.length > 100 ? '...' : ''));
             } catch (transcriptionError) {
                 console.error('Error transcribing audio:', transcriptionError);
                 // Continue without transcription if it fails
@@ -119,14 +131,26 @@ app.post('/api/generate-caption', upload.fields([
         // Analyze image using GPT-4 Vision
         const imageBase64 = fs.readFileSync(imageFile.path, { encoding: 'base64' });
         const imageAnalysis = await analyzeImage(imageBase64);
-        console.log("image analysis is coming as: %j", imageAnalysis);
+        console.log("Image analysis complete");
 
         // Get song details and analysis
         const songAnalysis = await analyzeSong(trackId);
-        console.log("song analysis is coming as: %j", songAnalysis);
+        console.log("Song analysis complete");
 
-        // Generate caption with the additional context
-        const caption = await generateCaption(imageAnalysis, songAnalysis, userContext);
+        // Setup customization options
+        const customization = {
+            tone: tone || 'casual',
+            length: length || 'medium',
+            language: language || 'english',
+            emoji: emoji || 'moderate',
+            hashtags: hashtags || 'moderate'
+        };
+
+        console.log("Using caption options:", customization);
+
+        // Generate caption with the additional context and customization options
+        const caption = await generateCaption(imageAnalysis, songAnalysis, userContext, customization);
+        console.log("Caption generated successfully");
 
         // Clean up uploaded files
         fs.unlinkSync(imageFile.path);
@@ -361,8 +385,8 @@ async function generateSongDescription(songData) {
     return response.choices[0].message.content;
 }
 
-// Update the generateCaption function in server.js with improved human-like prompting
-async function generateCaption(imageAnalysis, songAnalysis, customization = {}) {
+// Update the generateCaption function in server.js to incorporate user context and customization options
+async function generateCaption(imageAnalysis, songAnalysis, userContext = '', customization = {}) {
     // Set default values if customization options are not provided
     const options = {
         tone: customization.tone || 'casual',
@@ -373,7 +397,6 @@ async function generateCaption(imageAnalysis, songAnalysis, customization = {}) 
         style: customization.style || 'balanced',
         focus: customization.focus || 'balanced'
     };
-
 
     // Define length parameters
     const lengthMap = {
@@ -452,8 +475,15 @@ async function generateCaption(imageAnalysis, songAnalysis, customization = {}) 
 
     const toneParams = toneExamples[options.tone] || toneExamples.casual;
 
-    // Extract key elements of image and song to help with natural connections
-    // This helps focus the model on key elements instead of generic analysis
+    // Prepare user context section - only include if there is actual context
+    const userContextSection = userContext
+        ? `
+USER-PROVIDED CONTEXT ABOUT THIS IMAGE:
+${userContext}
+`
+        : '';
+
+    // Generate caption with image analysis, song info, and user context
     const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
@@ -468,7 +498,7 @@ I need a natural-sounding Instagram caption for a post. I want it to feel authen
 
 THE IMAGE SHOWS:
 ${imageAnalysis}
-
+${userContextSection}
 THE SONG I'M FEATURING:
 "${songAnalysis.name}" by ${songAnalysis.artist}
 From: ${songAnalysis.album}
@@ -479,7 +509,7 @@ CAPTION STYLE:
 - Length: ${lengthParams.description} (around ${lengthParams.maxWords} words max)
 - Emoji usage: ${emojiParams}
 - Hashtags: ${hashtagParams}
-- Language: ${options.language}
+- Language: ${options.language}${options.language === 'hinglish' ? ' (mix of Hindi and English)' : ''}
 
 WHAT MAKES HUMAN CAPTIONS DIFFERENT FROM AI CAPTIONS:
 1. Humans are subjective and speak from personal experience
@@ -490,19 +520,38 @@ WHAT MAKES HUMAN CAPTIONS DIFFERENT FROM AI CAPTIONS:
 6. Humans use varied sentence structure and conversational patterns
 7. Humans sometimes include casual interjections or asides
 
+${options.language === 'hindi' ? `
+SPECIFIC GUIDELINES FOR HINDI CAPTIONS:
+- Use natural Hindi expressions and colloquialisms that a native speaker would use
+- Incorporate common Hindi slang or phrases used on social media
+- Use Devanagari script properly
+- Mix formal and informal Hindi as appropriate for social media
+- Use culturally relevant references that would resonate with Hindi speakers
+` : ''}
+
+${options.language === 'hinglish' ? `
+SPECIFIC GUIDELINES FOR HINGLISH CAPTIONS:
+- Naturally mix Hindi and English the way young Indians do on social media
+- Use Romanized Hindi (Hindi written in English letters) for Hindi words
+- Switch between languages mid-sentence in a natural way
+- Include popular Hinglish expressions and slang
+- Keep the tone conversational and authentic to how young Indians actually write
+- Use phrases like "yaar", "matlab", "bas", "ekdum", etc. where they naturally fit
+` : ''}
+
 For reference, here's an example of the TONE I want (but create a totally new caption specific to my image and song):
 "${toneParams.example}"
 
 Please write a caption that:
 1. Makes a natural, specific connection between the image and the song
-2. Includes personal perspective and subjective feelings
-3. Feels like something a real person would actually post on Instagram
-4. Avoids clichéd phrases and overly formal language
-5. Sounds relaxed and authentic, not formulaic
-6. Includes the song credit at the end
+2. Includes personal perspective and subjective feelings${userContext ? "\n3. Incorporates the personal context I've shared about the image" : ""}
+${userContext ? "4" : "3"}. Feels like something a real person would actually post on Instagram
+${userContext ? "5" : "4"}. Avoids clichéd phrases and overly formal language
+${userContext ? "6" : "5"}. Sounds relaxed and authentic, not formulaic
+${userContext ? "7" : "6"}. Includes the song credit at the end
 
 FORMAT:
-[Main caption text]
+[Main caption text in ${options.language}${options.language === 'hinglish' ? ' (mix of Hindi and English)' : ''}]
 
 [Hashtags if requested, placed below the main caption]
 

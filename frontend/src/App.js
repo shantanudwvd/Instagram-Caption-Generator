@@ -4,7 +4,8 @@ import SongSearch from './components/SongSearch';
 import GeneratedCaption from './components/GeneratedCaption';
 import LoadingSpinner from './components/LoadingSpinner';
 import SongRecommendations from './components/SongRecommendations';
-import ImageContext from './components/ImageContext';
+import ImageContext from './components/ImageContext'; // Import the ImageContext component
+import CaptionOptions from './components/CaptionOptions'; // Import the CaptionOptions component
 
 function App() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -19,8 +20,15 @@ function App() {
   const [error, setError] = useState('');
   const fileInputRef = useRef();
   const [imageAnalysis, setImageAnalysis] = useState('');
-  // New state variables for context
+  // New state variables for context and caption options
   const [imageContext, setImageContext] = useState(null);
+  const [captionOptions, setCaptionOptions] = useState({
+    tone: 'casual',
+    length: 'medium',
+    language: 'english',
+    emoji: 'moderate',
+    hashtags: 'moderate'
+  });
 
   const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
   console.log("backend url is coming as: %s", REACT_APP_BACKEND_URL);
@@ -29,6 +37,12 @@ function App() {
   const handleContextChange = (contextData) => {
     setImageContext(contextData);
     console.log("Context updated:", contextData);
+  };
+
+  // Handle options changes from the CaptionOptions component
+  const handleOptionsChange = (options) => {
+    setCaptionOptions(options);
+    console.log("Caption options updated:", options);
   };
 
   const searchTracks = async (query) => {
@@ -217,6 +231,11 @@ function App() {
       }
     }
 
+    // Add caption options
+    Object.entries(captionOptions).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
+
     try {
       const response = await fetch(`${REACT_APP_BACKEND_URL}/api/generate-caption`, {
         method: 'POST',
@@ -267,6 +286,11 @@ function App() {
             onSearch={searchTracks}
         />
 
+        {/* Add the Caption Options component */}
+        {selectedImage && selectedTrack && (
+            <CaptionOptions onOptionsChange={handleOptionsChange} />
+        )}
+
         <button
             onClick={handleSubmit}
             disabled={loading || !selectedImage || !selectedTrack}
@@ -286,7 +310,17 @@ function App() {
             <div className="p-4 bg-red-50 text-red-600 rounded-lg">{error}</div>
         )}
 
-        {caption && <GeneratedCaption caption={caption} />}
+        {caption && (
+            <>
+              <GeneratedCaption caption={caption} />
+              <button
+                  onClick={handleSubmit}
+                  className="mt-4 w-full py-2 px-4 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center"
+              >
+                Regenerate Caption with Selected Options
+              </button>
+            </>
+        )}
 
         <SongRecommendations
             recommendations={recommendations}
