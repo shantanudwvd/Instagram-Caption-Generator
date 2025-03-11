@@ -308,90 +308,220 @@ async function analyzeImage(base64Image) {
     }
 }
 
-async function analyzeSongOld(trackId) {
-    const trackInfo = await spotifyApi.getTrack(trackId);
-    console.log("track info is coming as: %j", trackInfo);
-    const audioFeatures = await spotifyApi.getAudioFeaturesForTrack(trackId);
-    console.log("audio features is coming as: %j", audioFeatures);
 
-    const songData = {
-        name: trackInfo.body.name,
-        artist: trackInfo.body.artists[0].name,
-        album: trackInfo.body.album.name,
-        features: audioFeatures.body
-    };
-
-    const description = await generateSongDescription(songData);
-    return {...songData, description};
-}
-
-// Update the analyzeSong function with better error handling
+/**
+ * Improved song analysis function that uses OpenAI instead of deprecated Spotify APIs
+ * for analyzing song features and characteristics
+ *
+ * @param {string} trackId - Spotify track ID
+ * @returns {Promise<Object>} Song data with analysis
+ */
 async function analyzeSong(trackId) {
     try {
         // Ensure valid token before making API calls
         await ensureSpotifyToken();
 
-        // Get track info
-        const trackInfo = await spotifyApi.getTrack(trackId);
+        // Get basic track info from Spotify
+        const trackInfoResponse = await spotifyApi.getTrack(trackId);
 
-        let audioFeatures = null;
-        try {
-            // Get audio features
-            const featuresResponse = await spotifyApi.getAudioFeaturesForTrack(trackId);
-            audioFeatures = featuresResponse.body;
-        } catch (featuresError) {
-            // console.warn('Could not fetch audio features:', featuresError);
-            // Continue without audio features
+        if (!trackInfoResponse.body) {
+            throw new Error('Failed to fetch track information');
         }
 
+        const trackInfo = trackInfoResponse.body;
+
+        // Extract basic song metadata
         const songData = {
-            name: trackInfo.body.name,
-            artist: trackInfo.body.artists[0].name,
-            album: trackInfo.body.album.name,
-            features: audioFeatures || {
+            id: trackInfo.id,
+            name: trackInfo.name,
+            artist: trackInfo.artists[0].name,
+            album: trackInfo.album.name,
+            releaseDate: trackInfo.album.release_date,
+            popularity: trackInfo.popularity,
+            previewUrl: trackInfo.preview_url,
+            albumArt: trackInfo.album.images[0]?.url || null,
+            // Initialize with empty values that will be filled by OpenAI
+            description: '',
+            features: {
                 energy: 0.5,
-                valence: 0.5,
-                danceability: 0.5
+                mood: 'neutral',
+                tempo: 'moderate',
+                genre: 'pop',
+                vibe: 'general'
             }
         };
 
-        // Generate description even without audio features
-        const description = await generateSongDescription(songData);
-        return {...songData, description};
+        // Use OpenAI to analyze the song
+        const description = await generateSongAnalysis(songData);
+        console.log("description is coming as: %s", JSON.stringify(description, null, 2));
 
+        // Process the description to extract features
+        const features = extractFeaturesFromDescription(description);
+        console.log("features is coming as: %s", JSON.stringify(features, null, 2));
+
+        return {
+            ...songData,
+            description,
+            features
+        };
     } catch (error) {
         console.error('Error in analyzeSong:', error);
-        throw new Error(`Failed to analyze song: ${error.message}`);
+
+        // Provide fallback analysis if there's an error
+        return {
+            id: trackId,
+            name: "Unknown Track",
+            artist: "Unknown Artist",
+            album: "Unknown Album",
+            description: "A track that could complement the mood of your image.",
+            features: {
+                energy: 0.5,
+                mood: 'neutral',
+                tempo: 'moderate',
+                genre: 'pop',
+                vibe: 'general'
+            }
+        };
     }
 }
 
-async function generateSongDescription(songData) {
-    const response = await openai.chat.completions.create({
-        model: "gpt-4o-2024-11-20",
-        messages: [
-            {
-                role: "user",
-                content: `
-          Please create a brief, engaging description of this song based on its characteristics:
-          
-          Song: ${songData.name}
-          Artist: ${songData.artist}
-          Album: ${songData.album}
-          
-          Audio features:
-          - Energy: ${songData.features.energy}
-          - Valence (positivity): ${songData.features.valence}
-          - Danceability: ${songData.features.danceability}
-          
-          Focus on the mood, energy, and emotional qualities of the song.
-        `
-            }
-        ],
-        max_tokens: 150
-    });
 
-    return response.choices[0].message.content;
+/**
+ * Generate song analysis using OpenAI
+ *
+ * @param {Object} songData - Basic song metadata
+ * @returns {Promise<string>} Song description/analysis
+ */
+async function generateSongAnalysis(songData) {
+    try {
+        // Create prompt for OpenAI to analyze the song
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                {
+                    role: "system",
+                    content: "You are a music analysis expert with deep knowledge of songs, artists, genres, and emotional characteristics of music. You can analyze songs based on their metadata and provide insightful descriptions of their mood, energy, and overall vibe."
+                },
+                {
+                    role: "user",
+                    content: `
+Analyze this song based on its metadata and your music knowledge:
+
+Song: "${songData.name}"
+Artist: ${songData.artist}
+Album: ${songData.album}
+Release Date: ${songData.releaseDate || 'Unknown'}
+Popularity on Spotify: ${songData.popularity || 'Unknown'}/100
+
+Please provide:
+1. A brief, engaging description (2-3 sentences) of this song's overall sound, mood, and vibe
+2. Estimate these characteristics in your analysis:
+   - Energy level (low, moderate, high)
+   - Mood (melancholic, neutral, upbeat, etc.)
+   - Tempo (slow, moderate, fast)
+   - Genre or style
+   - Overall vibe/atmosphere
+
+Focus on how this song might make someone feel when listening to it, what contexts it's suitable for, and its emotional qualities.
+Keep your response under 150 words, focusing on the most distinctive elements of the track.
+`
+                }
+            ],
+            max_tokens: 250,
+            temperature: 0.7
+        });
+
+        return response.choices[0].message.content.trim();
+    } catch (error) {
+        console.error('Error generating song analysis with OpenAI:', error);
+        return `"${songData.name}" by ${songData.artist} is a track with distinctive qualities that could match the mood of your image.`;
+    }
 }
+
+
+/**
+ * Extract numerical and categorical features from the AI-generated description
+ *
+ * @param {string} description - AI-generated song description
+ * @returns {Object} Extracted features
+ */
+function extractFeaturesFromDescription(description) {
+    const features = {
+        energy: 0.5,
+        mood: 'neutral',
+        tempo: 'moderate',
+        genre: 'pop',
+        vibe: 'general'
+    };
+
+    // Extract energy level
+    if (description.toLowerCase().includes('high energy') ||
+        description.toLowerCase().includes('energetic') ||
+        description.toLowerCase().includes('upbeat')) {
+        features.energy = 0.8;
+    } else if (description.toLowerCase().includes('low energy') ||
+        description.toLowerCase().includes('calm') ||
+        description.toLowerCase().includes('relaxed') ||
+        description.toLowerCase().includes('mellow')) {
+        features.energy = 0.3;
+    }
+
+    // Extract mood
+    if (description.toLowerCase().includes('happy') ||
+        description.toLowerCase().includes('joyful') ||
+        description.toLowerCase().includes('upbeat') ||
+        description.toLowerCase().includes('positive')) {
+        features.mood = 'positive';
+    } else if (description.toLowerCase().includes('sad') ||
+        description.toLowerCase().includes('melancholic') ||
+        description.toLowerCase().includes('somber')) {
+        features.mood = 'melancholic';
+    } else if (description.toLowerCase().includes('angry') ||
+        description.toLowerCase().includes('intense') ||
+        description.toLowerCase().includes('aggressive')) {
+        features.mood = 'intense';
+    }
+
+    // Extract tempo
+    if (description.toLowerCase().includes('fast') ||
+        description.toLowerCase().includes('uptempo') ||
+        description.toLowerCase().includes('quick')) {
+        features.tempo = 'fast';
+    } else if (description.toLowerCase().includes('slow') ||
+        description.toLowerCase().includes('downtempo')) {
+        features.tempo = 'slow';
+    }
+
+    // Extract genre (basic extraction, can be expanded)
+    const genres = [
+        'pop', 'rock', 'hip hop', 'rap', 'r&b', 'jazz', 'classical',
+        'electronic', 'dance', 'edm', 'country', 'folk', 'indie',
+        'alternative', 'metal', 'blues', 'reggae', 'latin'
+    ];
+
+    for (const genre of genres) {
+        if (description.toLowerCase().includes(genre)) {
+            features.genre = genre;
+            break;
+        }
+    }
+
+    // Extract vibe/atmosphere
+    const vibes = [
+        'chill', 'relaxing', 'party', 'romantic', 'dreamy', 'nostalgic',
+        'energetic', 'dark', 'atmospheric', 'emotional', 'summer', 'winter'
+    ];
+
+    for (const vibe of vibes) {
+        if (description.toLowerCase().includes(vibe)) {
+            features.vibe = vibe;
+            break;
+        }
+    }
+
+    return features;
+}
+
 
 // Update the generateCaption function in server.js to incorporate user context and customization options
 async function generateCaption(imageAnalysis, songAnalysis, userContext = '', customization = {}) {
