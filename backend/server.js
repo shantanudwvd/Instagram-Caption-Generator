@@ -386,6 +386,7 @@ async function generateSongDescription(songData) {
 }
 
 // Update the generateCaption function in server.js to incorporate user context and customization options
+// Update the generateCaption function in server.js to incorporate user context and customization options
 async function generateCaption(imageAnalysis, songAnalysis, userContext = '', customization = {}) {
     // Set default values if customization options are not provided
     const options = {
@@ -446,6 +447,10 @@ async function generateCaption(imageAnalysis, songAnalysis, userContext = '', cu
         'humorous': {
             description: 'witty, playful, amusing',
             example: "When the song hits just right and you pretend you're in a music video but really you're just waiting for your coffee to brew. #MainCharacterMoment"
+        },
+        'dark-humor': {
+            description: 'comedy with an edge, morbid or cynical undertones',
+            example: "Blasting upbeat music to drown out the existential dread. This view almost makes me forget my crippling debt. Almost."
         },
         'inspirational': {
             description: 'uplifting, motivational, encouraging',
@@ -537,6 +542,17 @@ SPECIFIC GUIDELINES FOR HINGLISH CAPTIONS:
 - Include popular Hinglish expressions and slang
 - Keep the tone conversational and authentic to how young Indians actually write
 - Use phrases like "yaar", "matlab", "bas", "ekdum", etc. where they naturally fit
+` : ''}
+
+${options.tone === 'dark-humor' ? `
+SPECIFIC GUIDELINES FOR DARK HUMOR TONE:
+- Use irony, sarcasm, and self-deprecation
+- Balance edginess with accessibility - don't go too extreme
+- Incorporate witty observations on life's difficulties or absurdities
+- Keep it instagram-appropriate while maintaining the dark humor edge
+- Use juxtaposition between the upbeat song and more cynical observations
+- Avoid content that would be genuinely hurtful or offensive
+- Focus on relatable dark humor about everyday life struggles
 ` : ''}
 
 For reference, here's an example of the TONE I want (but create a totally new caption specific to my image and song):
