@@ -84,18 +84,40 @@ async function refreshSpotifyToken() {
 refreshSpotifyToken();
 setInterval(refreshSpotifyToken, 50 * 60 * 1000);
 
-// Routes
-app.post('/api/generate-caption', upload.single('image'), async (req, res) => {
+
+app.post('/api/generate-caption', upload.fields([
+    { name: 'image', maxCount: 1 },
+    { name: 'audio', maxCount: 1 }
+]), async (req, res) => {
     try {
-        const {trackId} = req.body;
-        const imageFile = req.file;
+        const { trackId, textContext } = req.body;
+        const imageFile = req.files.image ? req.files.image[0] : null;
+        const audioFile = req.files.audio ? req.files.audio[0] : null;
 
         if (!imageFile || !trackId) {
-            return res.status(400).json({error: 'Image and track ID are required'});
+            return res.status(400).json({ error: 'Image and track ID are required' });
+        }
+
+        // User context from either text or transcribed audio
+        let userContext = '';
+
+        // Process text context if provided
+        if (textContext) {
+            userContext = textContext;
+        }
+
+        // Process audio file if provided (transcribe with OpenAI)
+        if (audioFile) {
+            try {
+                userContext = await transcribeAudio(audioFile.path);
+            } catch (transcriptionError) {
+                console.error('Error transcribing audio:', transcriptionError);
+                // Continue without transcription if it fails
+            }
         }
 
         // Analyze image using GPT-4 Vision
-        const imageBase64 = fs.readFileSync(imageFile.path, {encoding: 'base64'});
+        const imageBase64 = fs.readFileSync(imageFile.path, { encoding: 'base64' });
         const imageAnalysis = await analyzeImage(imageBase64);
         console.log("image analysis is coming as: %j", imageAnalysis);
 
@@ -103,29 +125,37 @@ app.post('/api/generate-caption', upload.single('image'), async (req, res) => {
         const songAnalysis = await analyzeSong(trackId);
         console.log("song analysis is coming as: %j", songAnalysis);
 
-        // Generate caption
-        const caption = await generateCaption(imageAnalysis, songAnalysis);
+        // Generate caption with the additional context
+        const caption = await generateCaption(imageAnalysis, songAnalysis, userContext);
 
-        // Get song recommendations based on the image analysis
-        const recommendations = await recommendationService.getRecommendations(imageAnalysis, {
-            id: trackId,
-            name: songAnalysis.name,
-            artist: songAnalysis.artist,
-            album: songAnalysis.album
-        });
-
-        // Clean up uploaded file
+        // Clean up uploaded files
         fs.unlinkSync(imageFile.path);
+        if (audioFile) {
+            fs.unlinkSync(audioFile.path);
+        }
 
-        res.json({
-            caption,
-            recommendations
-        });
+        res.json({ caption });
     } catch (error) {
         console.error('Error generating caption:', error);
-        res.status(500).json({error: 'Error generating caption'});
+        res.status(500).json({ error: 'Error generating caption' });
     }
 });
+
+// New function to transcribe audio using OpenAI
+async function transcribeAudio(audioFilePath) {
+    try {
+        const response = await openai.audio.transcriptions.create({
+            file: fs.createReadStream(audioFilePath),
+            model: "whisper-1",
+        });
+
+        return response.text;
+    } catch (error) {
+        console.error('OpenAI transcription error:', error);
+        throw new Error('Failed to transcribe audio');
+    }
+}
+
 
 app.get('/api/search-tracks', async (req, res) => {
     try {

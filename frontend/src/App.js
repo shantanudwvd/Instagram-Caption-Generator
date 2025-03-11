@@ -4,6 +4,7 @@ import SongSearch from './components/SongSearch';
 import GeneratedCaption from './components/GeneratedCaption';
 import LoadingSpinner from './components/LoadingSpinner';
 import SongRecommendations from './components/SongRecommendations';
+import ImageContext from './components/ImageContext';
 
 function App() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -18,9 +19,17 @@ function App() {
   const [error, setError] = useState('');
   const fileInputRef = useRef();
   const [imageAnalysis, setImageAnalysis] = useState('');
+  // New state variables for context
+  const [imageContext, setImageContext] = useState(null);
 
   const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
   console.log("backend url is coming as: %s", REACT_APP_BACKEND_URL);
+
+  // Handle context changes from the ImageContext component
+  const handleContextChange = (contextData) => {
+    setImageContext(contextData);
+    console.log("Context updated:", contextData);
+  };
 
   const searchTracks = async (query) => {
     try {
@@ -199,6 +208,15 @@ function App() {
     formData.append('image', selectedImage);
     formData.append('trackId', selectedTrack.id);
 
+    // Add context information if available
+    if (imageContext) {
+      if (imageContext.type === 'text' && imageContext.data) {
+        formData.append('textContext', imageContext.data);
+      } else if (imageContext.type === 'audio' && imageContext.data) {
+        formData.append('audio', imageContext.data, 'recording.webm');
+      }
+    }
+
     try {
       const response = await fetch(`${REACT_APP_BACKEND_URL}/api/generate-caption`, {
         method: 'POST',
@@ -234,6 +252,11 @@ function App() {
             onImageSelect={handleImageSelect}
             fileInputRef={fileInputRef}
         />
+
+        {/* Add the ImageContext component after the user uploads an image */}
+        {imagePreview && (
+            <ImageContext onContextChange={handleContextChange} />
+        )}
 
         <SongSearch
             searchQuery={searchQuery}
