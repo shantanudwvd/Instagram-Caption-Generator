@@ -14,6 +14,7 @@ const upload = multer({dest: 'uploads/'});
 
 const corsOptions = {
     origin: [
+        "https://captionmuse.adityagusain.com",
         "https://instagram-caption-generator-shantanudwvds-projects.vercel.app",
         "http://localhost:3000", // Replace with your Vercel frontend URL
     ],
