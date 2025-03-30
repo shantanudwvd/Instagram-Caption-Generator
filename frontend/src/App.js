@@ -6,7 +6,8 @@ import LoadingSpinner from './components/LoadingSpinner';
 import SongRecommendations from './components/SongRecommendations';
 import ImageContext from './components/ImageContext';
 import CaptionOptions from './components/CaptionOptions';
-import SpotifyPlayer from './components/SpotifyPlayer'; // Import the SpotifyPlayer component
+import SpotifyPlayer from './components/SpotifyPlayer';
+import CaptionFeedback from './components/CaptionFeedback';
 
 function App() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -15,6 +16,7 @@ function App() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [caption, setCaption] = useState('');
+  const [captionId, setCaptionId] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
@@ -29,7 +31,7 @@ function App() {
     emoji: 'moderate',
     hashtags: 'moderate'
   });
-  const [musicIsOptional, setMusicIsOptional] = useState(true); // New state to track if music is optional
+  const [musicIsOptional, setMusicIsOptional] = useState(true); // Track if music is optional
 
   const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -43,6 +45,11 @@ function App() {
   const handleOptionsChange = (options) => {
     setCaptionOptions(options);
     console.log("Caption options updated:", options);
+  };
+
+  // Handle caption editing from feedback component
+  const handleCaptionEdit = (editedCaption) => {
+    setCaption(editedCaption);
   };
 
   const searchTracks = async (query) => {
@@ -256,7 +263,13 @@ function App() {
       if (data.error) {
         throw new Error(data.error);
       }
+
       setCaption(data.caption);
+
+      // Store the captionId for feedback if it's provided
+      if (data.captionId) {
+        setCaptionId(data.captionId);
+      }
 
       // If recommendations are included in response, update them
       if (data.recommendations) {
@@ -345,6 +358,16 @@ function App() {
         {caption && (
             <>
               <GeneratedCaption caption={caption} />
+
+              {/* Add the CaptionFeedback component */}
+              {captionId && (
+                  <CaptionFeedback
+                      caption={caption}
+                      captionId={captionId}
+                      onCaptionEdit={handleCaptionEdit}
+                  />
+              )}
+
               <button
                   onClick={handleSubmit}
                   className="mt-4 w-full py-2 px-4 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center"
