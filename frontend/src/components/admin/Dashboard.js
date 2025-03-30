@@ -1,8 +1,7 @@
-// src/components/admin/Dashboard.js
 import React, { useState, useEffect } from 'react';
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-    BarChart, Bar, Cell, PieChart, Pie
+    BarChart, Bar
 } from 'recharts';
 
 const AdminDashboard = () => {
@@ -39,11 +38,12 @@ const AdminDashboard = () => {
         setLoading(true);
         try {
             // Fetch stats
-            const statsResponse = await fetch('/api/admin/stats', {
+            const statsResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/stats`, {
                 headers: {
                     'Authorization': `Bearer ${apiKey}`
                 }
             });
+            console.log("stats response is coming as:  ", statsResponse);
 
             if (!statsResponse.ok) {
                 throw new Error('Failed to fetch statistics');
@@ -53,7 +53,7 @@ const AdminDashboard = () => {
             setStats(statsData);
 
             // Fetch fine-tuning jobs
-            const jobsResponse = await fetch('/api/admin/fine-tuning-jobs', {
+            const jobsResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/fine-tuning-jobs`, {
                 headers: {
                     'Authorization': `Bearer ${apiKey}`
                 }
@@ -79,7 +79,7 @@ const AdminDashboard = () => {
         setSuccess('');
 
         try {
-            const response = await fetch('/api/admin/generate-training-data', {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/generate-training-data`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -113,7 +113,7 @@ const AdminDashboard = () => {
         setSuccess('');
 
         try {
-            const response = await fetch('/api/admin/finetune-model', {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/finetune-model`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -145,7 +145,7 @@ const AdminDashboard = () => {
 
     const checkJobStatus = async (jobId) => {
         try {
-            const response = await fetch(`/api/admin/finetune-status/${jobId}`, {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/finetune-status/${jobId}`, {
                 headers: {
                     'Authorization': `Bearer ${apiKey}`
                 }

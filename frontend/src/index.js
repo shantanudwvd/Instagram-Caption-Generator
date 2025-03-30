@@ -1,12 +1,19 @@
-// 10. Update src/index.js:
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './index.css';
 import App from './App';
+import AdminDashboard from './components/admin/Dashboard';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
     <React.StrictMode>
-        <App />
+        <BrowserRouter>
+            <Routes>
+                <Route path="/" element={<App />} />
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/dashboard" element={<AdminDashboard />} />
+            </Routes>
+        </BrowserRouter>
     </React.StrictMode>
 );
