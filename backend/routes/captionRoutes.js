@@ -1,4 +1,3 @@
-// routes/captionRoutes.js
 const express = require('express');
 const router = express.Router();
 const OpenAI = require('openai');
