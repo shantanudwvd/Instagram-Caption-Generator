@@ -5,15 +5,21 @@ const SongRecommendations = ({ recommendations, onTrackSelect, loading }) => {
     if (loading) {
         return (
             <div className="space-y-4">
-                <h2 className="text-xl font-semibold">Song Recommendations</h2>
-                <div className="animate-pulse space-y-3">
+                <div className="flex items-center gap-2 text-slate-700">
+                    <Music className="h-5 w-5 text-blue-500" />
+                    <h2 className="text-lg font-semibold">Curating soundscapes…</h2>
+                </div>
+                <div className="space-y-3">
                     {[...Array(3)].map((_, index) => (
-                        <div key={index} className="border rounded-lg p-4 flex items-center space-x-4">
-                            <div className="bg-gray-200 w-16 h-16 rounded"></div>
+                        <div
+                            key={index}
+                            className="animate-pulse bg-white/70 border border-slate-100 rounded-2xl p-4 flex items-center gap-4"
+                        >
+                            <div className="bg-slate-200 w-16 h-16 rounded-xl" />
                             <div className="space-y-2 flex-1">
-                                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                                <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                                <div className="h-4 bg-slate-200 rounded w-3/4" />
+                                <div className="h-3 bg-slate-200 rounded w-1/2" />
+                                <div className="h-3 bg-slate-200 rounded w-1/3" />
                             </div>
                         </div>
                     ))}
@@ -28,34 +34,35 @@ const SongRecommendations = ({ recommendations, onTrackSelect, loading }) => {
 
     return (
         <div className="space-y-4">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-                <Music className="h-5 w-5" />
-                Similar Songs You Might Like
-            </h2>
+            <div className="flex items-center gap-2 text-slate-700">
+                <Music className="h-5 w-5 text-blue-500" />
+                <h2 className="text-lg font-semibold">Similar songs you might love</h2>
+            </div>
             <div className="space-y-3">
                 {recommendations.map((track) => (
-                    <div
+                    <button
+                        type="button"
                         key={track.id}
                         onClick={() => onTrackSelect(track)}
-                        className="border rounded-lg p-4 flex items-center space-x-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                        className="w-full border border-slate-100 rounded-2xl p-4 flex items-center gap-4 cursor-pointer hover:border-blue-200 hover:bg-blue-50/40 transition"
                     >
                         {track.albumArt ? (
                             <img
                                 src={track.albumArt}
                                 alt={track.album}
-                                className="w-16 h-16 rounded object-cover"
+                                className="w-16 h-16 rounded-2xl object-cover"
                             />
                         ) : (
-                            <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
-                                <Music className="text-gray-400" />
+                            <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center">
+                                <Music className="text-slate-400" />
                             </div>
                         )}
-                        <div>
-                            <p className="font-medium">{track.name}</p>
-                            <p className="text-gray-600">{track.artist}</p>
-                            <p className="text-sm text-gray-500">{track.album}</p>
+                        <div className="text-left">
+                            <p className="font-semibold text-slate-900">{track.name}</p>
+                            <p className="text-sm text-slate-500">{track.artist}</p>
+                            <p className="text-xs text-slate-400 uppercase tracking-wide">{track.album}</p>
                         </div>
-                    </div>
+                    </button>
                 ))}
             </div>
         </div>

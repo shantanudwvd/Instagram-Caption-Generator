@@ -751,6 +751,47 @@ class CaptionLearningService {
     }
 
     /**
+     * Get recent captions for dashboard activity feed
+     *
+     * @param {number} limit - Maximum number of captions to return
+     * @returns {Promise<Array>} Recent caption summaries
+     */
+    async getRecentCaptions(limit = 5) {
+        try {
+            await this._initializeConnection();
+            const db = this.getDb();
+            const captionColl = db.collection(this.captionCollection);
+
+            const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 5, 1), 50);
+
+            const captions = await captionColl.find({ status: 'active' })
+                .sort({ createdAt: -1 })
+                .limit(safeLimit)
+                .project({
+                    caption: 1,
+                    createdAt: 1,
+                    avgRating: 1,
+                    feedbackCount: 1,
+                    options: 1
+                })
+                .toArray();
+
+            return captions.map(caption => ({
+                id: caption._id.toString(),
+                caption: caption.caption,
+                createdAt: caption.createdAt,
+                avgRating: caption.avgRating || 0,
+                feedbackCount: caption.feedbackCount || 0,
+                tone: caption?.options?.tone || null,
+                length: caption?.options?.length || null
+            }));
+        } catch (error) {
+            logger.error('Error fetching recent captions:', error);
+            throw new Error('Failed to fetch recent captions');
+        }
+    }
+
+    /**
      * Helper method to format the prompt for fine-tuning
      * @private
      */
@@ -812,4 +853,3 @@ ${item.context.userContext ? `ADDITIONAL CONTEXT: ${item.context.userContext}` :
 }
 
 module.exports = CaptionLearningService;
-

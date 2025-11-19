@@ -3,6 +3,9 @@ const router = express.Router();
 const crypto = require('crypto');
 const CaptionLearningService = require('../services/captionLearningService');
 const captionLearningService = new CaptionLearningService();
+const authMiddleware = require('../middleware/auth');
+
+router.use(authMiddleware);
 
 // Submit feedback for a caption
 router.post('/caption-feedback/:captionId', async (req, res) => {
@@ -19,6 +22,7 @@ router.post('/caption-feedback/:captionId', async (req, res) => {
             rating,
             comments,
             userEdits,
+            userId: req.user?.id || null,
             userAgent: req.headers['user-agent'],
             ipHash: hashIP(req.ip) // Anonymize IP
         };

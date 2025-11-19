@@ -1,8 +1,10 @@
 // src/components/CaptionFeedback.js
 import React, { useState } from 'react';
-import { Star, Edit, CheckCircle, XCircle } from 'lucide-react';
+import { Star, Edit, CheckCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const CaptionFeedback = ({ caption, captionId, onCaptionEdit }) => {
+    const { token } = useAuth();
     const [rating, setRating] = useState(0);
     const [feedback, setFeedback] = useState('');
     const [editMode, setEditMode] = useState(false);
@@ -44,6 +46,7 @@ const CaptionFeedback = ({ caption, captionId, onCaptionEdit }) => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
                     rating,

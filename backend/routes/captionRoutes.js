@@ -6,7 +6,7 @@ const multer = require('multer');
 const fs = require('fs');
 const CaptionLearningService = require('../services/captionLearningService');
 const captionLearningService = new CaptionLearningService();
-// Add this after the existing imports
+const authMiddleware = require('../middleware/auth');
 const SongRecommendationService = require('../services/songRecommendationService');
 
 // Initialize OpenAI
@@ -61,6 +61,9 @@ setInterval(refreshSpotifyToken, 50 * 60 * 1000);
 
 // Configure multer for file uploads
 const upload = multer({ dest: 'uploads/' });
+
+// Require authentication for all caption routes
+router.use(authMiddleware);
 
 // Generate caption endpoint
 router.post('/generate-caption', upload.fields([
