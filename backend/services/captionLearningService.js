@@ -181,7 +181,10 @@ class CaptionLearningService {
             const sanitizedData = {
                 caption: this._sanitizeText(captionData.caption),
                 imageAnalysis: this._sanitizeText(captionData.imageAnalysis || ''),
+                imageFeatures: this._sanitizeObject(captionData.imageFeatures || null),
                 songAnalysis: this._sanitizeObject(captionData.songAnalysis || {}),
+                songFeatures: this._sanitizeObject(captionData.songFeatures || null),
+                relationshipAnalysis: this._sanitizeObject(captionData.relationshipAnalysis || null),
                 userContext: this._sanitizeText(captionData.userContext || ''),
                 options: this._sanitizeObject(captionData.options || {}),
                 createdAt: new Date(),
@@ -346,7 +349,10 @@ class CaptionLearningService {
                 trainingData.push({
                     context: {
                         imageAnalysis: caption.imageAnalysis,
+                        imageFeatures: caption.imageFeatures || null,
                         songAnalysis: caption.songAnalysis,
+                        songFeatures: caption.songFeatures || null,
+                        relationshipAnalysis: caption.relationshipAnalysis || null,
                         userContext: caption.userContext,
                         options: caption.options
                     },
@@ -796,15 +802,51 @@ class CaptionLearningService {
      * @private
      */
     _formatPrompt(item) {
+        const imageFeaturesSection = item.context.imageFeatures
+            ? `
+IMAGE FEATURES:
+- Mood: ${item.context.imageFeatures.mood}
+- Energy: ${item.context.imageFeatures.energy}
+- Colors: ${item.context.imageFeatures.colors?.join(', ') || 'various'}
+- Themes: ${item.context.imageFeatures.themes?.join(', ') || 'general'}
+- Setting: ${item.context.imageFeatures.setting}
+- Time of Day: ${item.context.imageFeatures.timeOfDay}
+`
+            : '';
+
+        const songFeaturesSection = item.context.songFeatures
+            ? `
+SONG FEATURES:
+- Mood: ${item.context.songFeatures.mood}
+- Energy: ${item.context.songFeatures.energy}
+- Tempo: ${item.context.songFeatures.tempo}
+- Genre: ${item.context.songFeatures.genre}
+- Vibe: ${item.context.songFeatures.vibe}
+`
+            : '';
+
+        const relationshipSection = item.context.relationshipAnalysis
+            ? `
+IMAGE-SONG RELATIONSHIP:
+- Compatibility: ${item.context.relationshipAnalysis.compatibility}
+- Thematic Connections: ${item.context.relationshipAnalysis.thematicConnections?.join(', ') || 'Various'}
+- Emotional Resonance: ${item.context.relationshipAnalysis.emotionalResonance || 'Cohesive emotional experience'}
+- Integration Suggestions: ${item.context.relationshipAnalysis.integrationSuggestions?.join('; ') || 'Weave elements naturally together'}
+`
+            : '';
+
         return `
 Create a caption for my Instagram post with this image and song.
 
 IMAGE ANALYSIS:
 ${item.context.imageAnalysis}
+${imageFeaturesSection}
 
 SONG:
-"${item.context.songAnalysis.name}" by ${item.context.songAnalysis.artist}
-${item.context.songAnalysis.description || ''}
+"${item.context.songAnalysis?.name || 'Unknown'}" by ${item.context.songAnalysis?.artist || 'Unknown Artist'}
+${item.context.songAnalysis?.description || ''}
+${songFeaturesSection}
+${relationshipSection}
 
 CAPTION STYLE:
 - Tone: ${item.context.options?.tone || 'casual'}

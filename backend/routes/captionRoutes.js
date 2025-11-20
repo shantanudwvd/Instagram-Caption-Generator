@@ -120,10 +120,15 @@ router.post('/generate-caption', upload.fields([
             }
         }
 
-        // Analyze image using GPT-4 Vision
+        // Analyze image using GPT-4 Vision (returns object with text and features)
         const imageBase64 = fs.readFileSync(imageFile.path, { encoding: 'base64' });
-        const imageAnalysis = await analyzeImage(imageBase64);
-        logger.debug('Image analysis complete', { userId: req.user?.id });
+        const imageAnalysisResult = await analyzeImage(imageBase64);
+        const imageAnalysisText = imageAnalysisResult.text || imageAnalysisResult;
+        const imageFeatures = imageAnalysisResult.features || null;
+        logger.debug('Image analysis complete', { 
+            userId: req.user?.id,
+            hasFeatures: !!imageFeatures 
+        });
 
         // Setup customization options
         const customization = {
@@ -138,10 +143,38 @@ router.post('/generate-caption', upload.fields([
 
         // Get song details and analysis if trackId is provided
         let songAnalysis = null;
+        let songFeatures = null;
+        let relationshipAnalysis = null;
+        
         if (trackId) {
             try {
                 songAnalysis = await analyzeSong(trackId);
-                logger.debug('Song analysis complete', { trackId, userId: req.user?.id });
+                songFeatures = songAnalysis.features || null;
+                logger.debug('Song analysis complete', { 
+                    trackId, 
+                    userId: req.user?.id,
+                    hasSpotifyFeatures: !!songAnalysis.spotifyAudioFeatures 
+                });
+
+                // Analyze relationship between image and song if both are available
+                if (imageFeatures && songFeatures) {
+                    try {
+                        relationshipAnalysis = await analyzeImageSongRelationship(
+                            imageFeatures,
+                            songFeatures,
+                            imageAnalysisText,
+                            songAnalysis
+                        );
+                        logger.debug('Relationship analysis complete', { userId: req.user?.id });
+                    } catch (relationshipError) {
+                        logger.error('Error analyzing image-song relationship', { 
+                            error: relationshipError.message, 
+                            stack: relationshipError.stack,
+                            userId: req.user?.id 
+                        });
+                        // Continue without relationship analysis if it fails
+                    }
+                }
             } catch (songError) {
                 logger.error('Error analyzing song', { 
                     error: songError.message, 
@@ -153,8 +186,16 @@ router.post('/generate-caption', upload.fields([
             }
         }
 
-        // Generate caption
-        const caption = await generateCaption(imageAnalysis, songAnalysis, userContext, customization);
+        // Generate caption with all available data
+        const caption = await generateCaption(
+            imageAnalysisText,
+            imageFeatures,
+            songAnalysis,
+            songFeatures,
+            relationshipAnalysis,
+            userContext,
+            customization
+        );
         logger.info('Caption generated successfully', { userId: req.user?.id });
 
         // Store the caption for learning
@@ -162,8 +203,11 @@ router.post('/generate-caption', upload.fields([
         try {
             captionId = await captionLearningService.storeCaption({
                 caption,
-                imageAnalysis,
+                imageAnalysis: imageAnalysisText,
+                imageFeatures,
                 songAnalysis,
+                songFeatures,
+                relationshipAnalysis,
                 userContext,
                 options: customization
             });
@@ -258,9 +302,12 @@ router.post('/analyze-image', upload.single('image'), async (req, res) => {
             userId: req.user?.id 
         });
 
-        // Analyze image using GPT-4 Vision
+        // Analyze image using GPT-4 Vision (returns object with text and features)
         const imageBase64 = fs.readFileSync(imageFile.path, {encoding: 'base64'});
-        const imageAnalysis = await analyzeImage(imageBase64);
+        const imageAnalysisResult = await analyzeImage(imageBase64);
+        const imageAnalysis = typeof imageAnalysisResult === 'string' 
+            ? imageAnalysisResult 
+            : imageAnalysisResult.text;
 
         logger.debug('Image analysis complete', { userId: req.user?.id });
 
@@ -358,6 +405,136 @@ router.post('/get-recommendations', async (req, res) => {
 // analyzeImage, and transcribeAudio functions accessible.
 // These should be imported or defined in this file.
 /**
+ * Extract structured features from image analysis text
+ *
+ * @param {string} imageAnalysisText - AI-generated image analysis text
+ * @returns {Object} Extracted image features
+ */
+function extractImageFeatures(imageAnalysisText) {
+    const features = {
+        mood: 'neutral',
+        energy: 0.5,
+        colors: [],
+        themes: [],
+        setting: 'general',
+        timeOfDay: 'unknown',
+        dominantElements: []
+    };
+
+    const text = imageAnalysisText.toLowerCase();
+
+    // Extract mood
+    if (text.includes('happy') || text.includes('joyful') || text.includes('cheerful') || 
+        text.includes('bright') || text.includes('uplifting') || text.includes('positive')) {
+        features.mood = 'positive';
+    } else if (text.includes('sad') || text.includes('melancholic') || text.includes('somber') ||
+               text.includes('gloomy') || text.includes('moody') || text.includes('dark')) {
+        features.mood = 'melancholic';
+    } else if (text.includes('peaceful') || text.includes('calm') || text.includes('serene') ||
+               text.includes('tranquil') || text.includes('relaxed')) {
+        features.mood = 'peaceful';
+    } else if (text.includes('energetic') || text.includes('vibrant') || text.includes('dynamic') ||
+               text.includes('intense') || text.includes('dramatic')) {
+        features.mood = 'energetic';
+    } else if (text.includes('romantic') || text.includes('intimate') || text.includes('tender')) {
+        features.mood = 'romantic';
+    }
+
+    // Extract energy level
+    if (text.includes('high energy') || text.includes('energetic') || text.includes('vibrant') ||
+        text.includes('dynamic') || text.includes('intense') || text.includes('action')) {
+        features.energy = 0.8;
+    } else if (text.includes('low energy') || text.includes('calm') || text.includes('peaceful') ||
+               text.includes('serene') || text.includes('relaxed') || text.includes('still')) {
+        features.energy = 0.3;
+    } else if (text.includes('moderate') || text.includes('balanced')) {
+        features.energy = 0.5;
+    }
+
+    // Extract colors
+    const colorKeywords = {
+        'blue': ['blue', 'azure', 'navy', 'cyan', 'sky'],
+        'green': ['green', 'emerald', 'lime', 'forest', 'mint'],
+        'red': ['red', 'crimson', 'scarlet', 'burgundy', 'rose'],
+        'yellow': ['yellow', 'gold', 'amber', 'sunshine', 'golden'],
+        'orange': ['orange', 'coral', 'peach', 'sunset'],
+        'purple': ['purple', 'violet', 'lavender', 'plum'],
+        'pink': ['pink', 'rose', 'blush', 'magenta'],
+        'brown': ['brown', 'tan', 'beige', 'coffee', 'earth'],
+        'black': ['black', 'dark', 'shadow', 'charcoal'],
+        'white': ['white', 'bright', 'light', 'pale', 'snow'],
+        'gray': ['gray', 'grey', 'silver', 'ash', 'slate']
+    };
+
+    for (const [color, keywords] of Object.entries(colorKeywords)) {
+        if (keywords.some(keyword => text.includes(keyword))) {
+            if (!features.colors.includes(color)) {
+                features.colors.push(color);
+            }
+        }
+    }
+
+    // Extract themes
+    const themeKeywords = {
+        'nature': ['nature', 'outdoor', 'landscape', 'forest', 'mountain', 'beach', 'ocean', 'tree', 'flower', 'sunset', 'sunrise'],
+        'urban': ['city', 'urban', 'street', 'building', 'architecture', 'skyline', 'downtown'],
+        'portrait': ['person', 'face', 'portrait', 'people', 'human', 'portrait'],
+        'food': ['food', 'meal', 'dish', 'restaurant', 'cooking', 'cuisine'],
+        'travel': ['travel', 'vacation', 'trip', 'journey', 'adventure', 'explore'],
+        'lifestyle': ['lifestyle', 'daily', 'routine', 'home', 'interior', 'cozy'],
+        'abstract': ['abstract', 'artistic', 'creative', 'pattern', 'design'],
+        'sports': ['sport', 'athletic', 'fitness', 'exercise', 'game'],
+        'nightlife': ['night', 'party', 'club', 'evening', 'nightlife', 'dusk'],
+        'minimalist': ['minimal', 'simple', 'clean', 'minimalist', 'minimalistic']
+    };
+
+    for (const [theme, keywords] of Object.entries(themeKeywords)) {
+        if (keywords.some(keyword => text.includes(keyword))) {
+            if (!features.themes.includes(theme)) {
+                features.themes.push(theme);
+            }
+        }
+    }
+
+    // Extract setting
+    if (text.includes('beach') || text.includes('ocean') || text.includes('coast') || text.includes('shore')) {
+        features.setting = 'beach';
+    } else if (text.includes('mountain') || text.includes('hill') || text.includes('peak')) {
+        features.setting = 'mountain';
+    } else if (text.includes('forest') || text.includes('wood') || text.includes('tree')) {
+        features.setting = 'forest';
+    } else if (text.includes('city') || text.includes('urban') || text.includes('street')) {
+        features.setting = 'urban';
+    } else if (text.includes('home') || text.includes('indoor') || text.includes('room')) {
+        features.setting = 'indoor';
+    } else if (text.includes('cafe') || text.includes('restaurant') || text.includes('bar')) {
+        features.setting = 'venue';
+    }
+
+    // Extract time of day
+    if (text.includes('sunrise') || text.includes('dawn') || text.includes('morning') || text.includes('early')) {
+        features.timeOfDay = 'morning';
+    } else if (text.includes('sunset') || text.includes('dusk') || text.includes('evening') || text.includes('golden hour')) {
+        features.timeOfDay = 'evening';
+    } else if (text.includes('night') || text.includes('dark') || text.includes('midnight') || text.includes('late')) {
+        features.timeOfDay = 'night';
+    } else if (text.includes('afternoon') || text.includes('midday') || text.includes('noon')) {
+        features.timeOfDay = 'afternoon';
+    }
+
+    // Extract dominant elements (first 3-4 key elements mentioned)
+    const elementKeywords = ['light', 'shadow', 'color', 'texture', 'composition', 'angle', 'perspective', 
+                             'subject', 'background', 'foreground', 'detail', 'pattern', 'reflection'];
+    for (const keyword of elementKeywords) {
+        if (text.includes(keyword) && features.dominantElements.length < 4) {
+            features.dominantElements.push(keyword);
+        }
+    }
+
+    return features;
+}
+
+/**
  * Extract numerical and categorical features from the AI-generated description
  *
  * @param {string} description - AI-generated song description
@@ -442,6 +619,83 @@ function extractFeaturesFromDescription(description) {
 
 
 /**
+ * Extract structured features from song using GPT-4
+ * This is used as a fallback when Spotify audio features aren't available
+ *
+ * @param {Object} songData - Basic song metadata
+ * @param {string} description - Song description from GPT-4
+ * @returns {Promise<Object>} Structured song features
+ */
+async function extractSongFeaturesWithGPT(songData, description) {
+    try {
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                {
+                    role: "system",
+                    content: "You are a music analysis expert. Extract structured features from song descriptions and metadata."
+                },
+                {
+                    role: "user",
+                    content: `
+Based on this song information, extract structured features:
+
+Song: "${songData.name}"
+Artist: ${songData.artist}
+Album: ${songData.album}
+Release Date: ${songData.releaseDate || 'Unknown'}
+Popularity: ${songData.popularity || 'Unknown'}/100
+
+Song Description:
+${description}
+
+Extract and return a JSON object with these exact fields:
+{
+    "energy": 0.0-1.0 (numeric value representing energy level),
+    "mood": "positive" | "neutral" | "melancholic" | "intense" | "romantic" | "peaceful",
+    "tempo": "slow" | "moderate" | "fast",
+    "genre": "pop" | "rock" | "hip hop" | "r&b" | "jazz" | "electronic" | "country" | "indie" | "alternative" | "classical" | etc.,
+    "vibe": "chill" | "relaxing" | "party" | "romantic" | "dreamy" | "nostalgic" | "energetic" | "dark" | "atmospheric" | "emotional" | "danceable" | "acoustic" | "general"
+}
+
+Base your extraction on the description, song title, artist, genre, release date, and popularity. Be specific and accurate.
+`
+                }
+            ],
+            max_tokens: 200,
+            temperature: 0.3,
+            response_format: { type: "json_object" }
+        });
+
+        const extractedFeatures = JSON.parse(response.choices[0].message.content);
+        
+        // Validate and normalize the extracted features
+        const features = {
+            energy: Math.max(0, Math.min(1, extractedFeatures.energy || 0.5)),
+            mood: extractedFeatures.mood || 'neutral',
+            tempo: extractedFeatures.tempo || 'moderate',
+            genre: extractedFeatures.genre || 'pop',
+            vibe: extractedFeatures.vibe || 'general'
+        };
+
+        logger.debug('Extracted song features using GPT-4', { 
+            trackId: songData.id,
+            features 
+        });
+
+        return features;
+    } catch (error) {
+        logger.error('Error extracting song features with GPT-4', { 
+            error: error.message, 
+            stack: error.stack,
+            songName: songData.name 
+        });
+        // Fall back to keyword-based extraction
+        return extractFeaturesFromDescription(description);
+    }
+}
+
+/**
  * Generate song analysis using OpenAI
  *
  * @param {Object} songData - Basic song metadata
@@ -499,8 +753,8 @@ Keep your response under 150 words, focusing on the most distinctive elements of
 }
 
 
-// Update the generateCaption function in server.js to incorporate user context and customization options
-async function generateCaption(imageAnalysis, songAnalysis, userContext = '', customization = {}) {
+// Update the generateCaption function to incorporate structured features and relationship analysis
+async function generateCaption(imageAnalysis, imageFeatures, songAnalysis, songFeatures, relationshipAnalysis, userContext = '', customization = {}) {
     // Set default values if customization options are not provided
     const options = {
         tone: customization.tone || 'casual',
@@ -601,6 +855,19 @@ ${userContext}
 `
         : '';
 
+    // Prepare image features section
+    const imageFeaturesSection = imageFeatures
+        ? `
+IMAGE FEATURES:
+- Mood: ${imageFeatures.mood}
+- Energy Level: ${imageFeatures.energy}
+- Dominant Colors: ${imageFeatures.colors.join(', ') || 'various'}
+- Themes: ${imageFeatures.themes.join(', ') || 'general'}
+- Setting: ${imageFeatures.setting}
+- Time of Day: ${imageFeatures.timeOfDay}
+`
+        : '';
+
     // Prepare song information - only include if song is provided
     const songSection = songAnalysis
         ? `
@@ -608,6 +875,32 @@ THE SONG I'M FEATURING:
 "${songAnalysis.name}" by ${songAnalysis.artist}
 From: ${songAnalysis.album}
 Vibe: ${songAnalysis.description}
+`
+        : '';
+
+    // Prepare song features section - only include if song is provided
+    const songFeaturesSection = songAnalysis && songFeatures
+        ? `
+SONG FEATURES:
+- Mood: ${songFeatures.mood}
+- Energy Level: ${songFeatures.energy}
+- Tempo: ${songFeatures.tempo}
+- Genre: ${songFeatures.genre}
+- Vibe: ${songFeatures.vibe}
+`
+        : '';
+
+    // Prepare relationship analysis section - only include if song is provided
+    const relationshipSection = relationshipAnalysis && songAnalysis
+        ? `
+IMAGE-SONG RELATIONSHIP ANALYSIS:
+- Compatibility: ${relationshipAnalysis.compatibility}
+- Thematic Connections: ${relationshipAnalysis.thematicConnections?.join(', ') || 'Various connections'}
+- Emotional Resonance: ${relationshipAnalysis.emotionalResonance || 'The image and song create a cohesive emotional experience'}
+- Contrast Opportunities: ${relationshipAnalysis.contrastOpportunities || 'Consider exploring subtle contrasts'}
+- Integration Suggestions: ${relationshipAnalysis.integrationSuggestions?.join('; ') || 'Weave image and song elements naturally together'}
+
+IMPORTANT: Use these relationship insights to create a caption that naturally integrates both the image and song. Don't just mention them separately - find authentic connections and weave them together organically.
 `
         : '';
 
@@ -638,9 +931,12 @@ Vibe: ${songAnalysis.description}
 I need a natural-sounding Instagram caption for a post. I want it to feel authentic and human, not AI-generated.
 
 THE IMAGE SHOWS:
-${imageAnalysis}
+${typeof imageAnalysis === 'string' ? imageAnalysis : imageAnalysis.text}
+${imageFeaturesSection}
 ${userContextSection}
 ${songSection}
+${songFeaturesSection}
+${relationshipSection}
 CAPTION STYLE:
 - Tone: ${toneParams.description}
 - Length: ${lengthParams.description} (around ${lengthParams.maxWords} words max)
@@ -752,7 +1048,16 @@ async function analyzeImage(base64Image) {
         });
 
         logger.debug('Received OpenAI response');
-        return response.choices[0].message.content;
+        const imageAnalysisText = response.choices[0].message.content;
+        
+        // Extract structured features from the analysis text
+        const imageFeatures = extractImageFeatures(imageAnalysisText);
+        logger.debug('Image features extracted', { imageFeatures });
+
+        return {
+            text: imageAnalysisText,
+            features: imageFeatures
+        };
     } catch (error) {
         logger.error('Error in image analysis API call', { 
             error: error.message, 
@@ -768,7 +1073,11 @@ async function analyzeImage(base64Image) {
         // Provide a fallback analysis when in production
         if (process.env.NODE_ENV === 'production') {
             logger.warn('Using fallback analysis due to error');
-            return "This image has a really interesting vibe to it. There's something about the lighting and composition that gives it a unique feel. It's the kind of scene that would go perfectly with the right soundtrack.";
+            const fallbackText = "This image has a really interesting vibe to it. There's something about the lighting and composition that gives it a unique feel. It's the kind of scene that would go perfectly with the right soundtrack.";
+            return {
+                text: fallbackText,
+                features: extractImageFeatures(fallbackText)
+            };
         }
 
         throw error;
@@ -777,7 +1086,148 @@ async function analyzeImage(base64Image) {
 
 
 /**
- * Improved song analysis function that uses OpenAI instead of deprecated Spotify APIs
+ * Analyze the relationship between image and song features
+ * Uses GPT-4 to find thematic connections, compatibility, and integration opportunities
+ *
+ * @param {Object} imageFeatures - Structured image features
+ * @param {Object} songFeatures - Structured song features
+ * @param {string} imageAnalysisText - Image analysis text description
+ * @param {Object} songAnalysis - Full song analysis object
+ * @returns {Promise<Object>} Relationship analysis
+ */
+async function analyzeImageSongRelationship(imageFeatures, songFeatures, imageAnalysisText, songAnalysis) {
+    try {
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                {
+                    role: "system",
+                    content: "You are an expert at analyzing the relationship between visual and musical elements. You identify thematic connections, emotional resonance, compatibility, and creative integration opportunities between images and songs."
+                },
+                {
+                    role: "user",
+                    content: `
+Analyze the relationship between this image and song. Find connections, compatibility, and integration opportunities.
+
+IMAGE FEATURES:
+- Mood: ${imageFeatures.mood}
+- Energy: ${imageFeatures.energy}
+- Colors: ${imageFeatures.colors.join(', ') || 'various'}
+- Themes: ${imageFeatures.themes.join(', ') || 'general'}
+- Setting: ${imageFeatures.setting}
+- Time of Day: ${imageFeatures.timeOfDay}
+
+IMAGE DESCRIPTION:
+${imageAnalysisText}
+
+SONG FEATURES:
+- Mood: ${songFeatures.mood}
+- Energy: ${songFeatures.energy}
+- Tempo: ${songFeatures.tempo}
+- Genre: ${songFeatures.genre}
+- Vibe: ${songFeatures.vibe}
+
+SONG: "${songAnalysis.name}" by ${songAnalysis.artist}
+SONG DESCRIPTION: ${songAnalysis.description}
+
+Please provide a JSON object with the following structure:
+{
+    "compatibility": "high|moderate|low" - How well the image and song match
+    "thematicConnections": ["connection1", "connection2"] - Specific thematic links between image and song
+    "emotionalResonance": "description of how image and song emotions align or complement"
+    "contrastOpportunities": "description of interesting contrasts that could create dynamic captions"
+    "integrationSuggestions": ["suggestion1", "suggestion2"] - Specific ways to weave image and song together in a caption
+}
+
+Focus on finding authentic, natural connections that would make sense in an Instagram caption. Consider both complementary matches and interesting contrasts.
+`
+                }
+            ],
+            max_tokens: 500,
+            temperature: 0.7,
+            response_format: { type: "json_object" }
+        });
+
+        const relationshipAnalysis = JSON.parse(response.choices[0].message.content);
+        logger.debug('Image-song relationship analyzed', { relationshipAnalysis });
+
+        return relationshipAnalysis;
+    } catch (error) {
+        logger.error('Error analyzing image-song relationship', { 
+            error: error.message, 
+            stack: error.stack 
+        });
+
+        // Return fallback relationship analysis
+        return {
+            compatibility: 'moderate',
+            thematicConnections: ['Both elements share a similar mood and energy'],
+            emotionalResonance: 'The image and song create a cohesive emotional experience',
+            contrastOpportunities: 'Consider exploring subtle contrasts between visual and auditory elements',
+            integrationSuggestions: ['Reference both the visual scene and the song naturally in the caption']
+        };
+    }
+}
+
+/**
+ * Map Spotify audio features to our feature schema
+ *
+ * @param {Object} audioFeatures - Spotify audio features object
+ * @returns {Object} Mapped features
+ */
+function mapSpotifyFeaturesToSchema(audioFeatures) {
+    const features = {
+        energy: audioFeatures.energy || 0.5,
+        mood: 'neutral',
+        tempo: 'moderate',
+        genre: 'pop',
+        vibe: 'general'
+    };
+
+    // Map valence (0-1) to mood
+    // Valence represents musical positiveness (0 = sad, 1 = happy)
+    if (audioFeatures.valence !== undefined) {
+        if (audioFeatures.valence >= 0.7) {
+            features.mood = 'positive';
+        } else if (audioFeatures.valence >= 0.4) {
+            features.mood = 'neutral';
+        } else {
+            features.mood = 'melancholic';
+        }
+    }
+
+    // Map tempo (BPM) to tempo category
+    if (audioFeatures.tempo !== undefined) {
+        if (audioFeatures.tempo >= 120) {
+            features.tempo = 'fast';
+        } else if (audioFeatures.tempo >= 90) {
+            features.tempo = 'moderate';
+        } else {
+            features.tempo = 'slow';
+        }
+    }
+
+    // Map danceability to vibe
+    if (audioFeatures.danceability !== undefined) {
+        if (audioFeatures.danceability >= 0.7) {
+            features.vibe = 'danceable';
+        } else if (audioFeatures.danceability >= 0.4) {
+            features.vibe = 'general';
+        } else {
+            features.vibe = 'chill';
+        }
+    }
+
+    // Use acousticness to refine vibe
+    if (audioFeatures.acousticness !== undefined && audioFeatures.acousticness >= 0.7) {
+        features.vibe = 'acoustic';
+    }
+
+    return features;
+}
+
+/**
+ * Improved song analysis function that uses OpenAI and Spotify Audio Features API
  * for analyzing song features and characteristics
  *
  * @param {string} trackId - Spotify track ID
@@ -807,7 +1257,7 @@ async function analyzeSong(trackId) {
             popularity: trackInfo.popularity,
             previewUrl: trackInfo.preview_url,
             albumArt: trackInfo.album.images[0]?.url || null,
-            // Initialize with empty values that will be filled by OpenAI
+            // Initialize with empty values that will be filled
             description: '',
             features: {
                 energy: 0.5,
@@ -815,8 +1265,77 @@ async function analyzeSong(trackId) {
                 tempo: 'moderate',
                 genre: 'pop',
                 vibe: 'general'
-            }
+            },
+            spotifyAudioFeatures: null
         };
+
+        // Fetch Spotify audio features
+        let spotifyAudioFeatures = null;
+        try {
+            // Validate trackId
+            if (!trackId || typeof trackId !== 'string' || trackId.trim().length === 0) {
+                throw new Error(`Invalid trackId: ${trackId}`);
+            }
+
+            // Ensure token is still valid before making the call
+            await ensureSpotifyToken();
+            
+            // Check if the method exists
+            if (typeof spotifyApi.getAudioFeaturesForTrack !== 'function') {
+                throw new Error('getAudioFeaturesForTrack method not available on spotifyApi');
+            }
+            
+            logger.debug('Fetching Spotify audio features', { 
+                trackId,
+                hasAccessToken: !!spotifyApi.getAccessToken(),
+                accessTokenPreview: spotifyApi.getAccessToken() ? spotifyApi.getAccessToken().substring(0, 10) + '...' : 'none'
+            });
+            
+            const audioFeaturesResponse = await spotifyApi.getAudioFeaturesForTrack(trackId);
+            
+            if (audioFeaturesResponse && audioFeaturesResponse.body) {
+                spotifyAudioFeatures = audioFeaturesResponse.body;
+                logger.debug('Spotify audio features fetched successfully', { 
+                    trackId,
+                    energy: spotifyAudioFeatures.energy,
+                    valence: spotifyAudioFeatures.valence,
+                    tempo: spotifyAudioFeatures.tempo,
+                    danceability: spotifyAudioFeatures.danceability
+                });
+            } else {
+                logger.warn('Spotify audio features response missing body', { 
+                    trackId,
+                    response: audioFeaturesResponse 
+                });
+            }
+        } catch (audioFeaturesError) {
+            // Enhanced error logging for debugging
+            const errorDetails = {
+                trackId,
+                errorMessage: audioFeaturesError.message,
+                errorName: audioFeaturesError.name,
+                errorStack: audioFeaturesError.stack
+            };
+
+            // Check if Spotify API provides additional error details
+            if (audioFeaturesError.body) {
+                errorDetails.spotifyErrorBody = audioFeaturesError.body;
+            }
+            if (audioFeaturesError.statusCode) {
+                errorDetails.statusCode = audioFeaturesError.statusCode;
+            }
+            if (audioFeaturesError.statusCode === 404) {
+                errorDetails.diagnosis = 'Track not found - trackId may be invalid or track may have been removed';
+            } else if (audioFeaturesError.statusCode === 401) {
+                errorDetails.diagnosis = 'Authentication failed - Spotify token may be expired or invalid';
+            } else if (audioFeaturesError.statusCode === 403) {
+                errorDetails.diagnosis = 'Forbidden - Audio features not available for this track. Will use GPT-4 based feature extraction instead.';
+                logger.info('Spotify audio features not available, using GPT-4 fallback', { trackId });
+            }
+
+            logger.warn('Failed to fetch Spotify audio features', errorDetails);
+            // Continue without audio features - we'll use GPT-4 based extraction instead
+        }
 
         // Use OpenAI to analyze the song
         const description = await generateSongAnalysis(songData);
@@ -825,17 +1344,35 @@ async function analyzeSong(trackId) {
             descriptionPreview: description.substring(0, 100) 
         });
 
-        // Process the description to extract features
-        const features = extractFeaturesFromDescription(description);
-        logger.debug('Song features extracted', { 
-            trackId,
-            features 
-        });
+        // Extract features - use Spotify if available, otherwise use enhanced GPT-4 extraction
+        let features;
+        if (spotifyAudioFeatures) {
+            // Use Spotify audio features (most accurate)
+            const spotifyMappedFeatures = mapSpotifyFeaturesToSchema(spotifyAudioFeatures);
+            features = {
+                ...spotifyMappedFeatures,
+                // Keep genre from GPT-4 analysis as Spotify doesn't provide it
+                genre: extractFeaturesFromDescription(description).genre
+            };
+            logger.debug('Features extracted from Spotify audio features', { 
+                trackId,
+                features 
+            });
+        } else {
+            // Use enhanced GPT-4 based feature extraction as fallback
+            logger.debug('Using GPT-4 based feature extraction (Spotify features not available)', { trackId });
+            features = await extractSongFeaturesWithGPT(songData, description);
+            logger.debug('Song features extracted using GPT-4', { 
+                trackId,
+                features 
+            });
+        }
 
         return {
             ...songData,
             description,
-            features
+            features,
+            spotifyAudioFeatures: spotifyAudioFeatures || null
         };
     } catch (error) {
         logger.error('Error in analyzeSong', { 
@@ -857,7 +1394,8 @@ async function analyzeSong(trackId) {
                 tempo: 'moderate',
                 genre: 'pop',
                 vibe: 'general'
-            }
+            },
+            spotifyAudioFeatures: null
         };
     }
 }
