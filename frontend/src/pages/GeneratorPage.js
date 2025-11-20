@@ -220,27 +220,38 @@ const GeneratorPage = () => {
     return (
         <>
             <Navigation />
-            <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-white pb-12">
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 space-y-8">
-                    <section className="space-y-4">
+            <div className="min-h-screen relative overflow-hidden pb-12">
+                {/* Animated Gradient Background */}
+                <div className="absolute inset-0 animate-gradient-xy opacity-30" style={{
+                    background: 'linear-gradient(-45deg, #9333ea, #ec4899, #f97316, #9333ea, #ec4899, #f97316)',
+                    backgroundSize: '400% 400%'
+                }}></div>
+                
+                {/* Floating Orbs */}
+                <div className="absolute top-20 left-10 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+                <div className="absolute top-40 right-10 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+                <div className="absolute -bottom-20 left-1/2 w-96 h-96 bg-orange-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+                
+                <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-10 space-y-8">
+                    <section className="space-y-4 animate-fade-in">
                         <div className="flex justify-start">
                             <BackButton to="/" label="Back to Profile" />
                         </div>
                         <div className="text-center space-y-4">
-                            <span className="inline-flex items-center px-4 py-1 rounded-full text-xs font-semibold tracking-wide uppercase bg-slate-900 text-white">
+                            <span className="inline-flex items-center px-4 py-1 rounded-full text-xs font-semibold tracking-wide uppercase bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white shadow-lg animate-fade-in-up">
                                 AI Story Studio
                             </span>
-                            <h1 className="text-4xl sm:text-5xl font-bold text-slate-900">
+                            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent animate-fade-in-up animation-delay-100">
                                 Instagram Caption Generator
                             </h1>
-                            <p className="text-base text-slate-600 max-w-3xl mx-auto">
+                            <p className="text-base text-slate-600 max-w-3xl mx-auto animate-fade-in-up animation-delay-200">
                                 Upload your moodboard-worthy shots, pick a track, and let Caption Muse craft a caption that feels curated, human, and ready for your feed.
                             </p>
                         </div>
                     </section>
 
                     <div className="space-y-6">
-                        <section className={cardClass}>
+                        <section className={`${cardClass} backdrop-blur-sm bg-white/90 animate-fade-in-up animation-delay-300 hover:shadow-xl transition-all duration-300`}>
                             <ImageUpload
                                 imagePreview={imagePreview}
                                 onImageSelect={handleImageSelect}
@@ -253,7 +264,7 @@ const GeneratorPage = () => {
                             )}
                         </section>
 
-                        <section className={cardClass}>
+                        <section className={`${cardClass} backdrop-blur-sm bg-white/90 animate-fade-in-up animation-delay-400 hover:shadow-xl transition-all duration-300`}>
                             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                                 <div>
                                     <p className="text-xs uppercase tracking-[0.3em] text-indigo-500 font-semibold">Step 2</p>
@@ -288,7 +299,7 @@ const GeneratorPage = () => {
                             </div>
                         </section>
 
-                        <section className={cardClass}>
+                        <section className={`${cardClass} backdrop-blur-sm bg-white/90 animate-fade-in-up animation-delay-500 hover:shadow-xl transition-all duration-300`}>
                             <div className="space-y-2 mb-4">
                                 <p className="text-xs uppercase tracking-[0.3em] text-emerald-500 font-semibold">Step 3</p>
                                 <h2 className="text-2xl font-semibold text-slate-900">Personalize the caption</h2>
@@ -304,8 +315,9 @@ const GeneratorPage = () => {
                             <button
                                 onClick={handleSubmit}
                                 disabled={loading || !selectedImage || (!musicIsOptional && !selectedTrack)}
-                                className="mt-6 w-full py-3 px-4 bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-500 text-white rounded-2xl font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-lg transition flex items-center justify-center gap-2"
+                                className="mt-6 w-full py-3 px-4 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white rounded-2xl font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 relative overflow-hidden group"
                             >
+                                <span className="relative z-10">
                                 {loading ? (
                                     <>
                                         <LoadingSpinner />
@@ -314,6 +326,8 @@ const GeneratorPage = () => {
                                 ) : (
                                     <span>Generate Caption{selectedTrack ? ' with Music' : ''}</span>
                                 )}
+                                </span>
+                                <div className="absolute inset-0 bg-gradient-to-r from-purple-700 via-pink-600 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
                             </button>
                             {error && (
                                 <div className="mt-4 rounded-2xl border border-red-100 bg-red-50/80 text-red-600 px-4 py-3 text-sm">
@@ -323,7 +337,7 @@ const GeneratorPage = () => {
                         </section>
 
                         {caption && (
-                            <section className={cardClass}>
+                            <section className={`${cardClass} backdrop-blur-sm bg-white/90 animate-fade-in-up animation-delay-600 hover:shadow-xl transition-all duration-300`}>
                                 <div className="space-y-4">
                                     <GeneratedCaption caption={caption} />
                                     {captionId && (
@@ -335,16 +349,17 @@ const GeneratorPage = () => {
                                     )}
                                     <button
                                         onClick={handleSubmit}
-                                        className="w-full py-2.5 rounded-2xl bg-slate-900 text-white font-semibold hover:bg-slate-800 transition"
+                                        className="w-full py-2.5 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 relative overflow-hidden group"
                                     >
-                                        Regenerate with current options
+                                        <span className="relative z-10">Regenerate with current options</span>
+                                        <div className="absolute inset-0 bg-gradient-to-r from-purple-700 via-pink-600 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
                                     </button>
                                 </div>
                             </section>
                         )}
 
                         {(recommendations.length > 0 || recommendationsLoading) && (
-                            <section className={cardClass}>
+                            <section className={`${cardClass} backdrop-blur-sm bg-white/90 animate-fade-in-up animation-delay-700 hover:shadow-xl transition-all duration-300`}>
                                 <SongRecommendations
                                     recommendations={recommendations}
                                     onTrackSelect={handleTrackSelect}

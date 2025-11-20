@@ -11,21 +11,24 @@ const ImageUpload = ({ imagePreview, onImageSelect, fileInputRef }) => {
             </div>
             <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center cursor-pointer bg-slate-50/60 hover:bg-white transition-all hover:border-blue-400"
+                className="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center cursor-pointer bg-slate-50/60 hover:bg-white/90 backdrop-blur-sm transition-all duration-300 hover:border-purple-400 hover:shadow-lg transform hover:scale-[1.01] group relative overflow-hidden"
             >
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-pink-500/0 to-orange-500/0 group-hover:from-purple-500/5 group-hover:via-pink-500/5 group-hover:to-orange-500/5 transition-all duration-300 pointer-events-none"></div>
                 {imagePreview ? (
-                    <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="max-h-72 mx-auto rounded-2xl shadow-sm object-contain"
-                    />
+                    <div className="relative z-10">
+                        <img
+                            src={imagePreview}
+                            alt="Preview"
+                            className="max-h-72 mx-auto rounded-2xl shadow-lg object-contain transform transition-transform duration-300 group-hover:scale-105"
+                        />
+                    </div>
                 ) : (
-                    <div className="space-y-3">
-                        <Upload className="w-12 h-12 mx-auto text-slate-400" />
+                    <div className="space-y-3 relative z-10">
+                        <Upload className="w-12 h-12 mx-auto text-slate-400 transform transition-transform duration-300 group-hover:scale-110 group-hover:text-purple-500" />
                         <p className="text-base font-medium text-slate-700">Click to browse or drag & drop</p>
                         <p className="text-sm text-slate-500">PNG, JPG up to 10MB</p>
                         <div className="flex justify-center">
-                            <span className="px-4 py-2 rounded-full bg-white text-sm font-medium text-slate-600 border border-slate-200">
+                            <span className="px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white text-sm font-medium shadow-md transform transition-transform duration-300 group-hover:scale-105">
                                 Browse files
                             </span>
                         </div>

@@ -82,8 +82,9 @@ const ProfileSummary = () => {
     };
 
     return (
-        <div className="relative overflow-hidden rounded-3xl border border-slate-100 bg-gradient-to-br from-white to-slate-50 shadow-lg p-6">
-            <div className="absolute -top-6 -right-6 h-24 w-24 rounded-full bg-blue-100 blur-3xl opacity-70" />
+        <div className="relative overflow-hidden rounded-3xl border border-slate-100 bg-white/90 backdrop-blur-sm shadow-xl p-6 transform transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
+            <div className="absolute -top-6 -right-6 h-24 w-24 rounded-full bg-gradient-to-br from-purple-300 via-pink-300 to-orange-300 blur-3xl opacity-50 animate-blob" />
+            <div className="absolute -bottom-6 -left-6 h-32 w-32 rounded-full bg-gradient-to-br from-orange-300 via-pink-300 to-purple-300 blur-3xl opacity-30 animate-blob animation-delay-2000" />
             <div className="relative flex flex-col gap-6">
                 <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-4">
@@ -118,13 +119,13 @@ const ProfileSummary = () => {
                         </div>
                         <Link
                             to="/generator"
-                            className="inline-flex items-center px-4 py-2 rounded-2xl bg-slate-900 text-white text-sm font-semibold shadow hover:bg-slate-800 transition"
+                            className="inline-flex items-center px-4 py-2 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white text-sm font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all duration-200"
                         >
                             Start Generating
                         </Link>
                         <Link
                             to="/dashboard"
-                            className="inline-flex items-center px-4 py-2 rounded-2xl border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50"
+                            className="inline-flex items-center px-4 py-2 rounded-2xl border-2 border-slate-200 text-slate-700 text-sm font-semibold hover:bg-gradient-to-r hover:from-purple-50 hover:via-pink-50 hover:to-orange-50 hover:border-purple-300 transform hover:scale-105 active:scale-95 transition-all duration-200"
                         >
                             View Dashboard
                         </Link>
@@ -209,7 +210,7 @@ const ProfileSummary = () => {
                             <button
                                 type="submit"
                                 disabled={saving}
-                                className="inline-flex items-center px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-60"
+                                className="inline-flex items-center px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white text-sm font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-60 disabled:transform-none"
                             >
                                 {saving ? 'Saving...' : 'Save changes'}
                             </button>

@@ -75,9 +75,9 @@ const CaptionFeedback = ({ caption, captionId, onCaptionEdit }) => {
 
     if (submitted) {
         return (
-            <div className="border rounded-lg p-4 bg-green-50">
+            <div className="border-2 border-green-200 rounded-xl p-4 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg animate-fade-in-up">
                 <div className="flex items-center text-green-600 mb-2">
-                    <CheckCircle className="w-5 h-5 mr-2" />
+                    <CheckCircle className="w-5 h-5 mr-2 transform animate-scale-in" />
                     <p className="font-medium">Thank you for your feedback!</p>
                 </div>
                 <p className="text-sm text-gray-600">
@@ -88,8 +88,8 @@ const CaptionFeedback = ({ caption, captionId, onCaptionEdit }) => {
     }
 
     return (
-        <div className="border rounded-lg p-4 space-y-4">
-            <h2 className="text-lg font-semibold">How's this caption?</h2>
+        <div className="border-2 border-slate-200 rounded-xl p-4 space-y-4 bg-white/80 backdrop-blur-sm shadow-md transform transition-all duration-300 hover:shadow-lg animate-fade-in-up">
+            <h2 className="text-lg font-semibold bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent">How's this caption?</h2>
 
             {/* Star Rating */}
             <div className="space-y-2">
@@ -99,11 +99,11 @@ const CaptionFeedback = ({ caption, captionId, onCaptionEdit }) => {
                         <button
                             key={star}
                             onClick={() => handleRatingChange(star)}
-                            className={`p-1 rounded-full focus:outline-none focus:ring ${
-                                star <= rating ? 'text-yellow-400' : 'text-gray-300'
+                            className={`p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 transform transition-all duration-200 hover:scale-125 ${
+                                star <= rating ? 'text-yellow-400' : 'text-gray-300 hover:text-yellow-300'
                             }`}
                         >
-                            <Star className="w-6 h-6" fill={star <= rating ? 'currentColor' : 'none'} />
+                            <Star className="w-6 h-6 transform transition-transform duration-200" fill={star <= rating ? 'currentColor' : 'none'} />
                         </button>
                     ))}
                 </div>
@@ -114,11 +114,11 @@ const CaptionFeedback = ({ caption, captionId, onCaptionEdit }) => {
                 <p className="text-sm text-gray-600">Want to improve this caption?</p>
                 <button
                     onClick={toggleEditMode}
-                    className={`flex items-center text-sm ${
-                        editMode ? 'text-blue-600' : 'text-gray-600'
-                    } hover:text-blue-700`}
+                    className={`flex items-center text-sm transform transition-all duration-200 hover:scale-105 group ${
+                        editMode ? 'text-purple-600' : 'text-gray-600'
+                    } hover:text-purple-700`}
                 >
-                    <Edit className="w-4 h-4 mr-1" />
+                    <Edit className="w-4 h-4 mr-1 transform transition-transform duration-200 group-hover:rotate-12" />
                     {editMode ? 'Cancel Edit' : 'Edit Caption'}
                 </button>
             </div>
@@ -129,7 +129,7 @@ const CaptionFeedback = ({ caption, captionId, onCaptionEdit }) => {
                     <textarea
                         value={editedCaption}
                         onChange={handleEditedCaptionChange}
-                        className="w-full p-3 border rounded-lg min-h-[120px]"
+                        className="w-full p-3 border-2 border-slate-200 rounded-xl min-h-[120px] bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-400 transition-all duration-200"
                         placeholder="Edit the caption to make it better..."
                     />
                 </div>
@@ -140,7 +140,7 @@ const CaptionFeedback = ({ caption, captionId, onCaptionEdit }) => {
                 <textarea
                     value={feedback}
                     onChange={handleFeedbackChange}
-                    className="w-full p-3 border rounded-lg min-h-[80px]"
+                    className="w-full p-3 border-2 border-slate-200 rounded-xl min-h-[80px] bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-400 transition-all duration-200"
                     placeholder="Any additional feedback? What did you like or dislike about this caption?"
                 />
             </div>
@@ -151,9 +151,10 @@ const CaptionFeedback = ({ caption, captionId, onCaptionEdit }) => {
             <button
                 onClick={submitFeedback}
                 disabled={submitting}
-                className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors"
+                className="w-full py-2.5 px-4 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:transform-none relative overflow-hidden group"
             >
-                {submitting ? 'Submitting...' : 'Submit Feedback'}
+                <span className="relative z-10">{submitting ? 'Submitting...' : 'Submit Feedback'}</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-700 via-pink-600 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
             </button>
         </div>
     );
