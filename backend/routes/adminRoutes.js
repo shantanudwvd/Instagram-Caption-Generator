@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const CaptionLearningService = require('../services/captionLearningService');
 const captionLearningService = new CaptionLearningService();
+const logger = require('../utils/logger');
 
 // Middleware to check admin API key
 const checkAdminApiKey = (req, res, next) => {
@@ -31,7 +32,10 @@ router.get('/stats', async (req, res) => {
         const stats = await captionLearningService.getDashboardStats();
         res.json(stats);
     } catch (error) {
-        console.error('Error getting dashboard stats:', error);
+        logger.error('Error getting dashboard stats', { 
+            error: error.message, 
+            stack: error.stack 
+        });
         res.status(500).json({ error: 'Failed to get dashboard statistics' });
     }
 });
@@ -42,7 +46,10 @@ router.get('/fine-tuning-jobs', async (req, res) => {
         const jobs = await captionLearningService.getFineTuningJobs();
         res.json(jobs);
     } catch (error) {
-        console.error('Error getting fine-tuning jobs:', error);
+        logger.error('Error getting fine-tuning jobs', { 
+            error: error.message, 
+            stack: error.stack 
+        });
         res.status(500).json({ error: 'Failed to get fine-tuning jobs' });
     }
 });
@@ -65,7 +72,10 @@ router.post('/generate-training-data', async (req, res) => {
             trainingData: trainingData.slice(0, 50) // Return a subset to avoid large responses
         });
     } catch (error) {
-        console.error('Error generating training data:', error);
+        logger.error('Error generating training data', { 
+            error: error.message, 
+            stack: error.stack 
+        });
         res.status(500).json({ error: 'Failed to generate training data' });
     }
 });
@@ -87,7 +97,10 @@ router.post('/finetune-model', async (req, res) => {
             res.status(400).json(result);
         }
     } catch (error) {
-        console.error('Error starting fine-tuning:', error);
+        logger.error('Error starting fine-tuning', { 
+            error: error.message, 
+            stack: error.stack 
+        });
         res.status(500).json({ error: 'Failed to start fine-tuning process' });
     }
 });
@@ -100,7 +113,11 @@ router.get('/finetune-status/:jobId', async (req, res) => {
         const status = await captionLearningService.checkFineTuningStatus(jobId);
         res.json(status);
     } catch (error) {
-        console.error('Error checking fine-tuning status:', error);
+        logger.error('Error checking fine-tuning status', { 
+            error: error.message, 
+            stack: error.stack,
+            jobId: req.params.jobId 
+        });
         res.status(500).json({ error: 'Failed to check fine-tuning status' });
     }
 });
@@ -111,7 +128,10 @@ router.get('/latest-model', async (req, res) => {
         const model = await captionLearningService.getLatestFineTunedModel();
         res.json({ model });
     } catch (error) {
-        console.error('Error getting latest model:', error);
+        logger.error('Error getting latest model', { 
+            error: error.message, 
+            stack: error.stack 
+        });
         res.status(500).json({ error: 'Failed to get latest fine-tuned model' });
     }
 });

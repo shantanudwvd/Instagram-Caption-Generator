@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const CaptionLearningService = require('../services/captionLearningService');
 const captionLearningService = new CaptionLearningService();
 const authMiddleware = require('../middleware/auth');
+const logger = require('../utils/logger');
 
 router.use(authMiddleware);
 
@@ -31,7 +32,12 @@ router.post('/caption-feedback/:captionId', async (req, res) => {
 
         res.json({ success });
     } catch (error) {
-        console.error('Error recording feedback:', error);
+        logger.error('Error recording feedback', { 
+            error: error.message, 
+            stack: error.stack,
+            captionId: req.params.captionId,
+            userId: req.user?.id 
+        });
         res.status(500).json({ error: 'Failed to record feedback' });
     }
 });

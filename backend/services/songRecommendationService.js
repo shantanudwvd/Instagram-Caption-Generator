@@ -1,5 +1,6 @@
 const OpenAI = require('openai');
 const dotenv = require('dotenv');
+const logger = require('../utils/logger');
 
 dotenv.config();
 
@@ -27,7 +28,7 @@ class SongRecommendationService {
         try {
             // Generate search queries based on image analysis
             const searchQueries = await this.generateSearchQueries(imageAnalysis, currentTrack);
-            console.log("Generated search queries:", searchQueries);
+            logger.debug('Generated search queries', { searchQueries });
 
             // Search for tracks using the generated queries
             const recommendations = await this.searchTracksWithQueries(searchQueries);
@@ -40,10 +41,13 @@ class SongRecommendationService {
             // Return top 5 recommendations
             return filteredRecommendations.slice(0, 5);
         } catch (error) {
-            console.error('Error generating recommendations:', error);
+            logger.error('Error generating recommendations', { 
+                error: error.message, 
+                stack: error.stack 
+            });
 
             // Fallback: Use default queries if there's an error
-            console.log("Using fallback search queries...");
+            logger.warn('Using fallback search queries');
             const defaultQueries = ["chill music", "relaxing songs", "popular hits", "mood music", "vibes"];
             const recommendations = await this.searchTracksWithQueries(defaultQueries);
             return recommendations.slice(0, 5);
@@ -99,7 +103,7 @@ class SongRecommendationService {
             });
 
             const content = response.choices[0].message.content.trim();
-            console.log("GPT raw response:", content);
+            logger.debug('GPT raw response for search queries', { content });
 
             // Split by new lines and filter empty lines
             const queries = content.split('\n')
@@ -115,7 +119,10 @@ class SongRecommendationService {
             return ["chill music", "relaxing songs", "popular hits", "mood music", "vibes"];
 
         } catch (error) {
-            console.error("Error generating search queries:", error);
+            logger.error('Error generating search queries', { 
+                error: error.message, 
+                stack: error.stack 
+            });
             return ["chill music", "relaxing songs", "popular hits", "mood music", "vibes"];
         }
     }
@@ -135,7 +142,7 @@ class SongRecommendationService {
                 const data = await this.spotifyApi.searchTracks(query, {limit: 5});
 
                 if (!data.body || !data.body.tracks || !data.body.tracks.items) {
-                    console.warn(`No results found for query "${query}"`);
+                    logger.warn('No results found for query', { query });
                     continue;
                 }
 
@@ -155,7 +162,10 @@ class SongRecommendationService {
                     }
                 }
             } catch (error) {
-                console.warn(`Error searching for tracks with query "${query}":`, error);
+                logger.warn('Error searching for tracks with query', { 
+                    query, 
+                    error: error.message 
+                });
                 // Continue with next query
             }
         }
