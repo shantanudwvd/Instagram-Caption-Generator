@@ -18,12 +18,16 @@ router.post('/caption-feedback/:captionId', async (req, res) => {
             return res.status(400).json({ error: 'Valid rating (1-5) is required' });
         }
 
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ error: 'User authentication required' });
+        }
+
         // Add client info for analytics
         const feedback = {
+            userId: req.user.id,
             rating,
             comments,
             userEdits,
-            userId: req.user?.id || null,
             userAgent: req.headers['user-agent'],
             ipHash: hashIP(req.ip) // Anonymize IP
         };

@@ -69,14 +69,54 @@ class UserService {
             return null;
         }
 
+        // Support both old (name) and new (firstName/lastName) formats
+        const firstName = user.firstName || (user.name ? this._splitName(user.name).firstName : '');
+        const lastName = user.lastName || (user.name ? this._splitName(user.name).lastName : '');
+        const fullName = user.fullName || this._computeFullName(firstName, lastName) || user.name || '';
+
         return {
             id: user._id ? user._id.toString() : user.id,
-            name: user.name,
+            firstName,
+            lastName,
+            fullName,
+            name: fullName, // Keep for backward compatibility
             email: user.email,
             photoUrl: user.photoUrl || null,
             createdAt: user.createdAt,
             lastLoginAt: user.lastLoginAt
         };
+    }
+
+    _splitName(name) {
+        if (!name || typeof name !== 'string') {
+            return { firstName: '', lastName: '' };
+        }
+        
+        const trimmed = name.trim();
+        if (trimmed.length === 0) {
+            return { firstName: '', lastName: '' };
+        }
+
+        // Split by last space
+        const lastSpaceIndex = trimmed.lastIndexOf(' ');
+        if (lastSpaceIndex === -1) {
+            // Single word - treat as firstName
+            return { firstName: trimmed, lastName: '' };
+        }
+
+        return {
+            firstName: trimmed.substring(0, lastSpaceIndex).trim(),
+            lastName: trimmed.substring(lastSpaceIndex + 1).trim()
+        };
+    }
+
+    _computeFullName(firstName, lastName) {
+        const first = (firstName || '').trim();
+        const last = (lastName || '').trim();
+        if (first && last) {
+            return `${first} ${last}`.trim();
+        }
+        return first || last || '';
     }
 
     _validateEmail(email) {
@@ -200,13 +240,14 @@ class UserService {
         return JSON.parse(payloadJson);
     }
 
-    async registerUser({ name, email, password, photoUrl }) {
+    async registerUser({ firstName, lastName, email, password, photoUrl }) {
         await this._initializeConnection();
         const db = this.getDb();
         const collection = db.collection(this.collectionName);
 
         const sanitizedEmail = this._validateEmail(email);
-        const sanitizedName = (name || '').trim();
+        const sanitizedFirstName = (firstName || '').trim();
+        const sanitizedLastName = (lastName || '').trim();
         const sanitizedPhotoUrl = this._validatePhotoUrl(photoUrl);
         this._validatePassword(password);
 
@@ -216,8 +257,12 @@ class UserService {
         }
 
         const now = new Date();
+        const fullName = this._computeFullName(sanitizedFirstName || 'New', sanitizedLastName || '');
         const user = {
-            name: sanitizedName || 'New User',
+            firstName: sanitizedFirstName || 'New',
+            lastName: sanitizedLastName || '',
+            fullName: fullName || 'New User',
+            name: fullName || 'New User', // Keep name for backward compatibility
             email: sanitizedEmail,
             photoUrl: sanitizedPhotoUrl || null,
             passwordHash: this._hashPassword(password),
@@ -276,10 +321,15 @@ class UserService {
     }
 
     generateToken(user) {
+        const fullName = user.fullName || this._computeFullName(user.firstName || '', user.lastName || '') || user.name || '';
+        
         return this._buildToken({
             userId: user.id,
             email: user.email,
-            name: user.name,
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+            fullName: fullName,
+            name: fullName, // Keep for backward compatibility
             photoUrl: user.photoUrl || null
         });
     }
@@ -302,13 +352,53 @@ class UserService {
         const isValidObjectId = ObjectId.isValid(userId);
         logger.debug('User ID validation', { userId, isValidObjectId });
 
+        // First, verify the user exists before trying to update
+        let existingUser = null;
+        if (isValidObjectId) {
+            existingUser = await collection.findOne({ _id: new ObjectId(userId) });
+            logger.debug('User existence check by _id', { 
+                found: !!existingUser,
+                userId,
+                foundUserId: existingUser?._id?.toString()
+            });
+        }
+
         const updateDoc = {};
 
-        if (typeof updates.name === 'string') {
+        // Handle firstName
+        if (typeof updates.firstName === 'string') {
+            const trimmed = updates.firstName.trim();
+            updateDoc.firstName = trimmed;
+            // Compute fullName
+            const lastName = updates.lastName !== undefined 
+                ? (updates.lastName || '') 
+                : (existingUser?.lastName || '');
+            updateDoc.fullName = this._computeFullName(trimmed, lastName);
+            updateDoc.name = updateDoc.fullName; // Keep name for backward compatibility
+        }
+
+        // Handle lastName
+        if (typeof updates.lastName === 'string') {
+            const trimmed = updates.lastName.trim();
+            updateDoc.lastName = trimmed;
+            // Compute fullName
+            const firstName = updates.firstName !== undefined 
+                ? (updates.firstName || '') 
+                : (existingUser?.firstName || updateDoc.firstName || '');
+            updateDoc.fullName = this._computeFullName(firstName, trimmed);
+            updateDoc.name = updateDoc.fullName; // Keep name for backward compatibility
+        }
+
+        // Handle legacy name field (for backward compatibility during migration)
+        if (typeof updates.name === 'string' && !updates.firstName && !updates.lastName) {
             const trimmed = updates.name.trim();
             if (trimmed.length === 0) {
                 throw new Error('Name cannot be empty');
             }
+            const split = this._splitName(trimmed);
+            updateDoc.firstName = split.firstName;
+            updateDoc.lastName = split.lastName;
+            updateDoc.fullName = this._computeFullName(split.firstName, split.lastName);
             updateDoc.name = trimmed;
         }
 
@@ -328,17 +418,6 @@ class UserService {
 
         if (Object.keys(updateDoc).length === 0) {
             throw new Error('No updates provided');
-        }
-
-        // First, verify the user exists before trying to update
-        let existingUser = null;
-        if (isValidObjectId) {
-            existingUser = await collection.findOne({ _id: new ObjectId(userId) });
-            logger.debug('User existence check by _id', { 
-                found: !!existingUser,
-                userId,
-                foundUserId: existingUser?._id?.toString()
-            });
         }
 
         // If not found by _id, try by email (case-insensitive)

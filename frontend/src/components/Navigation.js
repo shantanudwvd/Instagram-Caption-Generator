@@ -6,13 +6,18 @@ import { useAuth } from '../context/AuthContext';
 const Navigation = () => {
     const { user, logout } = useAuth();
     const location = useLocation();
-    const initials = user?.name
-        ? user.name
-            .split(' ')
-            .map((part) => part.charAt(0).toUpperCase())
-            .join('')
-            .slice(0, 2)
-        : 'CM';
+    const fullName = user?.firstName && user?.lastName 
+        ? `${user.firstName} ${user.lastName}` 
+        : user?.firstName || user?.lastName || user?.name || '';
+    const initials = user?.firstName && user?.lastName
+        ? `${user.firstName.charAt(0).toUpperCase()}${user.lastName.charAt(0).toUpperCase()}`
+        : user?.firstName
+            ? user.firstName.charAt(0).toUpperCase()
+            : user?.lastName
+                ? user.lastName.charAt(0).toUpperCase()
+                : user?.name
+                    ? user.name.split(' ').map((part) => part.charAt(0).toUpperCase()).join('').slice(0, 2)
+                    : 'CM';
 
     return (
         <nav className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-lg shadow-sm">
@@ -53,12 +58,12 @@ const Navigation = () => {
                         <div className="flex items-center gap-3">
                             <div className="hidden sm:flex flex-col text-right leading-tight">
                                 <span className="text-xs text-slate-500">Logged in</span>
-                                <span className="text-sm font-semibold text-slate-900">{user.name}</span>
+                                <span className="text-sm font-semibold text-slate-900">{fullName}</span>
                             </div>
                             {user.photoUrl ? (
                                 <img
                                     src={user.photoUrl}
-                                    alt={user.name}
+                                    alt={fullName}
                                     className="h-10 w-10 rounded-2xl object-cover border-2 border-slate-200 shadow-md transform transition-transform duration-200 hover:scale-110 hover:border-purple-400"
                                 />
                             ) : (

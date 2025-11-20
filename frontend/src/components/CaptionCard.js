@@ -116,7 +116,7 @@ const CaptionCard = ({ caption, createdAt, avgRating, feedbackCount, tone, lengt
                         ) : (
                             <img
                                 src={fullImageUrl}
-                                alt="Caption image"
+                                alt="Caption"
                                 className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-110 ${
                                     imageLoaded ? 'opacity-100' : 'opacity-0'
                                 }`}

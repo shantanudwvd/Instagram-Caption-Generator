@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Navigation from '../components/Navigation';
 import BackButton from '../components/BackButton';
@@ -9,11 +10,18 @@ import { Search, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const CaptionsBrowser = () => {
     const { user, token, isInitializing } = useAuth();
+    const navigate = useNavigate();
+
+    // Redirect to login if user logs out
+    useEffect(() => {
+        if (!isInitializing && !user) {
+            navigate('/', { replace: true });
+        }
+    }, [user, isInitializing, navigate]);
     const [captions, setCaptions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [totalCount, setTotalCount] = useState(0);
-    const [hasMore, setHasMore] = useState(false);
     
     // Image modal state
     const [modalImage, setModalImage] = useState(null);
@@ -109,7 +117,6 @@ const CaptionsBrowser = () => {
             const data = await response.json();
             setCaptions(data.captions || []);
             setTotalCount(data.totalCount || 0);
-            setHasMore(data.hasMore || false);
         } catch (err) {
             setError(err.message || 'Failed to load captions');
         } finally {
@@ -148,7 +155,7 @@ const CaptionsBrowser = () => {
     }
 
     if (!user) {
-        return null; // Will redirect via AuthGate
+        return null; // Redirect handled by useEffect
     }
 
     return (

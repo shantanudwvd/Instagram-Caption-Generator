@@ -6,7 +6,8 @@ const ProfileSummary = () => {
     const { user, updateProfile, uploadPhoto } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
-        name: user?.name || '',
+        firstName: user?.firstName || '',
+        lastName: user?.lastName || '',
         email: user?.email || '',
         photoUrl: user?.photoUrl || '',
         password: ''
@@ -22,13 +23,18 @@ const ProfileSummary = () => {
     }
 
     const memberDate = user.createdAt ? new Date(user.createdAt) : null;
-    const initials = user.name
-        ? user.name
-            .split(' ')
-            .map((part) => part.charAt(0).toUpperCase())
-            .join('')
-            .slice(0, 2)
-        : 'YOU';
+    const fullName = user.firstName && user.lastName 
+        ? `${user.firstName} ${user.lastName}` 
+        : user.firstName || user.lastName || user.name || '';
+    const initials = user.firstName && user.lastName
+        ? `${user.firstName.charAt(0).toUpperCase()}${user.lastName.charAt(0).toUpperCase()}`
+        : user.firstName
+            ? user.firstName.charAt(0).toUpperCase()
+            : user.lastName
+                ? user.lastName.charAt(0).toUpperCase()
+                : user.name
+                    ? user.name.split(' ').map((part) => part.charAt(0).toUpperCase()).join('').slice(0, 2)
+                    : 'YOU';
 
     const handleChange = (event) => {
         const { name, value } = event.target;
@@ -56,7 +62,8 @@ const ProfileSummary = () => {
             }
 
             const payload = {
-                name: formData.name,
+                firstName: formData.firstName,
+                lastName: formData.lastName,
                 email: formData.email,
                 photoUrl: uploadedPhotoUrl
             };
@@ -91,7 +98,7 @@ const ProfileSummary = () => {
                         {photoPreview ? (
                             <img
                                 src={photoPreview}
-                                alt={user.name}
+                                alt={fullName}
                                 className="h-16 w-16 rounded-2xl object-cover shadow-md border border-slate-200"
                             />
                         ) : (
@@ -101,7 +108,7 @@ const ProfileSummary = () => {
                         )}
                         <div>
                             <p className="text-xs uppercase tracking-wide text-slate-500">Signed in as</p>
-                            <p className="text-2xl font-semibold text-slate-900">{user.name}</p>
+                            <p className="text-2xl font-semibold text-slate-900">{fullName}</p>
                             <p className="text-sm text-slate-500">{user.email}</p>
                         </div>
                     </div>
@@ -147,27 +154,37 @@ const ProfileSummary = () => {
                     <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-slate-100 bg-white/70 p-4">
                         <div className="grid gap-4 md:grid-cols-2">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">First Name</label>
                                 <input
                                     type="text"
-                                    name="name"
-                                    value={formData.name}
+                                    name="firstName"
+                                    value={formData.firstName}
                                     onChange={handleChange}
                                     className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Last Name</label>
                                 <input
-                                    type="email"
-                                    name="email"
-                                    value={formData.email}
+                                    type="text"
+                                    name="lastName"
+                                    value={formData.lastName}
                                     onChange={handleChange}
                                     className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    required
                                 />
                             </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                            <input
+                                type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                required
+                            />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">New Password</label>
@@ -219,7 +236,8 @@ const ProfileSummary = () => {
                                 onClick={() => {
                                     setIsEditing(false);
                                     setFormData({
-                                        name: user.name,
+                                        firstName: user.firstName || '',
+                                        lastName: user.lastName || '',
                                         email: user.email,
                                         photoUrl: user.photoUrl || '',
                                         password: ''

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import AuthGate from '../components/auth/AuthGate';
 import { useAuth } from '../context/AuthContext';
@@ -10,6 +11,15 @@ import LoadingSpinner from '../components/LoadingSpinner';
 
 const ProfilePage = () => {
     const { user, isInitializing } = useAuth();
+    const navigate = useNavigate();
+
+    // Redirect to login if user logs out (though ProfilePage shows AuthGate, we still want redirect for consistency)
+    useEffect(() => {
+        if (!isInitializing && !user) {
+            // ProfilePage already shows AuthGate, but we can still ensure URL stays at root
+            // Actually, ProfilePage is the root, so no redirect needed here
+        }
+    }, [user, isInitializing, navigate]);
 
     if (isInitializing) {
         return (
@@ -50,7 +60,7 @@ const ProfilePage = () => {
                             My Profile
                         </span>
                         <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent animate-fade-in-up animation-delay-100">
-                            Welcome back, {user.name}
+                            Welcome back, {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || user.lastName || user.name || 'User'}
                         </h1>
                         <p className="text-base text-slate-600 max-w-3xl mx-auto animate-fade-in-up animation-delay-200">
                             Update your account details, change your password, and jump into the studio whenever inspiration hits.

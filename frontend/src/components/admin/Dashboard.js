@@ -10,7 +10,7 @@ import {
     BarChart,
     Bar
 } from 'recharts';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import BackButton from '../BackButton';
 
@@ -25,11 +25,19 @@ const DashboardCard = ({ label, value, description }) => (
 const formatNumber = (value) => (value || value === 0 ? value.toLocaleString() : '—');
 
 const UserDashboard = () => {
-    const { user, token } = useAuth();
+    const { user, token, isInitializing } = useAuth();
+    const navigate = useNavigate();
     const [stats, setStats] = useState(null);
     const [recentCaptions, setRecentCaptions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+
+    // Redirect to login if user logs out
+    useEffect(() => {
+        if (!isInitializing && !user) {
+            navigate('/', { replace: true });
+        }
+    }, [user, isInitializing, navigate]);
 
     useEffect(() => {
         if (!token) {
@@ -72,27 +80,25 @@ const UserDashboard = () => {
         [stats]
     );
 
-    if (!user) {
+    if (isInitializing) {
         return (
             <div className="max-w-3xl mx-auto py-12 px-6 relative overflow-hidden min-h-screen">
                 <div className="absolute inset-0 animate-gradient-xy opacity-30" style={{
                     background: 'linear-gradient(-45deg, #9333ea, #ec4899, #f97316, #9333ea, #ec4899, #f97316)',
                     backgroundSize: '400% 400%'
                 }}></div>
-                <div className="relative z-10">
-                <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-xl p-6 text-center space-y-4 animate-fade-in">
-                    <h2 className="text-xl font-semibold">Please sign in</h2>
-                    <p className="text-gray-600">You need to be signed in to access your dashboard.</p>
-                    <Link
-                        to="/"
-                        className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all duration-200"
-                    >
-                        Go to Caption Generator
-                    </Link>
-                </div>
+                <div className="relative z-10 flex items-center justify-center min-h-screen">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+                        <p className="mt-4 text-gray-600">Loading...</p>
+                    </div>
                 </div>
             </div>
         );
+    }
+
+    if (!user) {
+        return null; // Redirect handled by useEffect
     }
 
     return (
@@ -115,7 +121,7 @@ const UserDashboard = () => {
             <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between transform transition-all duration-300 hover:shadow-2xl animate-fade-in-up animation-delay-100">
                 <div>
                     <p className="text-sm text-gray-500">Welcome back</p>
-                    <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">{user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || user.lastName || user.name || 'User'}</h1>
                     <p className="text-sm text-gray-500">{user.email}</p>
                 </div>
                 <div className="mt-4 md:mt-0 flex items-center space-x-6 text-sm text-gray-600">

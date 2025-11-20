@@ -134,9 +134,12 @@ class CaptionLearningService {
             await db.collection(this.captionCollection).createIndex({ createdAt: -1 });
             await db.collection(this.captionCollection).createIndex({ avgRating: -1 });
             await db.collection(this.captionCollection).createIndex({ feedbackCount: -1 });
+            await db.collection(this.captionCollection).createIndex({ userId: 1 });
+            await db.collection(this.captionCollection).createIndex({ userId: 1, createdAt: -1 });
 
             // Feedback collection indexes
             await db.collection(this.feedbackCollection).createIndex({ captionId: 1 });
+            await db.collection(this.feedbackCollection).createIndex({ userId: 1 });
             await db.collection(this.feedbackCollection).createIndex({ timestamp: -1 });
 
             // Fine-tuning collection indexes
@@ -165,6 +168,7 @@ class CaptionLearningService {
      * Production-ready with validation, error handling and sanitization
      *
      * @param {Object} captionData - Caption data including context and options
+     * @param {string} captionData.userId - User ID who created the caption (required)
      * @returns {Promise<string>} ID of the stored caption
      */
     async storeCaption(captionData) {
@@ -172,13 +176,23 @@ class CaptionLearningService {
             throw new Error('Invalid caption data: caption text is required');
         }
 
+        if (!captionData.userId) {
+            throw new Error('User ID is required to store caption');
+        }
+
         try {
             await this._initializeConnection();
             const db = this.getDb();
             const collection = db.collection(this.captionCollection);
 
+            // Validate userId is a valid ObjectId
+            if (!ObjectId.isValid(captionData.userId)) {
+                throw new Error('Invalid user ID format');
+            }
+
             // Validate and sanitize data
             const sanitizedData = {
+                userId: new ObjectId(captionData.userId),
                 caption: this._sanitizeText(captionData.caption),
                 imageAnalysis: this._sanitizeText(captionData.imageAnalysis || ''),
                 imageFeatures: this._sanitizeObject(captionData.imageFeatures || null),
@@ -197,7 +211,7 @@ class CaptionLearningService {
 
             const result = await collection.insertOne(sanitizedData);
 
-            logger.info(`Stored new caption with ID: ${result.insertedId}`);
+            logger.info(`Stored new caption with ID: ${result.insertedId} for user: ${captionData.userId}`);
             return result.insertedId.toString();
         } catch (error) {
             logger.error('Error storing caption:', error);
@@ -210,6 +224,7 @@ class CaptionLearningService {
      *
      * @param {string} captionId - ID of the caption
      * @param {Object} feedback - User feedback data
+     * @param {string} feedback.userId - User ID who provided the feedback (required)
      * @returns {Promise<boolean>} Success status
      */
     async recordFeedback(captionId, feedback) {
@@ -219,6 +234,10 @@ class CaptionLearningService {
 
         if (!feedback || typeof feedback.rating !== 'number' || feedback.rating < 1 || feedback.rating > 5) {
             throw new Error('Valid rating (1-5) is required');
+        }
+
+        if (!feedback.userId) {
+            throw new Error('User ID is required to record feedback');
         }
 
         try {
@@ -235,15 +254,26 @@ class CaptionLearningService {
                 throw new Error('Invalid caption ID format');
             }
 
-            // Check if caption exists
+            // Validate userId format
+            if (!ObjectId.isValid(feedback.userId)) {
+                throw new Error('Invalid user ID format');
+            }
+
+            // Check if caption exists and belongs to the user
             const captionDoc = await captionColl.findOne({ _id: objectId });
             if (!captionDoc) {
                 throw new Error('Caption not found');
             }
 
+            // Verify the caption belongs to the user providing feedback
+            if (captionDoc.userId && captionDoc.userId.toString() !== feedback.userId) {
+                throw new Error('Caption does not belong to this user');
+            }
+
             // Store the feedback with sanitized data
             const feedbackDoc = {
                 captionId: objectId,
+                userId: new ObjectId(feedback.userId),
                 rating: Math.min(Math.max(parseInt(feedback.rating), 1), 5), // Ensure rating is 1-5
                 comments: this._sanitizeText(feedback.comments || ''),
                 userEdits: this._sanitizeText(feedback.userEdits || ''),
@@ -666,11 +696,20 @@ class CaptionLearningService {
     }
 
     /**
-     * Get dashboard statistics
+     * Get dashboard statistics for a specific user
      *
+     * @param {string} userId - User ID to get stats for (required)
      * @returns {Promise<Object>} Dashboard statistics
      */
-    async getDashboardStats() {
+    async getDashboardStats(userId) {
+        if (!userId) {
+            throw new Error('User ID is required to get dashboard stats');
+        }
+
+        if (!ObjectId.isValid(userId)) {
+            throw new Error('Invalid user ID format');
+        }
+
         try {
             await this._initializeConnection();
             const db = this.getDb();
@@ -678,33 +717,49 @@ class CaptionLearningService {
             const feedbackColl = db.collection(this.feedbackCollection);
             const fineTuneColl = db.collection(this.fineTuningCollection);
 
-            // Get total caption count
-            const totalCaptions = await captionColl.countDocuments({ status: 'active' });
+            const userObjectId = new ObjectId(userId);
 
-            // Get total feedback count
-            const totalFeedback = await feedbackColl.countDocuments();
+            // Base match for user's captions
+            const userCaptionMatch = { userId: userObjectId, status: 'active' };
 
-            // Get average rating
+            // Get total caption count for this user
+            const totalCaptions = await captionColl.countDocuments(userCaptionMatch);
+
+            // Get user's caption IDs for feedback filtering
+            const userCaptionIds = await captionColl.find(userCaptionMatch)
+                .project({ _id: 1 })
+                .toArray();
+            const captionIdArray = userCaptionIds.map(c => c._id);
+
+            // Get total feedback count for this user's captions
+            const totalFeedback = captionIdArray.length > 0
+                ? await feedbackColl.countDocuments({ captionId: { $in: captionIdArray } })
+                : 0;
+
+            // Get average rating for this user's captions
             const ratingAgg = await captionColl.aggregate([
-                { $match: { status: 'active', feedbackCount: { $gt: 0 } } },
+                { $match: { ...userCaptionMatch, feedbackCount: { $gt: 0 } } },
                 { $group: { _id: null, avgRating: { $avg: '$avgRating' } } }
             ]).toArray();
 
             const avgRating = ratingAgg.length > 0 ? ratingAgg[0].avgRating : 0;
 
-            // Get rating distribution
-            const ratingDistribution = await feedbackColl.aggregate([
-                { $group: { _id: '$rating', count: { $sum: 1 } } },
-                { $sort: { _id: 1 } },
-                { $project: { rating: '$_id', count: 1, _id: 0 } }
-            ]).toArray();
+            // Get rating distribution for this user's feedback
+            const ratingDistribution = captionIdArray.length > 0
+                ? await feedbackColl.aggregate([
+                    { $match: { captionId: { $in: captionIdArray } } },
+                    { $group: { _id: '$rating', count: { $sum: 1 } } },
+                    { $sort: { _id: 1 } },
+                    { $project: { rating: '$_id', count: 1, _id: 0 } }
+                ]).toArray()
+                : [];
 
-            // Get caption generation history (last 30 days)
+            // Get caption generation history (last 30 days) for this user
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
             const generationHistory = await captionColl.aggregate([
-                { $match: { createdAt: { $gte: thirtyDaysAgo } } },
+                { $match: { ...userCaptionMatch, createdAt: { $gte: thirtyDaysAgo } } },
                 {
                     $group: {
                         _id: {
@@ -717,7 +772,7 @@ class CaptionLearningService {
                 { $project: { date: '$_id', count: 1, _id: 0 } }
             ]).toArray();
 
-            // Get fine-tuning stats
+            // Fine-tuning stats are global (not user-specific)
             const fineTuningStats = {
                 total: await fineTuneColl.countDocuments(),
                 succeeded: await fineTuneColl.countDocuments({ status: 'succeeded' }),
@@ -727,20 +782,23 @@ class CaptionLearningService {
                 })
             };
 
-            // Get feedback trends over time (rating averages by week)
-            const feedbackTrends = await feedbackColl.aggregate([
-                {
-                    $group: {
-                        _id: {
-                            $dateToString: { format: '%Y-%U', date: '$createdAt' } // Group by year and week
-                        },
-                        avgRating: { $avg: '$rating' },
-                        count: { $sum: 1 }
-                    }
-                },
-                { $sort: { _id: 1 } },
-                { $project: { period: '$_id', avgRating: 1, count: 1, _id: 0 } }
-            ]).toArray();
+            // Get feedback trends over time (rating averages by week) for this user's captions
+            const feedbackTrends = captionIdArray.length > 0
+                ? await feedbackColl.aggregate([
+                    { $match: { captionId: { $in: captionIdArray } } },
+                    {
+                        $group: {
+                            _id: {
+                                $dateToString: { format: '%Y-%U', date: '$createdAt' } // Group by year and week
+                            },
+                            avgRating: { $avg: '$rating' },
+                            count: { $sum: 1 }
+                        }
+                    },
+                    { $sort: { _id: 1 } },
+                    { $project: { period: '$_id', avgRating: 1, count: 1, _id: 0 } }
+                ]).toArray()
+                : [];
 
             return {
                 totalCaptions,
@@ -763,15 +821,24 @@ class CaptionLearningService {
      * @param {number} limit - Maximum number of captions to return
      * @returns {Promise<Array>} Recent caption summaries
      */
-    async getRecentCaptions(limit = 5) {
+    async getRecentCaptions(limit = 5, userId) {
+        if (!userId) {
+            throw new Error('User ID is required to get recent captions');
+        }
+
+        if (!ObjectId.isValid(userId)) {
+            throw new Error('Invalid user ID format');
+        }
+
         try {
             await this._initializeConnection();
             const db = this.getDb();
             const captionColl = db.collection(this.captionCollection);
 
             const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 5, 1), 50);
+            const userObjectId = new ObjectId(userId);
 
-            const captions = await captionColl.find({ status: 'active' })
+            const captions = await captionColl.find({ userId: userObjectId, status: 'active' })
                 .sort({ createdAt: -1 })
                 .limit(safeLimit)
                 .project({
@@ -819,8 +886,18 @@ class CaptionLearningService {
             const db = this.getDb();
             const captionColl = db.collection(this.captionCollection);
 
-            // Build query
+            // Build query - always filter by userId
             const query = { status: 'active' };
+
+            // User filter (required)
+            if (filters.userId) {
+                if (!ObjectId.isValid(filters.userId)) {
+                    throw new Error('Invalid user ID format');
+                }
+                query.userId = new ObjectId(filters.userId);
+            } else {
+                throw new Error('User ID is required to filter captions');
+            }
 
             // Text search filter
             if (filters.search && filters.search.trim()) {
@@ -828,12 +905,12 @@ class CaptionLearningService {
             }
 
             // Tone filter
-            if (filters.tone) {
+            if (filters.tone && filters.tone !== 'all') {
                 query['options.tone'] = filters.tone;
             }
 
             // Length filter
-            if (filters.length) {
+            if (filters.length && filters.length !== 'all') {
                 query['options.length'] = filters.length;
             }
 

@@ -5,7 +5,8 @@ const AuthGate = () => {
     const { login, register } = useAuth();
     const [mode, setMode] = useState('login');
     const [formData, setFormData] = useState({
-        name: '',
+        firstName: '',
+        lastName: '',
         email: '',
         password: ''
     });
@@ -83,22 +84,43 @@ const AuthGate = () => {
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-5">
-                    {/* Name Field - Animated */}
-                    <div className={`transition-all duration-300 overflow-hidden ${mode === 'register' ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'}`}>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Name
-                        </label>
-                        <div className="relative group">
-                            <input
-                                type="text"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleChange}
-                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200 bg-white/50 backdrop-blur-sm"
-                                placeholder="Alex Doe"
-                                required={mode === 'register'}
-                            />
-                            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-500/0 via-pink-500/0 to-orange-500/0 group-hover:from-purple-500/10 group-hover:via-pink-500/10 group-hover:to-orange-500/10 transition-all duration-300 pointer-events-none"></div>
+                    {/* Name Fields - Animated */}
+                    <div className={`transition-all duration-300 overflow-hidden ${mode === 'register' ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    First Name
+                                </label>
+                                <div className="relative group">
+                                    <input
+                                        type="text"
+                                        name="firstName"
+                                        value={formData.firstName}
+                                        onChange={handleChange}
+                                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200 bg-white/50 backdrop-blur-sm"
+                                        placeholder="Alex"
+                                        required={mode === 'register'}
+                                    />
+                                    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-500/0 via-pink-500/0 to-orange-500/0 group-hover:from-purple-500/10 group-hover:via-pink-500/10 group-hover:to-orange-500/10 transition-all duration-300 pointer-events-none"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Last Name
+                                </label>
+                                <div className="relative group">
+                                    <input
+                                        type="text"
+                                        name="lastName"
+                                        value={formData.lastName}
+                                        onChange={handleChange}
+                                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200 bg-white/50 backdrop-blur-sm"
+                                        placeholder="Doe"
+                                        required={mode === 'register'}
+                                    />
+                                    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-500/0 via-pink-500/0 to-orange-500/0 group-hover:from-purple-500/10 group-hover:via-pink-500/10 group-hover:to-orange-500/10 transition-all duration-300 pointer-events-none"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

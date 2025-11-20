@@ -12,8 +12,8 @@ router.use(authMiddleware);
 
 router.get('/overview', async (req, res) => {
     try {
-        const stats = await captionLearningService.getDashboardStats();
-        const recentCaptions = await captionLearningService.getRecentCaptions(5);
+        const stats = await captionLearningService.getDashboardStats(req.user.id);
+        const recentCaptions = await captionLearningService.getRecentCaptions(5, req.user.id);
 
         res.json({
             user: req.user,
@@ -28,7 +28,7 @@ router.get('/overview', async (req, res) => {
 
 router.get('/stats', async (req, res) => {
     try {
-        const stats = await captionLearningService.getDashboardStats();
+        const stats = await captionLearningService.getDashboardStats(req.user.id);
         res.json(stats);
     } catch (error) {
         logger.error('Error loading dashboard stats:', error);
@@ -39,6 +39,7 @@ router.get('/stats', async (req, res) => {
 router.get('/captions', async (req, res) => {
     try {
         const filters = {
+            userId: req.user.id,
             search: req.query.search || '',
             tone: req.query.tone || '',
             length: req.query.length || '',

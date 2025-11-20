@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/Navigation';
-import AuthGate from '../components/auth/AuthGate';
 import ImageUpload from '../components/ImageUpload';
 import SongSearch from '../components/SongSearch';
 import ImageContext from '../components/ImageContext';
@@ -15,6 +15,14 @@ import { useAuth } from '../context/AuthContext';
 
 const GeneratorPage = () => {
     const { user, token, isInitializing } = useAuth();
+    const navigate = useNavigate();
+
+    // Redirect to login if user logs out
+    useEffect(() => {
+        if (!isInitializing && !user) {
+            navigate('/', { replace: true });
+        }
+    }, [user, isInitializing, navigate]);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [selectedTrack, setSelectedTrack] = useState(null);
@@ -50,7 +58,7 @@ const GeneratorPage = () => {
     }
 
     if (!user) {
-        return <AuthGate />;
+        return null; // Redirect handled by useEffect
     }
 
     const handleContextChange = (contextData) => setImageContext(contextData);

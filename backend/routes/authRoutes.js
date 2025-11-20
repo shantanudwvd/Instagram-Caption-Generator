@@ -27,13 +27,38 @@ const upload = multer({
 
 router.post('/register', async (req, res) => {
     try {
-        const { name, email, password, photoUrl } = req.body;
+        const { firstName, lastName, name, email, password, photoUrl } = req.body;
 
         if (!email || !password) {
             return res.status(400).json({ error: 'Email and password are required' });
         }
 
-        const user = await userService.registerUser({ name, email, password, photoUrl });
+        // Support both new format (firstName/lastName) and legacy format (name)
+        let firstNameValue = firstName;
+        let lastNameValue = lastName;
+        
+        // If name is provided but firstName/lastName are not, split the name
+        if (name && firstName === undefined && lastName === undefined) {
+            const trimmed = (name || '').trim();
+            if (trimmed.length > 0) {
+                const lastSpaceIndex = trimmed.lastIndexOf(' ');
+                if (lastSpaceIndex === -1) {
+                    firstNameValue = trimmed;
+                    lastNameValue = '';
+                } else {
+                    firstNameValue = trimmed.substring(0, lastSpaceIndex).trim();
+                    lastNameValue = trimmed.substring(lastSpaceIndex + 1).trim();
+                }
+            }
+        }
+
+        const user = await userService.registerUser({ 
+            firstName: firstNameValue, 
+            lastName: lastNameValue, 
+            email, 
+            password, 
+            photoUrl 
+        });
         const token = userService.generateToken(user);
 
         res.status(201).json({ user, token });
@@ -71,13 +96,22 @@ router.get('/me', authMiddleware, async (req, res) => {
 
 router.put('/me', authMiddleware, async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { firstName, lastName, name, email, password } = req.body;
 
-        const updatedUser = await userService.updateProfile(req.user.id, {
-            name,
-            email,
-            password
-        });
+        const updates = {};
+        
+        // Support both new format (firstName/lastName) and legacy format (name)
+        if (firstName !== undefined || lastName !== undefined) {
+            if (firstName !== undefined) updates.firstName = firstName;
+            if (lastName !== undefined) updates.lastName = lastName;
+        } else if (name !== undefined) {
+            updates.name = name; // Legacy support
+        }
+        
+        if (email !== undefined) updates.email = email;
+        if (password !== undefined) updates.password = password;
+
+        const updatedUser = await userService.updateProfile(req.user.id, updates);
 
         const token = userService.generateToken(updatedUser);
 

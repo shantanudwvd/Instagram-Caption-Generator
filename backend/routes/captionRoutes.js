@@ -224,6 +224,7 @@ router.post('/generate-caption', upload.fields([
             logger.debug('Image saved for caption', { imageUrl, userId: req.user?.id });
 
             captionId = await captionLearningService.storeCaption({
+                userId: req.user.id,
                 caption,
                 imageAnalysis: imageAnalysisText,
                 imageFeatures,
@@ -282,6 +283,7 @@ router.post('/captions', async (req, res) => {
         }
 
         const captionId = await captionLearningService.storeCaption({
+            userId: req.user.id,
             caption,
             imageAnalysis,
             songAnalysis,
