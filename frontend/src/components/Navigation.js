@@ -55,9 +55,17 @@ const Navigation = () => {
                                 <span className="text-xs text-slate-500">Logged in</span>
                                 <span className="text-sm font-semibold text-slate-900">{user.name}</span>
                             </div>
-                            <div className="h-10 w-10 rounded-2xl bg-slate-900/90 text-white flex items-center justify-center font-semibold">
-                                {initials}
-                            </div>
+                            {user.photoUrl ? (
+                                <img
+                                    src={user.photoUrl}
+                                    alt={user.name}
+                                    className="h-10 w-10 rounded-2xl object-cover border border-slate-200"
+                                />
+                            ) : (
+                                <div className="h-10 w-10 rounded-2xl bg-slate-900/90 text-white flex items-center justify-center font-semibold">
+                                    {initials}
+                                </div>
+                            )}
                             <button
                                 onClick={logout}
                                 className="text-sm font-medium text-rose-500 hover:text-rose-600 transition-colors"

@@ -3,13 +3,16 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const ProfileSummary = () => {
-    const { user, updateProfile } = useAuth();
+    const { user, updateProfile, uploadPhoto } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
         name: user?.name || '',
         email: user?.email || '',
+        photoUrl: user?.photoUrl || '',
         password: ''
     });
+    const [photoFile, setPhotoFile] = useState(null);
+    const [photoPreview, setPhotoPreview] = useState(user?.photoUrl || '');
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -32,6 +35,14 @@ const ProfileSummary = () => {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
+    const handlePhotoSelect = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        setPhotoFile(file);
+        setPhotoPreview(URL.createObjectURL(file));
+        setError('');
+    };
+
     const handleSubmit = async (event) => {
         event.preventDefault();
         setSaving(true);
@@ -39,9 +50,15 @@ const ProfileSummary = () => {
         setSuccess('');
 
         try {
+            let uploadedPhotoUrl = formData.photoUrl;
+            if (photoFile) {
+                uploadedPhotoUrl = await uploadPhoto(photoFile);
+            }
+
             const payload = {
                 name: formData.name,
-                email: formData.email
+                email: formData.email,
+                photoUrl: uploadedPhotoUrl
             };
 
             if (formData.password.trim().length > 0) {
@@ -50,7 +67,12 @@ const ProfileSummary = () => {
 
             await updateProfile(payload);
             setSuccess('Profile updated successfully');
-            setFormData((prev) => ({ ...prev, password: '' }));
+            setFormData((prev) => ({
+                ...prev,
+                photoUrl: uploadedPhotoUrl || prev.photoUrl,
+                password: ''
+            }));
+            setPhotoFile(null);
             setIsEditing(false);
         } catch (err) {
             setError(err.message);
@@ -65,9 +87,17 @@ const ProfileSummary = () => {
             <div className="relative flex flex-col gap-6">
                 <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-4">
-                        <div className="h-16 w-16 rounded-2xl bg-slate-900 text-white flex items-center justify-center text-2xl font-semibold shadow-md">
-                            {initials}
-                        </div>
+                        {photoPreview ? (
+                            <img
+                                src={photoPreview}
+                                alt={user.name}
+                                className="h-16 w-16 rounded-2xl object-cover shadow-md border border-slate-200"
+                            />
+                        ) : (
+                            <div className="h-16 w-16 rounded-2xl bg-slate-900 text-white flex items-center justify-center text-2xl font-semibold shadow-md">
+                                {initials}
+                            </div>
+                        )}
                         <div>
                             <p className="text-xs uppercase tracking-wide text-slate-500">Signed in as</p>
                             <p className="text-2xl font-semibold text-slate-900">{user.name}</p>
@@ -151,6 +181,26 @@ const ProfileSummary = () => {
                             />
                             <p className="mt-1 text-xs text-slate-500">At least 8 characters. Leave empty to keep existing password.</p>
                         </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Profile Photo</label>
+                            <div className="flex items-center gap-3">
+                                <label className="inline-flex items-center px-3 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={handlePhotoSelect}
+                                    />
+                                    Choose file
+                                </label>
+                                {photoFile && (
+                                    <span className="text-xs text-slate-500">
+                                        {photoFile.name}
+                                    </span>
+                                )}
+                            </div>
+                            <p className="mt-1 text-xs text-slate-500">Upload a JPG or PNG (max 5MB) to update your avatar.</p>
+                        </div>
 
                         {error && <p className="text-sm text-rose-600">{error}</p>}
                         {success && <p className="text-sm text-emerald-600">{success}</p>}
@@ -170,8 +220,11 @@ const ProfileSummary = () => {
                                     setFormData({
                                         name: user.name,
                                         email: user.email,
+                                        photoUrl: user.photoUrl || '',
                                         password: ''
                                     });
+                                    setPhotoFile(null);
+                                    setPhotoPreview(user.photoUrl || '');
                                 }}
                                 className="inline-flex items-center px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                             >

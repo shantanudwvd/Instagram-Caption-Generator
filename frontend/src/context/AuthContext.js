@@ -119,6 +119,29 @@ export const AuthProvider = ({ children }) => {
         return data.user;
     };
 
+    const uploadPhoto = async (file) => {
+        ensureBackendUrl();
+        const formData = new FormData();
+        formData.append('photo', file);
+
+        const response = await fetch(`${backendUrl}/api/auth/photo`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Unable to upload photo');
+        }
+
+        persistSession(data);
+        return data.photoUrl || data.user?.photoUrl;
+    };
+
     const logout = () => {
         localStorage.removeItem('authToken');
         setToken(null);
@@ -132,7 +155,8 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
-        updateProfile
+        updateProfile,
+        uploadPhoto
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
