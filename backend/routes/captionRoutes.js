@@ -4,6 +4,8 @@ const OpenAI = require('openai');
 const SpotifyWebApi = require('spotify-web-api-node');
 const multer = require('multer');
 const fs = require('fs');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 const CaptionLearningService = require('../services/captionLearningService');
 const captionLearningService = new CaptionLearningService();
 const authMiddleware = require('../middleware/auth');
@@ -200,7 +202,27 @@ router.post('/generate-caption', upload.fields([
 
         // Store the caption for learning
         let captionId = null;
+        let imageUrl = null;
         try {
+            // Generate unique filename for image
+            const imageExt = path.extname(imageFile.originalname || imageFile.filename || '.jpg');
+            const captionsDir = path.join(process.cwd(), 'uploads', 'captions');
+            
+            // Ensure captions directory exists
+            if (!fs.existsSync(captionsDir)) {
+                fs.mkdirSync(captionsDir, { recursive: true });
+            }
+
+            // Generate unique filename using UUID
+            const imageFilename = `${uuidv4()}${imageExt}`;
+            const imagePath = path.join(captionsDir, imageFilename);
+            
+            // Copy image to captions directory
+            fs.copyFileSync(imageFile.path, imagePath);
+            imageUrl = `/uploads/captions/${imageFilename}`;
+            
+            logger.debug('Image saved for caption', { imageUrl, userId: req.user?.id });
+
             captionId = await captionLearningService.storeCaption({
                 caption,
                 imageAnalysis: imageAnalysisText,
@@ -209,7 +231,8 @@ router.post('/generate-caption', upload.fields([
                 songFeatures,
                 relationshipAnalysis,
                 userContext,
-                options: customization
+                options: customization,
+                imageUrl: imageUrl
             });
             logger.debug('Caption stored for learning', { captionId, userId: req.user?.id });
         } catch (storeError) {
@@ -218,6 +241,17 @@ router.post('/generate-caption', upload.fields([
                 stack: storeError.stack,
                 userId: req.user?.id 
             });
+            // Delete saved image if caption storage failed
+            if (imageUrl) {
+                try {
+                    const imagePath = path.join(process.cwd(), imageUrl);
+                    if (fs.existsSync(imagePath)) {
+                        fs.unlinkSync(imagePath);
+                    }
+                } catch (cleanupError) {
+                    logger.error('Error cleaning up image after failed storage', { error: cleanupError.message });
+                }
+            }
             // Continue even if storing fails
         }
 
@@ -227,7 +261,7 @@ router.post('/generate-caption', upload.fields([
             fs.unlinkSync(audioFile.path);
         }
 
-        res.json({ caption, captionId });
+        res.json({ caption, captionId, imageUrl });
     } catch (error) {
         logger.error('Error generating caption', { 
             error: error.message, 

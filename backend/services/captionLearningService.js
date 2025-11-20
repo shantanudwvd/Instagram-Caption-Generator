@@ -182,6 +182,7 @@ class CaptionLearningService {
                 caption: this._sanitizeText(captionData.caption),
                 imageAnalysis: this._sanitizeText(captionData.imageAnalysis || ''),
                 imageFeatures: this._sanitizeObject(captionData.imageFeatures || null),
+                imageUrl: captionData.imageUrl || null,
                 songAnalysis: this._sanitizeObject(captionData.songAnalysis || {}),
                 songFeatures: this._sanitizeObject(captionData.songFeatures || null),
                 relationshipAnalysis: this._sanitizeObject(captionData.relationshipAnalysis || null),
@@ -778,7 +779,8 @@ class CaptionLearningService {
                     createdAt: 1,
                     avgRating: 1,
                     feedbackCount: 1,
-                    options: 1
+                    options: 1,
+                    imageUrl: 1
                 })
                 .toArray();
 
@@ -789,11 +791,98 @@ class CaptionLearningService {
                 avgRating: caption.avgRating || 0,
                 feedbackCount: caption.feedbackCount || 0,
                 tone: caption?.options?.tone || null,
-                length: caption?.options?.length || null
+                length: caption?.options?.length || null,
+                imageUrl: caption.imageUrl || null
             }));
         } catch (error) {
             logger.error('Error fetching recent captions:', error);
             throw new Error('Failed to fetch recent captions');
+        }
+    }
+
+    /**
+     * Get filtered captions with search and pagination
+     *
+     * @param {Object} filters - Filter options
+     * @param {string} filters.search - Text search query
+     * @param {string} filters.tone - Filter by tone
+     * @param {string} filters.length - Filter by length
+     * @param {string} filters.sortBy - Sort field (createdAt, avgRating, feedbackCount)
+     * @param {string} filters.sortOrder - Sort order (asc, desc)
+     * @param {number} filters.limit - Number of results per page
+     * @param {number} filters.offset - Pagination offset
+     * @returns {Promise<Object>} Paginated captions with metadata
+     */
+    async getFilteredCaptions(filters = {}) {
+        try {
+            await this._initializeConnection();
+            const db = this.getDb();
+            const captionColl = db.collection(this.captionCollection);
+
+            // Build query
+            const query = { status: 'active' };
+
+            // Text search filter
+            if (filters.search && filters.search.trim()) {
+                query.caption = { $regex: filters.search.trim(), $options: 'i' };
+            }
+
+            // Tone filter
+            if (filters.tone) {
+                query['options.tone'] = filters.tone;
+            }
+
+            // Length filter
+            if (filters.length) {
+                query['options.length'] = filters.length;
+            }
+
+            // Build sort object
+            const sortField = filters.sortBy || 'createdAt';
+            const sortOrder = filters.sortOrder === 'asc' ? 1 : -1;
+            const sort = { [sortField]: sortOrder };
+
+            // Pagination
+            const limit = Math.min(Math.max(parseInt(filters.limit, 10) || 50, 1), 100);
+            const offset = Math.max(parseInt(filters.offset, 10) || 0, 0);
+
+            // Get total count for pagination
+            const totalCount = await captionColl.countDocuments(query);
+
+            // Fetch captions
+            const captions = await captionColl.find(query)
+                .sort(sort)
+                .skip(offset)
+                .limit(limit)
+                .project({
+                    caption: 1,
+                    createdAt: 1,
+                    avgRating: 1,
+                    feedbackCount: 1,
+                    options: 1,
+                    imageUrl: 1
+                })
+                .toArray();
+
+            return {
+                captions: captions.map(caption => ({
+                    id: caption._id.toString(),
+                    caption: caption.caption,
+                    createdAt: caption.createdAt,
+                    avgRating: caption.avgRating || 0,
+                    feedbackCount: caption.feedbackCount || 0,
+                    tone: caption?.options?.tone || null,
+                    length: caption?.options?.length || null,
+                    imageUrl: caption.imageUrl || null
+                })),
+                totalCount,
+                limit,
+                offset,
+                hasMore: offset + limit < totalCount
+            };
+        } catch (error) {
+            logger.error('Error fetching filtered captions:', error);
+            throw new Error('Failed to fetch filtered captions');
         }
     }
 

@@ -3,6 +3,9 @@ import Navigation from '../components/Navigation';
 import AuthGate from '../components/auth/AuthGate';
 import { useAuth } from '../context/AuthContext';
 import ProfileSummary from '../components/ProfileSummary';
+import ProfileStats from '../components/ProfileStats';
+import QuickActions from '../components/QuickActions';
+import RecentCaptionsPreview from '../components/RecentCaptionsPreview';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const ProfilePage = () => {
@@ -56,6 +59,18 @@ const ProfilePage = () => {
 
                     <div className="animate-fade-in-up animation-delay-300">
                         <ProfileSummary />
+                    </div>
+
+                    <div className="animate-fade-in-up animation-delay-400">
+                        <ProfileStats />
+                    </div>
+
+                    <div className="animate-fade-in-up animation-delay-500">
+                        <QuickActions />
+                    </div>
+
+                    <div className="animate-fade-in-up animation-delay-600">
+                        <RecentCaptionsPreview />
                     </div>
                 </div>
             </div>
