@@ -6,6 +6,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const logger = require('../utils/logger');
+const { uploadImage, deleteImage, extractPublicId } = require('../utils/cloudinary');
 
 const profileUploadDir = path.join(process.cwd(), 'uploads', 'profile_photos');
 if (!fs.existsSync(profileUploadDir)) {
@@ -124,6 +125,8 @@ router.put('/me', authMiddleware, async (req, res) => {
 
 // Upload and attach profile photo
 router.post('/photo', authMiddleware, upload.single('photo'), async (req, res) => {
+    let tempFilePath = null;
+    
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'Photo file is required' });
@@ -154,7 +157,50 @@ router.post('/photo', authMiddleware, upload.single('photo'), async (req, res) =
             hasFile: !!req.file 
         });
 
-        const photoUrl = `${req.protocol}://${req.get('host')}/uploads/profile_photos/${req.file.filename}`;
+        tempFilePath = req.file.path;
+
+        // Get current user to check for existing photo
+        const currentUser = await userService.findUserById(userId);
+        const oldPhotoUrl = currentUser?.photoUrl;
+
+        // Upload to Cloudinary if configured, otherwise fall back to local storage
+        let photoUrl;
+        if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+            try {
+                // Upload to Cloudinary
+                const uploadResult = await uploadImage(tempFilePath, 'profile_photos', `profile_${userId}`);
+                photoUrl = uploadResult.url;
+
+                // Delete old photo from Cloudinary if it exists
+                if (oldPhotoUrl && oldPhotoUrl.includes('cloudinary.com')) {
+                    const oldPublicId = extractPublicId(oldPhotoUrl);
+                    if (oldPublicId) {
+                        try {
+                            await deleteImage(oldPublicId);
+                            logger.info('Deleted old profile photo from Cloudinary', { userId, oldPublicId });
+                        } catch (deleteError) {
+                            logger.warn('Failed to delete old profile photo from Cloudinary', { 
+                                userId, 
+                                oldPublicId, 
+                                error: deleteError.message 
+                            });
+                            // Don't fail the upload if deletion fails
+                        }
+                    }
+                }
+            } catch (cloudinaryError) {
+                logger.error('Cloudinary upload failed, falling back to local storage', {
+                    error: cloudinaryError.message,
+                    userId
+                });
+                // Fall back to local storage
+                photoUrl = `${req.protocol}://${req.get('host')}/uploads/profile_photos/${req.file.filename}`;
+            }
+        } else {
+            // Use local storage if Cloudinary is not configured
+            logger.warn('Cloudinary not configured, using local storage', { userId });
+            photoUrl = `${req.protocol}://${req.get('host')}/uploads/profile_photos/${req.file.filename}`;
+        }
         
         const updatedUser = await userService.updateProfile(userId, {
             photoUrl,
@@ -163,9 +209,34 @@ router.post('/photo', authMiddleware, upload.single('photo'), async (req, res) =
         
         const token = userService.generateToken(updatedUser);
 
-        logger.info('Profile photo uploaded successfully', { userId });
+        // Clean up temporary file if uploaded to Cloudinary
+        if (photoUrl.includes('cloudinary.com') && tempFilePath && fs.existsSync(tempFilePath)) {
+            try {
+                fs.unlinkSync(tempFilePath);
+                logger.debug('Cleaned up temporary file', { tempFilePath });
+            } catch (cleanupError) {
+                logger.warn('Failed to clean up temporary file', { 
+                    tempFilePath, 
+                    error: cleanupError.message 
+                });
+            }
+        }
+
+        logger.info('Profile photo uploaded successfully', { userId, photoUrl });
         res.json({ user: updatedUser, token, photoUrl });
     } catch (error) {
+        // Clean up temporary file on error
+        if (tempFilePath && fs.existsSync(tempFilePath)) {
+            try {
+                fs.unlinkSync(tempFilePath);
+            } catch (cleanupError) {
+                logger.warn('Failed to clean up temporary file on error', { 
+                    tempFilePath, 
+                    error: cleanupError.message 
+                });
+            }
+        }
+
         logger.error('Error uploading profile photo', { 
             error: error.message,
             stack: error.stack,

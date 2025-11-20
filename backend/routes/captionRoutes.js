@@ -11,6 +11,7 @@ const captionLearningService = new CaptionLearningService();
 const authMiddleware = require('../middleware/auth');
 const SongRecommendationService = require('../services/songRecommendationService');
 const logger = require('../utils/logger');
+const { uploadImage, deleteImage, extractPublicId } = require('../utils/cloudinary');
 
 // Initialize OpenAI
 const openai = new OpenAI({
@@ -203,25 +204,65 @@ router.post('/generate-caption', upload.fields([
         // Store the caption for learning
         let captionId = null;
         let imageUrl = null;
+        let cloudinaryPublicId = null;
         try {
-            // Generate unique filename for image
-            const imageExt = path.extname(imageFile.originalname || imageFile.filename || '.jpg');
-            const captionsDir = path.join(process.cwd(), 'uploads', 'captions');
-            
-            // Ensure captions directory exists
-            if (!fs.existsSync(captionsDir)) {
-                fs.mkdirSync(captionsDir, { recursive: true });
-            }
+            // Upload image to Cloudinary if configured, otherwise use local storage
+            if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+                try {
+                    // Generate unique public ID for Cloudinary
+                    const publicId = `caption_${uuidv4()}`;
+                    
+                    // Upload to Cloudinary
+                    const uploadResult = await uploadImage(imageFile.path, 'captions', publicId);
+                    imageUrl = uploadResult.url;
+                    cloudinaryPublicId = uploadResult.publicId;
+                    
+                    logger.debug('Image uploaded to Cloudinary', { imageUrl, publicId: cloudinaryPublicId, userId: req.user?.id });
+                } catch (cloudinaryError) {
+                    logger.error('Cloudinary upload failed, falling back to local storage', {
+                        error: cloudinaryError.message,
+                        userId: req.user?.id
+                    });
+                    // Fall back to local storage
+                    const imageExt = path.extname(imageFile.originalname || imageFile.filename || '.jpg');
+                    const captionsDir = path.join(process.cwd(), 'uploads', 'captions');
+                    
+                    // Ensure captions directory exists
+                    if (!fs.existsSync(captionsDir)) {
+                        fs.mkdirSync(captionsDir, { recursive: true });
+                    }
 
-            // Generate unique filename using UUID
-            const imageFilename = `${uuidv4()}${imageExt}`;
-            const imagePath = path.join(captionsDir, imageFilename);
-            
-            // Copy image to captions directory
-            fs.copyFileSync(imageFile.path, imagePath);
-            imageUrl = `/uploads/captions/${imageFilename}`;
-            
-            logger.debug('Image saved for caption', { imageUrl, userId: req.user?.id });
+                    // Generate unique filename using UUID
+                    const imageFilename = `${uuidv4()}${imageExt}`;
+                    const imagePath = path.join(captionsDir, imageFilename);
+                    
+                    // Copy image to captions directory
+                    fs.copyFileSync(imageFile.path, imagePath);
+                    imageUrl = `/uploads/captions/${imageFilename}`;
+                    
+                    logger.debug('Image saved locally for caption', { imageUrl, userId: req.user?.id });
+                }
+            } else {
+                // Use local storage if Cloudinary is not configured
+                logger.warn('Cloudinary not configured, using local storage', { userId: req.user?.id });
+                const imageExt = path.extname(imageFile.originalname || imageFile.filename || '.jpg');
+                const captionsDir = path.join(process.cwd(), 'uploads', 'captions');
+                
+                // Ensure captions directory exists
+                if (!fs.existsSync(captionsDir)) {
+                    fs.mkdirSync(captionsDir, { recursive: true });
+                }
+
+                // Generate unique filename using UUID
+                const imageFilename = `${uuidv4()}${imageExt}`;
+                const imagePath = path.join(captionsDir, imageFilename);
+                
+                // Copy image to captions directory
+                fs.copyFileSync(imageFile.path, imagePath);
+                imageUrl = `/uploads/captions/${imageFilename}`;
+                
+                logger.debug('Image saved locally for caption', { imageUrl, userId: req.user?.id });
+            }
 
             captionId = await captionLearningService.storeCaption({
                 userId: req.user.id,
@@ -245,9 +286,16 @@ router.post('/generate-caption', upload.fields([
             // Delete saved image if caption storage failed
             if (imageUrl) {
                 try {
-                    const imagePath = path.join(process.cwd(), imageUrl);
-                    if (fs.existsSync(imagePath)) {
-                        fs.unlinkSync(imagePath);
+                    if (cloudinaryPublicId) {
+                        // Delete from Cloudinary
+                        await deleteImage(cloudinaryPublicId);
+                        logger.info('Deleted image from Cloudinary after failed storage', { cloudinaryPublicId });
+                    } else {
+                        // Delete from local storage
+                        const imagePath = path.join(process.cwd(), imageUrl);
+                        if (fs.existsSync(imagePath)) {
+                            fs.unlinkSync(imagePath);
+                        }
                     }
                 } catch (cleanupError) {
                     logger.error('Error cleaning up image after failed storage', { error: cleanupError.message });
