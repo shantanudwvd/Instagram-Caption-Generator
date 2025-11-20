@@ -12,12 +12,82 @@ dotenv.config();
 
 const app = express();
 
-const corsOptions = {
-    origin: [
+// CORS configuration - allows frontend origins to access the backend
+const getAllowedOrigins = () => {
+    const origins = [
         "https://captionmuse.adityagusain.com",
         "https://instagram-caption-generator-shantanudwvds-projects.vercel.app",
         "http://localhost:3000", // Frontend development URL
-    ],
+    ];
+
+    // Add origins from environment variable if provided (comma-separated)
+    // Example: CORS_ORIGINS=https://myapp.vercel.app,https://myapp.netlify.app
+    if (process.env.CORS_ORIGINS) {
+        const envOrigins = process.env.CORS_ORIGINS.split(',').map(origin => origin.trim()).filter(Boolean);
+        origins.push(...envOrigins);
+        logger.info('Added CORS origins from environment', { envOrigins });
+    }
+
+    // Add common Vercel pattern if FRONTEND_URL is set
+    if (process.env.FRONTEND_URL) {
+        origins.push(process.env.FRONTEND_URL);
+        // Also add without trailing slash
+        if (process.env.FRONTEND_URL.endsWith('/')) {
+            origins.push(process.env.FRONTEND_URL.slice(0, -1));
+        } else {
+            origins.push(process.env.FRONTEND_URL + '/');
+        }
+    }
+
+    // Remove duplicates
+    return [...new Set(origins)];
+};
+
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) {
+            return callback(null, true);
+        }
+
+        const allowedOrigins = getAllowedOrigins();
+        
+        // Normalize origin (remove trailing slash, lowercase for comparison)
+        const normalizedOrigin = origin.toLowerCase().replace(/\/$/, '');
+        const normalizedAllowed = allowedOrigins.map(o => o.toLowerCase().replace(/\/$/, ''));
+        
+        // Check if origin is in allowed list (case-insensitive)
+        if (normalizedAllowed.indexOf(normalizedOrigin) !== -1) {
+            logger.debug('CORS allowed origin (exact match)', { origin, normalizedOrigin });
+            return callback(null, true);
+        }
+
+        // Allow Vercel preview deployments (*.vercel.app)
+        if (origin.includes('.vercel.app')) {
+            logger.debug('CORS allowed Vercel origin', { origin });
+            return callback(null, true);
+        }
+
+        // Allow Netlify deployments (*.netlify.app)
+        if (origin.includes('.netlify.app')) {
+            logger.debug('CORS allowed Netlify origin', { origin });
+            return callback(null, true);
+        }
+
+        // In development, allow localhost origins
+        if (process.env.NODE_ENV !== 'production' && origin.startsWith('http://localhost')) {
+            logger.debug('CORS allowed localhost origin (dev)', { origin });
+            return callback(null, true);
+        }
+
+        logger.warn('CORS blocked origin', { 
+            origin, 
+            normalizedOrigin,
+            allowedOrigins,
+            normalizedAllowed 
+        });
+        callback(new Error('Not allowed by CORS'));
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
     credentials: true,
