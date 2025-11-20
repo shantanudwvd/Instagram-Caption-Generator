@@ -5,6 +5,8 @@ const dotenv = require('dotenv');
 const routes = require('./routes');
 const logger = require('./utils/logger');
 const requestLogger = require('./middleware/requestLogger');
+const path = require('path');
+const fs = require('fs');
 
 dotenv.config();
 
@@ -14,11 +16,12 @@ const corsOptions = {
     origin: [
         "https://captionmuse.adityagusain.com",
         "https://instagram-caption-generator-shantanudwvds-projects.vercel.app",
-        "http://localhost:3000", // Replace with your Vercel frontend URL
+        "http://localhost:3000", // Frontend development URL
     ],
-    methods: "GET,POST,OPTIONS",
-    allowedHeaders: "Content-Type,Authorization",
-    credentials: true
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    credentials: true,
+    optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
 };
 
 app.use(cors(corsOptions));
@@ -30,6 +33,13 @@ app.use(express.json());
 
 // Request logging middleware (should be early in the middleware chain)
 app.use(requestLogger);
+
+// Serve uploaded assets
+const uploadsDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsDir));
 
 // Apply routes
 routes(app);

@@ -73,6 +73,7 @@ class UserService {
             id: user._id ? user._id.toString() : user.id,
             name: user.name,
             email: user.email,
+            photoUrl: user.photoUrl || null,
             createdAt: user.createdAt,
             lastLoginAt: user.lastLoginAt
         };
@@ -92,6 +93,25 @@ class UserService {
             throw new Error('Password must be at least 8 characters long');
         }
         return password;
+    }
+
+    _validatePhotoUrl(photoUrl) {
+        if (!photoUrl) return null;
+        const trimmed = photoUrl.trim();
+        if (trimmed.length === 0) return null;
+
+        try {
+            const url = new URL(trimmed);
+            if (!['http:', 'https:'].includes(url.protocol)) {
+                throw new Error('Photo URL must start with http or https');
+            }
+            if (trimmed.length > 1024) {
+                throw new Error('Photo URL is too long');
+            }
+            return trimmed;
+        } catch (error) {
+            throw new Error('A valid photo URL is required');
+        }
     }
 
     _hashPassword(password) {
@@ -180,13 +200,14 @@ class UserService {
         return JSON.parse(payloadJson);
     }
 
-    async registerUser({ name, email, password }) {
+    async registerUser({ name, email, password, photoUrl }) {
         await this._initializeConnection();
         const db = this.getDb();
         const collection = db.collection(this.collectionName);
 
         const sanitizedEmail = this._validateEmail(email);
         const sanitizedName = (name || '').trim();
+        const sanitizedPhotoUrl = this._validatePhotoUrl(photoUrl);
         this._validatePassword(password);
 
         const existing = await collection.findOne({ email: sanitizedEmail });
@@ -198,6 +219,7 @@ class UserService {
         const user = {
             name: sanitizedName || 'New User',
             email: sanitizedEmail,
+            photoUrl: sanitizedPhotoUrl || null,
             passwordHash: this._hashPassword(password),
             createdAt: now,
             lastLoginAt: null
@@ -257,7 +279,8 @@ class UserService {
         return this._buildToken({
             userId: user.id,
             email: user.email,
-            name: user.name
+            name: user.name,
+            photoUrl: user.photoUrl || null
         });
     }
 
@@ -266,9 +289,18 @@ class UserService {
         const db = this.getDb();
         const collection = db.collection(this.collectionName);
 
-        if (!ObjectId.isValid(userId)) {
-            throw new Error('Invalid user ID');
-        }
+        const logger = require('../utils/logger');
+        
+        logger.debug('updateProfile called', { 
+            userId, 
+            userIdType: typeof userId,
+            hasEmail: !!updates.email,
+            updateKeys: Object.keys(updates)
+        });
+
+        // Check if userId is a valid ObjectId
+        const isValidObjectId = ObjectId.isValid(userId);
+        logger.debug('User ID validation', { userId, isValidObjectId });
 
         const updateDoc = {};
 
@@ -284,6 +316,11 @@ class UserService {
             updateDoc.email = this._validateEmail(updates.email);
         }
 
+        if (typeof updates.photoUrl === 'string') {
+            const sanitizedPhoto = this._validatePhotoUrl(updates.photoUrl);
+            updateDoc.photoUrl = sanitizedPhoto;
+        }
+
         if (typeof updates.password === 'string' && updates.password.length > 0) {
             this._validatePassword(updates.password);
             updateDoc.passwordHash = this._hashPassword(updates.password);
@@ -293,30 +330,115 @@ class UserService {
             throw new Error('No updates provided');
         }
 
-        const result = await collection.findOneAndUpdate(
-            { _id: new ObjectId(userId) },
-            { $set: updateDoc },
-            { returnDocument: 'after' }
-        );
+        // First, verify the user exists before trying to update
+        let existingUser = null;
+        if (isValidObjectId) {
+            existingUser = await collection.findOne({ _id: new ObjectId(userId) });
+            logger.debug('User existence check by _id', { 
+                found: !!existingUser,
+                userId,
+                foundUserId: existingUser?._id?.toString()
+            });
+        }
 
-        if (!result.value) {
+        // If not found by _id, try by email (case-insensitive)
+        if (!existingUser && updateDoc.email) {
+            existingUser = await collection.findOne({ 
+                email: { $regex: new RegExp(`^${updateDoc.email}$`, 'i') } 
+            });
+            logger.debug('User existence check by email', { 
+                found: !!existingUser,
+                email: updateDoc.email,
+                foundEmail: existingUser?.email,
+                foundUserId: existingUser?._id?.toString()
+            });
+        }
+
+        // If user still not found, throw error
+        if (!existingUser) {
+            // Try to find any user with similar email for debugging
+            let similarUsers = [];
+            if (updateDoc.email) {
+                try {
+                    const emailPrefix = updateDoc.email.split('@')[0];
+                    similarUsers = await collection.find({ 
+                        email: { $regex: emailPrefix, $options: 'i' } 
+                    }).limit(3).toArray();
+                    similarUsers = similarUsers.map(u => ({ 
+                        id: u._id.toString(), 
+                        email: u.email 
+                    }));
+                } catch (debugError) {
+                    // Ignore debug query errors
+                }
+            }
+
+            logger.error('User not found in database', { 
+                userId,
+                isValidObjectId,
+                email: updateDoc.email,
+                similarUsers
+            });
             throw new Error('User not found');
         }
 
-        return this._sanitizeUser(result.value);
+        // Now perform the update - use the found user's _id
+        const updateFilter = { _id: existingUser._id };
+        
+        // Perform the update
+        await collection.updateOne(
+            updateFilter,
+            { $set: updateDoc }
+        );
+
+        // Fetch the updated user
+        const updatedUser = await collection.findOne({ _id: existingUser._id });
+        
+        logger.debug('Update result', { 
+            found: !!updatedUser,
+            updatedUserId: updatedUser?._id?.toString(),
+            updatedFields: updatedUser ? Object.keys(updateDoc) : []
+        });
+
+        // If update didn't return a document, something went wrong
+        if (!updatedUser) {
+            logger.error('Update operation failed - user not found after update', { 
+                userId,
+                existingUserId: existingUser._id.toString(),
+                updateDoc
+            });
+            throw new Error('Failed to update user profile');
+        }
+
+        return this._sanitizeUser(updatedUser);
     }
 
     async verifyToken(token) {
+        const logger = require('../utils/logger');
         const payload = this._verifyTokenSignature(token);
 
         if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
             throw new Error('Token has expired');
         }
 
+        logger.debug('verifyToken - looking up user', { 
+            userIdFromToken: payload.userId,
+            emailFromToken: payload.email 
+        });
+
         const user = await this.findUserById(payload.userId);
         if (!user) {
+            logger.error('User not found in verifyToken', { 
+                userIdFromToken: payload.userId,
+                emailFromToken: payload.email 
+            });
             throw new Error('User not found');
         }
+
+        logger.debug('verifyToken - user found', { 
+            userId: user.id,
+            email: user.email 
+        });
 
         return user;
     }
