@@ -48,28 +48,32 @@ const ProfileStats = () => {
             value: stats ? formatNumber(stats.totalCaptions) : '—',
             icon: FileText,
             gradient: 'from-purple-500 to-purple-600',
-            bgGradient: 'from-purple-50 to-purple-100'
+            bgGradient: 'from-purple-50 to-purple-100',
+            sparkle: 'glow-pulse-purple'
         },
         {
             label: 'Average Rating',
             value: stats?.avgRating ? stats.avgRating.toFixed(1) : '—',
             icon: Star,
             gradient: 'from-pink-500 to-pink-600',
-            bgGradient: 'from-pink-50 to-pink-100'
+            bgGradient: 'from-pink-50 to-pink-100',
+            sparkle: 'glow-pulse-pink'
         },
         {
             label: 'Feedback Received',
             value: stats ? formatNumber(stats.totalFeedback) : '—',
             icon: MessageSquare,
             gradient: 'from-orange-500 to-orange-600',
-            bgGradient: 'from-orange-50 to-orange-100'
+            bgGradient: 'from-orange-50 to-orange-100',
+            sparkle: 'glow-pulse-orange'
         },
         {
             label: 'Total Activity',
             value: stats ? formatNumber(stats.totalCaptions + (stats.totalFeedback || 0)) : '—',
             icon: Activity,
             gradient: 'from-purple-500 via-pink-500 to-orange-500',
-            bgGradient: 'from-purple-50 via-pink-50 to-orange-50'
+            bgGradient: 'from-purple-50 via-pink-50 to-orange-50',
+            sparkle: 'glow-pulse-multi'
         }
     ];
 
@@ -108,8 +112,9 @@ const ProfileStats = () => {
                         className={`bg-white/90 backdrop-blur-sm rounded-xl border-2 border-slate-200 p-6 shadow-lg transform transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in-up`}
                         style={{ animationDelay: `${index * 100}ms` }}
                     >
-                        <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${stat.bgGradient} mb-4`}>
-                            <Icon className={`w-6 h-6 ${stat.gradient === 'from-purple-500 via-pink-500 to-orange-500' ? 'text-purple-600' : stat.gradient.includes('purple') ? 'text-purple-600' : stat.gradient.includes('pink') ? 'text-pink-600' : 'text-orange-600'}`} />
+                        <div className={`relative inline-flex p-3 rounded-xl bg-gradient-to-br ${stat.bgGradient} mb-4 overflow-visible`}>
+                            <span className={`absolute inset-0 rounded-xl ${stat.sparkle} pointer-events-none`}></span>
+                            <Icon className={`relative w-6 h-6 icon-animated ${stat.gradient === 'from-purple-500 via-pink-500 to-orange-500' ? 'text-purple-600' : stat.gradient.includes('purple') ? 'text-purple-600' : stat.gradient.includes('pink') ? 'text-pink-600' : 'text-orange-600'} transition-transform duration-300 group-hover:scale-110`} />
                         </div>
                         <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">{stat.label}</p>
                         <p className={`text-3xl font-bold bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}>
@@ -123,4 +128,3 @@ const ProfileStats = () => {
 };
 
 export default ProfileStats;
-

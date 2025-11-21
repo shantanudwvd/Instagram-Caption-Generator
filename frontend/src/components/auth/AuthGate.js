@@ -167,9 +167,17 @@ const AuthGate = () => {
                         {mode === 'login' && (
                             <button
                                 type="button"
-                                onClick={() => {
+                                onClick={async () => {
                                     const supportEmail = process.env.REACT_APP_SUPPORT_EMAIL || 'support@captionmuse.com';
-                                    window.location.href = `mailto:${supportEmail}?subject=Password reset request`;
+                                    const message = `Please email ${supportEmail} to reset your password.`;
+                                    try {
+                                        if (navigator?.clipboard?.writeText) {
+                                            await navigator.clipboard.writeText(supportEmail);
+                                        }
+                                    } catch (err) {
+                                        // If clipboard fails, just show the alert
+                                    }
+                                    alert(message);
                                 }}
                                 className="text-sm font-semibold text-purple-600 hover:text-purple-700 transition-colors inline-flex items-center gap-1"
                             >

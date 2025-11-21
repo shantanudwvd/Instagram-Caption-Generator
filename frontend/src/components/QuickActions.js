@@ -10,7 +10,8 @@ const QuickActions = () => {
             icon: Sparkles,
             link: '/generator',
             gradient: 'from-purple-600 via-pink-500 to-orange-400',
-            bgGradient: 'from-purple-50 via-pink-50 to-orange-50'
+            bgGradient: 'from-purple-50 via-pink-50 to-orange-50',
+            sparkle: 'glow-pulse-purple'
         },
         {
             title: 'View Dashboard',
@@ -18,7 +19,8 @@ const QuickActions = () => {
             icon: LayoutDashboard,
             link: '/dashboard',
             gradient: 'from-purple-600 to-pink-500',
-            bgGradient: 'from-purple-50 to-pink-50'
+            bgGradient: 'from-purple-50 to-pink-50',
+            sparkle: 'glow-pulse-purple'
         },
         {
             title: 'Browse Captions',
@@ -26,7 +28,8 @@ const QuickActions = () => {
             icon: List,
             link: '/captions',
             gradient: 'from-pink-500 to-orange-500',
-            bgGradient: 'from-pink-50 to-orange-50'
+            bgGradient: 'from-pink-50 to-orange-50',
+            sparkle: 'glow-pulse-pink'
         },
         {
             title: 'Tips & Tricks',
@@ -34,7 +37,8 @@ const QuickActions = () => {
             icon: HelpCircle,
             link: '/tips',
             gradient: 'from-purple-500 via-pink-500 to-orange-500',
-            bgGradient: 'from-purple-50 via-pink-50 to-orange-50'
+            bgGradient: 'from-purple-50 via-pink-50 to-orange-50',
+            sparkle: 'glow-pulse-multi'
         }
     ];
 
@@ -48,8 +52,9 @@ const QuickActions = () => {
                         style={{ animationDelay: `${index * 100}ms` }}
                         onClick={action.onClick}
                     >
-                        <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${action.bgGradient} mb-4 group-hover:scale-110 transition-transform duration-200`}>
-                            <Icon className={`w-6 h-6 ${action.gradient.includes('purple') && action.gradient.includes('orange') ? 'text-purple-600' : action.gradient.includes('purple') ? 'text-purple-600' : action.gradient.includes('pink') ? 'text-pink-600' : 'text-orange-600'}`} />
+                        <div className={`relative inline-flex p-3 rounded-xl bg-gradient-to-br ${action.bgGradient} mb-4 group-hover:scale-110 transition-transform duration-200 overflow-visible`}>
+                            <span className={`absolute inset-0 rounded-xl ${action.sparkle} pointer-events-none`}></span>
+                            <Icon className={`relative w-6 h-6 icon-animated ${action.gradient.includes('purple') && action.gradient.includes('orange') ? 'text-purple-600' : action.gradient.includes('purple') ? 'text-purple-600' : action.gradient.includes('pink') ? 'text-pink-600' : 'text-orange-600'} transition-transform duration-300 group-hover:scale-110`} />
                         </div>
                         <h3 className={`text-lg font-semibold bg-gradient-to-r ${action.gradient} bg-clip-text text-transparent mb-1`}>
                             {action.title}
