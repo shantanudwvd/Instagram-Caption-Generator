@@ -33,8 +33,11 @@ export const ThemeProvider = ({ children }) => {
 
     useEffect(() => {
         const root = document.documentElement;
-        root.classList.remove('theme-light', 'theme-dark');
+        root.classList.remove('theme-light', 'theme-dark', 'dark');
         root.classList.add(`theme-${theme}`);
+        if (theme === 'dark') {
+            root.classList.add('dark');
+        }
         localStorage.setItem(STORAGE_KEY, theme);
     }, [theme]);
 

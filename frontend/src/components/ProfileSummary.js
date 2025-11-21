@@ -132,7 +132,7 @@ const ProfileSummary = () => {
                         </Link>
                         <Link
                             to="/dashboard"
-                            className="inline-flex items-center px-4 py-2 rounded-2xl border-2 border-slate-200 text-slate-700 text-sm font-semibold hover:bg-gradient-to-r hover:from-purple-50 hover:via-pink-50 hover:to-orange-50 hover:border-purple-300 transform hover:scale-105 active:scale-95 transition-all duration-200"
+                            className="btn-secondary inline-flex items-center px-4 py-2 rounded-2xl text-sm font-semibold transform hover:scale-105 active:scale-95 transition-all duration-200"
                         >
                             View Dashboard
                         </Link>

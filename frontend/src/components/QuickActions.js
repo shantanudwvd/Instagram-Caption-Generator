@@ -32,13 +32,9 @@ const QuickActions = () => {
             title: 'Tips & Tricks',
             description: 'Learn best practices',
             icon: HelpCircle,
-            link: '#',
+            link: '/tips',
             gradient: 'from-purple-500 via-pink-500 to-orange-500',
-            bgGradient: 'from-purple-50 via-pink-50 to-orange-50',
-            onClick: (e) => {
-                e.preventDefault();
-                alert('Tips & Tricks coming soon!');
-            }
+            bgGradient: 'from-purple-50 via-pink-50 to-orange-50'
         }
     ];
 
@@ -77,4 +73,3 @@ const QuickActions = () => {
 };
 
 export default QuickActions;
-

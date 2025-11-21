@@ -305,25 +305,42 @@ const UserDashboard = () => {
                         )}
                     </div>
 
-                    <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 transform transition-all duration-300 hover:shadow-xl animate-fade-in-up animation-delay-700">
+                    <div className="bg-white/90 dark:bg-slate-900/80 backdrop-blur-sm rounded-lg shadow-lg p-4 transform transition-all duration-300 hover:shadow-xl animate-fade-in-up animation-delay-700">
                         <h3 className="text-lg font-semibold bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent mb-4">Recent Captions</h3>
                         {recentCaptions.length === 0 ? (
                             <p className="text-sm text-gray-500">Generate your first caption to see it here.</p>
                         ) : (
                             <ul className="space-y-4">
                                 {recentCaptions.map((item, index) => (
-                                    <li key={item.id} className="border rounded-lg p-4 bg-white/50 backdrop-blur-sm transform transition-all duration-300 hover:shadow-md hover:scale-[1.02] animate-fade-in-up" style={{ animationDelay: `${800 + index * 50}ms` }}>
-                                        <p className="text-gray-900">{item.caption}</p>
-                                        <div className="flex flex-wrap gap-4 text-sm text-gray-500 mt-2">
-                                            <span>
-                                                {item.createdAt
-                                                    ? new Date(item.createdAt).toLocaleString()
-                                                    : ''}
-                                            </span>
-                                            {item.tone && <span>tone: {item.tone}</span>}
-                                            {item.length && <span>length: {item.length}</span>}
-                                            <span>rating: {item.avgRating ? item.avgRating.toFixed(1) : '—'}</span>
-                                            <span>feedback: {formatNumber(item.feedbackCount)}</span>
+                                    <li
+                                        key={item.id}
+                                        className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800/50 bg-gradient-to-r from-white/95 via-white/90 to-slate-50/90 dark:from-slate-900/85 dark:via-slate-900/75 dark:to-slate-800/80 shadow-[0_12px_30px_rgba(15,23,42,0.08)] dark:shadow-[0_18px_40px_rgba(0,0,0,0.45)] animate-fade-in-up"
+                                        style={{ animationDelay: `${800 + index * 50}ms` }}
+                                    >
+                                        <div className="p-4 flex flex-col gap-3">
+                                            <p className="text-slate-800 dark:text-slate-100 leading-relaxed">{item.caption}</p>
+                                            <div className="flex flex-wrap items-center gap-3 text-sm">
+                                                <span className="text-slate-500 dark:text-slate-300">
+                                                    {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : ''}
+                                                </span>
+                                                {item.avgRating && (
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="text-yellow-400 dark:text-yellow-300">★</span>
+                                                        <span className="text-slate-700 dark:text-slate-200 font-medium">{item.avgRating.toFixed(1)}</span>
+                                                    </div>
+                                                )}
+                                                {item.tone && (
+                                                    <span className="px-2 py-1 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/60 dark:text-purple-200 text-xs font-medium">
+                                                        {item.tone}
+                                                    </span>
+                                                )}
+                                                {item.length && (
+                                                    <span className="px-2 py-1 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-100 text-xs font-medium">
+                                                        {item.length}
+                                                    </span>
+                                                )}
+                                                <span className="text-slate-500 dark:text-slate-400">feedback: {formatNumber(item.feedbackCount)}</span>
+                                            </div>
                                         </div>
                                     </li>
                                 ))}
