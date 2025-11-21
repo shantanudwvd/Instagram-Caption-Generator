@@ -23,6 +23,12 @@ const DashboardCard = ({ label, value, description }) => (
 );
 
 const formatNumber = (value) => (value || value === 0 ? value.toLocaleString() : '—');
+const formatWeekLabel = (period) => {
+    if (!period || typeof period !== 'string') return 'Week';
+    const [year, week] = period.split('-');
+    if (!year || !week) return period;
+    return `W${week} ${year}`;
+};
 
 const UserDashboard = () => {
     const { user, token, isInitializing } = useAuth();
@@ -79,6 +85,40 @@ const UserDashboard = () => {
         })),
         [stats]
     );
+
+    const feedbackTrends = useMemo(
+        () => (stats?.feedbackTrends || []).map((item) => ({
+            ...item,
+            label: formatWeekLabel(item.period)
+        })),
+        [stats]
+    );
+
+    const captionsLast30Days = useMemo(
+        () => generationHistory.reduce((sum, entry) => sum + (entry.count || 0), 0),
+        [generationHistory]
+    );
+
+    const feedbackPerCaptionDisplay = useMemo(() => {
+        if (!stats || stats.totalCaptions === 0) return '—';
+        const avg = stats.totalFeedback / stats.totalCaptions;
+        return Number.isFinite(avg) ? avg.toFixed(1) : '—';
+    }, [stats]);
+
+    const fineTuningStats = useMemo(() => stats?.fineTuningStats || {}, [stats]);
+
+    const renderFeedbackTooltip = ({ active, payload, label }) => {
+        if (!active || !payload || payload.length === 0) return null;
+        const { avgRating, count } = payload[0].payload;
+
+        return (
+            <div className="bg-white shadow-lg rounded-lg p-3 border border-slate-100">
+                <p className="text-sm font-medium text-gray-800">{label}</p>
+                <p className="text-xs text-gray-500">Avg rating: {avgRating ? avgRating.toFixed(2) : '—'}</p>
+                <p className="text-xs text-gray-500">Feedback: {formatNumber(count)}</p>
+            </div>
+        );
+    };
 
     if (isInitializing) {
         return (
@@ -150,7 +190,7 @@ const UserDashboard = () => {
                 <div className="text-center py-10 text-gray-500">Loading your dashboard...</div>
             ) : stats ? (
                 <>
-                    <div className="grid gap-4 md:grid-cols-3">
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                         <div className="animate-fade-in-up animation-delay-200">
                             <DashboardCard
                                 label="Captions Generated"
@@ -170,6 +210,44 @@ const UserDashboard = () => {
                                 label="Feedback Received"
                                 value={formatNumber(stats.totalFeedback)}
                                 description="Ratings & edits shared"
+                            />
+                        </div>
+                        <div className="animate-fade-in-up animation-delay-450">
+                            <DashboardCard
+                                label="Feedback per Caption"
+                                value={feedbackPerCaptionDisplay}
+                                description="Engagement on your creations"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        <div className="animate-fade-in-up animation-delay-475">
+                            <DashboardCard
+                                label="Captions (Last 30 Days)"
+                                value={formatNumber(captionsLast30Days)}
+                                description="Recent creation streak"
+                            />
+                        </div>
+                        <div className="animate-fade-in-up animation-delay-500">
+                            <DashboardCard
+                                label="Fine-tuning Runs"
+                                value={formatNumber(fineTuningStats.total)}
+                                description="All training jobs started"
+                            />
+                        </div>
+                        <div className="animate-fade-in-up animation-delay-525">
+                            <DashboardCard
+                                label="Models Ready"
+                                value={formatNumber(fineTuningStats.succeeded)}
+                                description="Succeeded fine-tunes"
+                            />
+                        </div>
+                        <div className="animate-fade-in-up animation-delay-550">
+                            <DashboardCard
+                                label="Active Training"
+                                value={formatNumber(fineTuningStats.inProgress)}
+                                description="Jobs currently running"
                             />
                         </div>
                     </div>
@@ -208,6 +286,23 @@ const UserDashboard = () => {
                                 </ResponsiveContainer>
                             )}
                         </div>
+                    </div>
+
+                    <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 transform transition-all duration-300 hover:shadow-xl animate-fade-in-up animation-delay-650">
+                        <h3 className="text-lg font-semibold bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent mb-4">Feedback Trends</h3>
+                        {feedbackTrends.length === 0 ? (
+                            <p className="text-sm text-gray-500">No feedback trend data yet.</p>
+                        ) : (
+                            <ResponsiveContainer width="100%" height={250}>
+                                <LineChart data={feedbackTrends}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="label" />
+                                    <YAxis domain={[0, 5]} allowDecimals />
+                                    <Tooltip content={renderFeedbackTooltip} />
+                                    <Line type="monotone" dataKey="avgRating" stroke="#f472b6" strokeWidth={2} dot={{ r: 3 }} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        )}
                     </div>
 
                     <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 transform transition-all duration-300 hover:shadow-xl animate-fade-in-up animation-delay-700">

@@ -155,3 +155,78 @@
         opacity: 1;
     }
 }
+
+/* Animated logo accents */
+@keyframes logo-glow {
+    0% {
+        opacity: 0.65;
+        filter: blur(18px);
+    }
+    50% {
+        opacity: 0.9;
+        filter: blur(24px);
+    }
+    100% {
+        opacity: 0.65;
+        filter: blur(18px);
+    }
+}
+
+@keyframes logo-tilt {
+    0% {
+        transform: rotate(-2deg);
+    }
+    50% {
+        transform: rotate(2deg);
+    }
+    100% {
+        transform: rotate(-2deg);
+    }
+}
+
+@keyframes logo-pulse {
+    0% {
+        transform: scale(0.9);
+        opacity: 0.7;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(0.9);
+        opacity: 0.7;
+    }
+}
+
+@keyframes logo-orbit {
+    0% {
+        transform: translate(-10px, -6px) scale(0.9);
+        opacity: 0.6;
+    }
+    50% {
+        transform: translate(8px, 4px) scale(1.1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-10px, -6px) scale(0.9);
+        opacity: 0.6;
+    }
+}
+
+.logo-glow {
+    animation: logo-glow 6s ease-in-out infinite;
+}
+
+.logo-tilt {
+    animation: logo-tilt 14s ease-in-out infinite;
+    transform-origin: center;
+}
+
+.logo-pulse {
+    animation: logo-pulse 2.6s ease-in-out infinite;
+}
+
+.logo-orbit {
+    animation: logo-orbit 5.5s ease-in-out infinite;
+}
