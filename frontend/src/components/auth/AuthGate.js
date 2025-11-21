@@ -144,24 +144,38 @@ const AuthGate = () => {
                     </div>
 
                     {/* Password Field */}
-                    <div className="transition-all duration-300">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Password
-                        </label>
-                        <div className="relative group">
-                            <input
-                                type="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200 bg-white/50 backdrop-blur-sm"
-                                placeholder="••••••••"
-                                required
-                                minLength={8}
-                            />
-                            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-500/0 via-pink-500/0 to-orange-500/0 group-hover:from-purple-500/10 group-hover:via-pink-500/10 group-hover:to-orange-500/10 transition-all duration-300 pointer-events-none"></div>
+                    <div className="transition-all duration-300 space-y-2">
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Password
+                            </label>
+                            <div className="relative group">
+                                <input
+                                    type="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200 bg-white/50 backdrop-blur-sm"
+                                    placeholder="••••••••"
+                                    required
+                                    minLength={8}
+                                />
+                                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-500/0 via-pink-500/0 to-orange-500/0 group-hover:from-purple-500/10 group-hover:via-pink-500/10 group-hover:to-orange-500/10 transition-all duration-300 pointer-events-none"></div>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-2 ml-1">Minimum 8 characters</p>
                         </div>
-                        <p className="text-xs text-gray-500 mt-2 ml-1">Minimum 8 characters</p>
+                        {mode === 'login' && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const supportEmail = process.env.REACT_APP_SUPPORT_EMAIL || 'support@captionmuse.com';
+                                    window.location.href = `mailto:${supportEmail}?subject=Password reset request`;
+                                }}
+                                className="text-sm font-semibold text-purple-600 hover:text-purple-700 transition-colors inline-flex items-center gap-1"
+                            >
+                                Forgot password?
+                            </button>
+                        )}
                     </div>
 
                     {/* Error Message */}

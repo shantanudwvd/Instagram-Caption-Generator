@@ -9,18 +9,12 @@ const Navigation = () => {
     const { user, logout } = useAuth();
     const location = useLocation();
     const { theme, toggleTheme } = useTheme();
-    const fullName = user?.firstName && user?.lastName 
+    const fullName = user?.fullName || (user?.firstName && user?.lastName 
         ? `${user.firstName} ${user.lastName}` 
-        : user?.firstName || user?.lastName || user?.name || '';
-    const initials = user?.firstName && user?.lastName
-        ? `${user.firstName.charAt(0).toUpperCase()}${user.lastName.charAt(0).toUpperCase()}`
-        : user?.firstName
-            ? user.firstName.charAt(0).toUpperCase()
-            : user?.lastName
-                ? user.lastName.charAt(0).toUpperCase()
-                : user?.name
-                    ? user.name.split(' ').map((part) => part.charAt(0).toUpperCase()).join('').slice(0, 2)
-                    : 'CM';
+        : user?.firstName || user?.lastName || '');
+    const initials = fullName
+        ? fullName.split(' ').map((part) => part.charAt(0).toUpperCase()).join('').slice(0, 2)
+        : 'CM';
 
     return (
         <nav className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-lg shadow-sm">

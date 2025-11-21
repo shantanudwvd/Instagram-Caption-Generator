@@ -79,7 +79,6 @@ class UserService {
             firstName,
             lastName,
             fullName,
-            name: fullName, // Keep for backward compatibility
             email: user.email,
             photoUrl: user.photoUrl || null,
             createdAt: user.createdAt,

@@ -161,7 +161,7 @@ const UserDashboard = () => {
             <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between transform transition-all duration-300 hover:shadow-2xl animate-fade-in-up animation-delay-100">
                 <div>
                     <p className="text-sm text-gray-500">Welcome back</p>
-                    <h1 className="text-2xl font-bold text-gray-900">{user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || user.lastName || user.name || 'User'}</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">{user.fullName || (user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || user.lastName || 'User')}</h1>
                     <p className="text-sm text-gray-500">{user.email}</p>
                 </div>
                 <div className="mt-4 md:mt-0 flex items-center space-x-6 text-sm text-gray-600">
