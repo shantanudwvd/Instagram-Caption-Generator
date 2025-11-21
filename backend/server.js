@@ -104,6 +104,11 @@ app.use(express.json());
 // Request logging middleware (should be early in the middleware chain)
 app.use(requestLogger);
 
+// Health check endpoint for Docker/ECS
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
+});
+
 // Serve uploaded assets
 const uploadsDir = path.join(process.cwd(), 'uploads');
 if (!fs.existsSync(uploadsDir)) {
