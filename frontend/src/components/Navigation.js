@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import AnimatedLogo from './AnimatedLogo';
+import CaptionMuseLogo from './CaptionMuseLogo';
 
 const Navigation = () => {
     const { user, logout } = useAuth();
@@ -24,7 +24,9 @@ const Navigation = () => {
         <nav className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-lg shadow-sm">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
                 <Link to="/" className="flex items-center gap-3 group transition-transform duration-200 hover:scale-105">
-                    <AnimatedLogo size={52} />
+                    <div className="h-16 w-44 flex items-center justify-start">
+                        <CaptionMuseLogo className="h-full w-full" />
+                    </div>
                 </Link>
                 <div className="flex items-center gap-4">
                     <Link
