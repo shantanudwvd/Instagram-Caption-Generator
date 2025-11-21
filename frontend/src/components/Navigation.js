@@ -1,12 +1,14 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Sparkles, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import CaptionMuseLogo from './CaptionMuseLogo';
+import { useTheme } from '../context/ThemeContext';
 
 const Navigation = () => {
     const { user, logout } = useAuth();
     const location = useLocation();
+    const { theme, toggleTheme } = useTheme();
     const fullName = user?.firstName && user?.lastName 
         ? `${user.firstName} ${user.lastName}` 
         : user?.firstName || user?.lastName || user?.name || '';
@@ -29,6 +31,14 @@ const Navigation = () => {
                     </div>
                 </Link>
                 <div className="flex items-center gap-4">
+                    <button
+                        onClick={toggleTheme}
+                        className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-xl border text-slate-600 border-slate-200 hover:text-slate-900 hover:border-purple-300 hover:bg-purple-50 transition-all duration-200 transform hover:scale-105"
+                        aria-label="Toggle color theme"
+                    >
+                        {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                        <span className="hidden sm:inline">{theme === 'dark' ? 'Light' : 'Dark'} mode</span>
+                    </button>
                     <Link
                         to="/generator"
                         className={`hidden sm:inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-xl border transition-all duration-200 transform hover:scale-105 ${

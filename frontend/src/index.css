@@ -435,3 +435,71 @@
 #sparkle {
     display: none;
 }
+
+/* Theme toggling */
+:root.theme-light {
+    color-scheme: light;
+}
+
+:root.theme-dark {
+    color-scheme: dark;
+}
+
+:root.theme-dark body {
+    background-color: #0b1020;
+    color: #e2e8f0;
+}
+
+:root.theme-dark .bg-white,
+:root.theme-dark .bg-white\/90,
+:root.theme-dark .bg-white\/80,
+:root.theme-dark .bg-white\/70,
+:root.theme-dark .bg-white\/60,
+:root.theme-dark .bg-white\/50 {
+    background-color: rgba(15, 23, 42, 0.9) !important;
+    color: #e2e8f0 !important;
+}
+
+:root.theme-dark .bg-gray-50,
+:root.theme-dark .bg-slate-50 {
+    background-color: #0f172a !important;
+}
+
+:root.theme-dark .text-gray-900,
+:root.theme-dark .text-slate-900,
+:root.theme-dark .text-black {
+    color: #f8fafc !important;
+}
+
+:root.theme-dark .text-gray-700,
+:root.theme-dark .text-gray-600,
+:root.theme-dark .text-gray-500,
+:root.theme-dark .text-slate-600,
+:root.theme-dark .text-slate-500 {
+    color: #cbd5e1 !important;
+}
+
+:root.theme-dark .text-gray-400,
+:root.theme-dark .text-slate-400 {
+    color: #94a3b8 !important;
+}
+
+:root.theme-dark .border-slate-200,
+:root.theme-dark .border-gray-200,
+:root.theme-dark .border-gray-100 {
+    border-color: #1f2937 !important;
+}
+
+:root.theme-dark .backdrop-blur-sm {
+    background-color: rgba(15, 23, 42, 0.72) !important;
+}
+
+:root.theme-dark .animate-gradient-xy {
+    filter: brightness(0.7);
+}
+
+:root.theme-dark .shadow-lg,
+:root.theme-dark .shadow-xl,
+:root.theme-dark .shadow-2xl {
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55) !important;
+}

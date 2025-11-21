@@ -7,19 +7,22 @@ import GeneratorPage from './pages/GeneratorPage';
 import UserDashboard from './components/admin/Dashboard';
 import CaptionsBrowser from './pages/CaptionsBrowser';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
     <React.StrictMode>
-        <AuthProvider>
-            <BrowserRouter>
-                <Routes>
-                    <Route path="/" element={<ProfilePage />} />
-                    <Route path="/generator" element={<GeneratorPage />} />
-                    <Route path="/dashboard" element={<UserDashboard />} />
-                    <Route path="/captions" element={<CaptionsBrowser />} />
-                </Routes>
-            </BrowserRouter>
-        </AuthProvider>
+        <ThemeProvider>
+            <AuthProvider>
+                <BrowserRouter>
+                    <Routes>
+                        <Route path="/" element={<ProfilePage />} />
+                        <Route path="/generator" element={<GeneratorPage />} />
+                        <Route path="/dashboard" element={<UserDashboard />} />
+                        <Route path="/captions" element={<CaptionsBrowser />} />
+                    </Routes>
+                </BrowserRouter>
+            </AuthProvider>
+        </ThemeProvider>
     </React.StrictMode>
 );
