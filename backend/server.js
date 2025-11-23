@@ -15,7 +15,7 @@ const app = express();
 // CORS configuration - allows frontend origins to access the backend
 const getAllowedOrigins = () => {
     const origins = [
-        "https://captionmuse.adityagusain.com",
+        "https://www.captionmuse.shop",
         "https://instagram-caption-generator-shantanudwvds-projects.vercel.app",
         "http://localhost:3000", // Frontend development URL
     ];
