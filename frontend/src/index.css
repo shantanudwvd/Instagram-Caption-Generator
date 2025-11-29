@@ -534,6 +534,55 @@
     transform-origin: center;
 }
 
+.btn-primary {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.875rem;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(90deg, #9333ea 0%, #ec4899 50%, #f97316 100%);
+    box-shadow: 0 14px 34px rgba(147, 51, 234, 0.25), 0 8px 18px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+    transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+}
+
+.btn-primary::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(147, 51, 234, 0.15), rgba(236, 72, 153, 0.12), rgba(249, 115, 22, 0.1));
+    opacity: 0;
+    transition: opacity 180ms ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px) scale(1.015);
+    box-shadow: 0 18px 38px rgba(147, 51, 234, 0.32), 0 10px 22px rgba(0, 0, 0, 0.14);
+    filter: brightness(1.02);
+}
+
+.btn-primary:hover::after {
+    opacity: 1;
+}
+
+.btn-primary:active {
+    transform: translateY(0) scale(0.99);
+    box-shadow: 0 12px 26px rgba(147, 51, 234, 0.22), 0 8px 18px rgba(0, 0, 0, 0.16);
+    filter: brightness(0.98);
+}
+
+.btn-primary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    filter: none;
+}
+
 .btn-secondary {
     background: rgba(255, 255, 255, 0.9);
     color: #334155;

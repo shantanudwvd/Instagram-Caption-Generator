@@ -323,9 +323,8 @@ const GeneratorPage = () => {
                             <button
                                 onClick={handleSubmit}
                                 disabled={loading || !selectedImage || (!musicIsOptional && !selectedTrack)}
-                                className="mt-6 w-full py-3 px-4 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white rounded-2xl font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 relative overflow-hidden group"
+                                className="btn-primary w-full mt-6 flex items-center justify-center gap-2"
                             >
-                                <span className="relative z-10">
                                 {loading ? (
                                     <>
                                         <LoadingSpinner />
@@ -334,8 +333,6 @@ const GeneratorPage = () => {
                                 ) : (
                                     <span>Generate Caption{selectedTrack ? ' with Music' : ''}</span>
                                 )}
-                                </span>
-                                <div className="absolute inset-0 bg-gradient-to-r from-purple-700 via-pink-600 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
                             </button>
                             {error && (
                                 <div className="mt-4 rounded-2xl border border-red-100 bg-red-50/80 text-red-600 px-4 py-3 text-sm">
@@ -349,18 +346,17 @@ const GeneratorPage = () => {
                                 <div className="space-y-4">
                                     <GeneratedCaption caption={caption} />
                                     {captionId && (
-                                        <CaptionFeedback
-                                            caption={caption}
-                                            captionId={captionId}
-                                            onCaptionEdit={handleCaptionEdit}
-                                        />
+                                    <CaptionFeedback
+                                        caption={caption}
+                                        captionId={captionId}
+                                        onCaptionEdit={handleCaptionEdit}
+                                    />
                                     )}
                                     <button
                                         onClick={handleSubmit}
-                                        className="w-full py-2.5 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 relative overflow-hidden group"
+                                        className="btn-primary w-full"
                                     >
-                                        <span className="relative z-10">Regenerate with current options</span>
-                                        <div className="absolute inset-0 bg-gradient-to-r from-purple-700 via-pink-600 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+                                        Regenerate with current options
                                     </button>
                                 </div>
                             </section>
