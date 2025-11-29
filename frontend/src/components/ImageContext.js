@@ -232,16 +232,16 @@ const ImageContext = ({ onContextChange }) => {
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div className="space-y-1">
                     <p className="text-xs uppercase tracking-[0.3em] text-purple-500 font-semibold">Step 1b</p>
-                    <h2 className="text-2xl font-semibold text-slate-900">Add context to your image</h2>
-                    <p className="text-sm text-slate-500">Choose to type or record—your vibe guides the caption.</p>
+                    <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Add context to your image</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Choose to type or record—your vibe guides the caption.</p>
                 </div>
-                <div className="inline-flex items-center rounded-full bg-slate-100/80 p-1 shadow-inner">
+                <div className="inline-flex items-center rounded-full bg-slate-100/80 dark:bg-slate-900/70 p-1 shadow-inner dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] border border-transparent dark:border-slate-800">
                     <button
                         onClick={() => setMode('text')}
                         className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full transition-all duration-200 ${
                             mode === 'text'
-                                ? 'bg-white text-slate-900 shadow-sm'
-                                : 'text-slate-500 hover:text-slate-900'
+                                ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-slate-100 dark:shadow-none'
+                                : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
                         }`}
                     >
                         <Type className="w-4 h-4" />
@@ -251,8 +251,8 @@ const ImageContext = ({ onContextChange }) => {
                         onClick={() => setMode('audio')}
                         className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full transition-all duration-200 ${
                             mode === 'audio'
-                                ? 'bg-white text-slate-900 shadow-sm'
-                                : 'text-slate-500 hover:text-slate-900'
+                                ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-slate-100 dark:shadow-none'
+                                : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
                         }`}
                     >
                         <Mic className="w-4 h-4" />
@@ -262,8 +262,8 @@ const ImageContext = ({ onContextChange }) => {
             </div>
 
             {mode === 'text' ? (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5 shadow-inner">
-                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-3 uppercase tracking-[0.2em]">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/70 p-4 sm:p-5 shadow-inner dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-300 mb-3 uppercase tracking-[0.2em]">
                         {renderStatusDot('bg-emerald-500')}
                         Freestyle prompt
                     </div>
@@ -271,13 +271,13 @@ const ImageContext = ({ onContextChange }) => {
                         value={textDescription}
                         onChange={handleTextChange}
                         placeholder="Describe the mood, setting, or story you want to tell (e.g., 'Sunset coffee with my best friend before the big move', 'Post-game pizza run—still hyped from the win')."
-                        className="w-full rounded-xl border border-slate-200 bg-white/80 backdrop-blur-sm p-4 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-300 transition"
+                        className="w-full rounded-xl border border-slate-200 bg-white/80 backdrop-blur-sm p-4 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-300 transition dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-purple-500/30 dark:focus:border-purple-500/40"
                         rows={4}
                     />
                 </div>
             ) : (
                 <div className="p-[1px] rounded-2xl bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400">
-                    <div className="rounded-2xl bg-white/90 backdrop-blur-md p-5 sm:p-6 shadow-lg">
+                    <div className="rounded-2xl bg-white/90 dark:bg-slate-900/80 backdrop-blur-md p-5 sm:p-6 shadow-lg dark:shadow-[0_20px_60px_rgba(0,0,0,0.6)]">
                         <div className="flex flex-col gap-5 md:flex-row md:items-center">
                             <div className="flex flex-col items-center justify-center gap-3">
                                 <div className="relative">
@@ -304,37 +304,37 @@ const ImageContext = ({ onContextChange }) => {
                                         )}
                                     </button>
                                 </div>
-                                <p className="text-xs uppercase tracking-[0.2em] text-slate-500 font-semibold">
+                                <p className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">
                                     {isRecording ? 'Listening' : audioURL ? 'Recorded' : 'Ready'}
                                 </p>
                             </div>
 
                             <div className="flex-1 w-full space-y-3">
-                                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                                    <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 font-semibold">
+                                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
+                                    <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 font-semibold dark:bg-slate-800/80 dark:text-slate-100">
                                         {renderStatusDot(isRecording ? 'bg-red-500 animate-pulse' : 'bg-emerald-500')}
                                         {isRecording ? 'Recording… tap to stop' : audioURL ? 'Recorded' : 'Ready to record'}
                                     </span>
-                                    <span className="text-xs uppercase tracking-[0.2em] text-slate-500 font-semibold">
+                                    <span className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">
                                         {isRecording || recordedDurationMs
                                             ? formatDuration(isRecording ? elapsedMs : recordedDurationMs || elapsedMs)
                                             : '00:00'}
                                     </span>
                                 </div>
                                 {isRecording && (
-                                    <div className="text-xs font-semibold text-rose-500">
+                                    <div className="text-xs font-semibold text-rose-500 dark:text-rose-300">
                                         Listening...
                                     </div>
                                 )}
 
                                 {isRecording && (
-                                    <div className="rounded-xl border border-rose-100 bg-rose-50/70 p-3 shadow-inner w-full">
+                                    <div className="rounded-xl border border-rose-100 dark:border-rose-400/40 bg-rose-50/70 dark:bg-rose-950/50 p-3 shadow-inner w-full">
                                         <div className="relative h-10 w-full">
                                             <RecordingRail />
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-rose-600 z-10">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-rose-600 dark:text-rose-300 z-10">
                                                 {formatDuration(elapsedMs)}
                                             </span>
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] uppercase tracking-[0.2em] text-rose-400 font-semibold z-10">
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] uppercase tracking-[0.2em] text-rose-400 dark:text-rose-300 font-semibold z-10">
                                                 live
                                             </span>
                                         </div>
@@ -342,7 +342,7 @@ const ImageContext = ({ onContextChange }) => {
                                 )}
 
                                 {audioURL ? (
-                                    <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+                                    <div className="rounded-xl border border-slate-200 bg-slate-50/70 dark:border-slate-700 dark:bg-slate-900/70 p-3">
                                         <audio
                                             ref={audioElementRef}
                                             src={audioURL}
@@ -356,26 +356,26 @@ const ImageContext = ({ onContextChange }) => {
                                         />
                                     </div>
                                 ) : (
-                                    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-500">
+                                    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
                                         We record in a web-friendly format for fast Whisper transcriptions. Keep it
                                         concise and conversational.
                                     </div>
                                 )}
 
                                 {audioURL && (
-                                    <div className="rounded-xl border border-slate-200 bg-white/80 backdrop-blur-sm p-4 space-y-2">
+                                    <div className="rounded-xl border border-slate-200 bg-white/80 dark:border-slate-700 dark:bg-slate-900/70 backdrop-blur-sm p-4 space-y-2">
                                         <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2 text-slate-700 font-semibold">
-                                                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                                            <div className="flex items-center gap-2 text-slate-700 dark:text-slate-100 font-semibold">
+                                                <CheckCircle2 className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
                                                 <span>Transcript</span>
                                             </div>
-                                            <span className="text-xs text-slate-500">
+                                            <span className="text-xs text-slate-500 dark:text-slate-400">
                                                 {formatDuration(recordedDurationMs || elapsedMs)}
                                             </span>
                                         </div>
-                                        <p className="text-sm text-slate-600">
+                                        <p className="text-sm text-slate-600 dark:text-slate-300">
                                             {isTranscribing ? (
-                                                <span className="inline-flex items-center gap-2 text-purple-600">
+                                                <span className="inline-flex items-center gap-2 text-purple-600 dark:text-purple-300">
                                                     <Loader2 className="w-4 h-4 animate-spin" />
                                                     Transcribing your note…
                                                 </span>
@@ -398,12 +398,12 @@ const ImageContext = ({ onContextChange }) => {
                                                 setAudioBlob(null);
                                                 onContextChange({ type: 'audio', data: null });
                                             }}
-                                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-red-200 text-red-600 bg-red-50/70 hover:bg-red-100 hover:-translate-y-0.5 transition shadow-sm text-sm font-semibold"
+                                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-red-200 text-red-600 bg-red-50/70 hover:bg-red-100 hover:-translate-y-0.5 transition shadow-sm text-sm font-semibold dark:border-red-500/50 dark:text-red-200 dark:bg-red-950/40 dark:hover:bg-red-900/60"
                                         >
                                             <MicOff className="w-4 h-4" />
                                             Delete &amp; record again
                                         </button>
-                                        <span className="text-xs text-slate-400">Formats: webm (auto), wav, mp3 supported</span>
+                                        <span className="text-xs text-slate-400 dark:text-slate-500">Formats: webm (auto), wav, mp3 supported</span>
                                     </div>
                                 )}
                             </div>

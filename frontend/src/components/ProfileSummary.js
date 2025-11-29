@@ -83,7 +83,7 @@ const ProfileSummary = () => {
     };
 
     return (
-        <div className="relative overflow-hidden rounded-3xl border border-slate-100 bg-white/90 backdrop-blur-sm shadow-xl p-6 transform transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
+        <div className="relative overflow-hidden rounded-3xl border border-slate-100 bg-white/90 backdrop-blur-sm shadow-xl p-6 transform transition-all duration-300 hover:shadow-2xl hover:scale-[1.01] dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-[0_20px_60px_rgba(0,0,0,0.6)]">
             <div className="absolute -top-6 -right-6 h-24 w-24 rounded-full bg-gradient-to-br from-purple-300 via-pink-300 to-orange-300 blur-3xl opacity-50 animate-blob" />
             <div className="absolute -bottom-6 -left-6 h-32 w-32 rounded-full bg-gradient-to-br from-orange-300 via-pink-300 to-purple-300 blur-3xl opacity-30 animate-blob animation-delay-2000" />
             <div className="relative flex flex-col gap-6">
@@ -93,7 +93,7 @@ const ProfileSummary = () => {
                             <img
                                 src={photoPreview}
                                 alt={fullName}
-                                className="h-16 w-16 rounded-2xl object-cover shadow-md border border-slate-200"
+                                className="h-16 w-16 rounded-2xl object-cover shadow-md border border-slate-200 dark:border-slate-700"
                             />
                         ) : (
                             <div className="h-16 w-16 rounded-2xl bg-slate-900 text-white flex items-center justify-center text-2xl font-semibold shadow-md">
@@ -101,15 +101,15 @@ const ProfileSummary = () => {
                             </div>
                         )}
                         <div>
-                            <p className="text-xs uppercase tracking-wide text-slate-500">Signed in as</p>
-                            <p className="text-2xl font-semibold text-slate-900">{fullName}</p>
-                            <p className="text-sm text-slate-500">{user.email}</p>
+                            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Signed in as</p>
+                            <p className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{fullName}</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">{user.email}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
                         <div>
-                            <p className="text-xs uppercase tracking-wide text-slate-500">Member since</p>
-                            <p className="text-base font-semibold text-slate-900">
+                            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Member since</p>
+                            <p className="text-base font-semibold text-slate-900 dark:text-slate-100">
                                 {memberDate
                                     ? memberDate.toLocaleDateString(undefined, {
                                         month: 'short',
@@ -139,64 +139,64 @@ const ProfileSummary = () => {
                         setSuccess('');
                         setIsEditing((prev) => !prev);
                     }}
-                    className="self-start text-sm font-semibold text-blue-600 hover:text-blue-700"
+                    className="self-start text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200"
                 >
                     {isEditing ? 'Cancel profile edit' : 'Edit profile details'}
                 </button>
 
                 {isEditing && (
-                    <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-slate-100 bg-white/70 p-4">
+                    <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-slate-100 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
                         <div className="grid gap-4 md:grid-cols-2">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">First Name</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">First Name</label>
                                 <input
                                     type="text"
                                     name="firstName"
                                     value={formData.firstName}
                                     onChange={handleChange}
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-purple-500/40"
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Last Name</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Last Name</label>
                                 <input
                                     type="text"
                                     name="lastName"
                                     value={formData.lastName}
                                     onChange={handleChange}
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-purple-500/40"
                                 />
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
                             <input
                                 type="email"
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
-                                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-purple-500/40"
                                 required
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">New Password</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">New Password</label>
                             <input
                                 type="password"
                                 name="password"
                                 value={formData.password}
                                 onChange={handleChange}
-                                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-purple-500/40"
                                 placeholder="Leave blank to keep current password"
                                 minLength={8}
                             />
-                            <p className="mt-1 text-xs text-slate-500">At least 8 characters. Leave empty to keep existing password.</p>
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">At least 8 characters. Leave empty to keep existing password.</p>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Profile Photo</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Profile Photo</label>
                             <div className="flex items-center gap-3">
-                                <label className="inline-flex items-center px-3 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer">
+                                <label className="inline-flex items-center px-3 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer dark:border-slate-700 dark:text-slate-200 dark:bg-slate-900/70 dark:hover:bg-slate-800">
                                     <input
                                         type="file"
                                         accept="image/*"
@@ -206,16 +206,16 @@ const ProfileSummary = () => {
                                     Choose file
                                 </label>
                                 {photoFile && (
-                                    <span className="text-xs text-slate-500">
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">
                                         {photoFile.name}
                                     </span>
                                 )}
                             </div>
-                            <p className="mt-1 text-xs text-slate-500">Upload a JPG or PNG (max 5MB) to update your avatar.</p>
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Upload a JPG or PNG (max 5MB) to update your avatar.</p>
                         </div>
 
-                        {error && <p className="text-sm text-rose-600">{error}</p>}
-                        {success && <p className="text-sm text-emerald-600">{success}</p>}
+                        {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
+                        {success && <p className="text-sm text-emerald-600 dark:text-emerald-400">{success}</p>}
 
                         <div className="flex gap-3">
                             <button
@@ -239,7 +239,7 @@ const ProfileSummary = () => {
                                     setPhotoFile(null);
                                     setPhotoPreview(user.photoUrl || '');
                                 }}
-                                className="inline-flex items-center px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                                className="inline-flex items-center px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:bg-slate-900/70 dark:hover:bg-slate-800"
                             >
                                 Discard
                             </button>

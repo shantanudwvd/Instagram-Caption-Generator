@@ -5,7 +5,7 @@ const SongRecommendations = ({ recommendations, onTrackSelect, loading }) => {
     if (loading) {
         return (
             <div className="space-y-4">
-            <div className="flex items-center gap-2 text-slate-700">
+            <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
                 <Music className="h-5 w-5 text-purple-500 animate-pulse" />
                 <h2 className="text-lg font-semibold bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent">Curating soundscapes…</h2>
             </div>
@@ -13,13 +13,13 @@ const SongRecommendations = ({ recommendations, onTrackSelect, loading }) => {
                     {[...Array(3)].map((_, index) => (
                         <div
                             key={index}
-                            className="animate-pulse bg-white/70 border border-slate-100 rounded-2xl p-4 flex items-center gap-4"
+                            className="animate-pulse bg-white/70 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 flex items-center gap-4"
                         >
-                            <div className="bg-slate-200 w-16 h-16 rounded-xl" />
+                            <div className="bg-slate-200 dark:bg-slate-800 w-16 h-16 rounded-xl" />
                             <div className="space-y-2 flex-1">
-                                <div className="h-4 bg-slate-200 rounded w-3/4" />
-                                <div className="h-3 bg-slate-200 rounded w-1/2" />
-                                <div className="h-3 bg-slate-200 rounded w-1/3" />
+                                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-3/4" />
+                                <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-1/2" />
+                                <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-1/3" />
                             </div>
                         </div>
                     ))}
@@ -34,7 +34,7 @@ const SongRecommendations = ({ recommendations, onTrackSelect, loading }) => {
 
     return (
         <div className="space-y-4 animate-fade-in-up">
-            <div className="flex items-center gap-2 text-slate-700">
+            <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
                 <Music className="h-5 w-5 text-purple-500 transform transition-transform duration-200 hover:scale-110" />
                 <h2 className="text-lg font-semibold bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent">Similar songs you might love</h2>
             </div>
@@ -44,7 +44,7 @@ const SongRecommendations = ({ recommendations, onTrackSelect, loading }) => {
                         type="button"
                         key={track.id}
                         onClick={() => onTrackSelect(track)}
-                        className="w-full border-2 border-slate-200 rounded-2xl p-4 flex items-center gap-4 cursor-pointer hover:border-purple-300 hover:bg-gradient-to-r hover:from-purple-50 hover:via-pink-50 hover:to-orange-50 transition-all duration-200 transform hover:scale-[1.02] shadow-md hover:shadow-lg bg-white/80 backdrop-blur-sm animate-fade-in-up group"
+                        className="w-full border-2 border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex items-center gap-4 cursor-pointer hover:border-purple-300 dark:hover:border-purple-500/70 hover:bg-gradient-to-r hover:from-purple-50 hover:via-pink-50 hover:to-orange-50 dark:bg-slate-900/70 dark:hover:from-purple-900/40 dark:hover:via-pink-900/35 dark:hover:to-orange-900/30 transition-all duration-200 transform hover:scale-[1.02] shadow-md hover:shadow-lg dark:shadow-[0_20px_60px_rgba(0,0,0,0.55)] bg-white/80 backdrop-blur-sm animate-fade-in-up group"
                         style={{ animationDelay: `${index * 50}ms` }}
                     >
                         {track.albumArt ? (
@@ -54,14 +54,14 @@ const SongRecommendations = ({ recommendations, onTrackSelect, loading }) => {
                                 className="w-16 h-16 rounded-2xl object-cover shadow-md transform transition-transform duration-200 group-hover:scale-110"
                             />
                         ) : (
-                            <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl flex items-center justify-center">
-                                <Music className="text-purple-400" />
+                            <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/70 dark:to-pink-900/60 rounded-2xl flex items-center justify-center">
+                                <Music className="text-purple-400 dark:text-purple-200" />
                             </div>
                         )}
                         <div className="text-left flex-1">
-                            <p className="font-semibold text-slate-900 group-hover:text-purple-600 transition-colors">{track.name}</p>
-                            <p className="text-sm text-slate-500">{track.artist}</p>
-                            <p className="text-xs text-slate-400 uppercase tracking-wide">{track.album}</p>
+                            <p className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors">{track.name}</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-300">{track.artist}</p>
+                            <p className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wide">{track.album}</p>
                         </div>
                     </button>
                 ))}

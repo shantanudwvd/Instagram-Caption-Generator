@@ -21,6 +21,7 @@ class CaptionLearningService {
         this.feedbackCollection = 'caption_feedback';
         this.trainingDataCollection = 'training_data';
         this.fineTuningCollection = 'fine_tuning_jobs';
+        this.userPreferenceCollection = 'user_preferences';
 
         this.openai = new OpenAI({
             apiKey: process.env.OPENAI_API_KEY
@@ -145,6 +146,10 @@ class CaptionLearningService {
             // Fine-tuning collection indexes
             await db.collection(this.fineTuningCollection).createIndex({ createdAt: -1 });
             await db.collection(this.fineTuningCollection).createIndex({ status: 1 });
+
+            // User preference collection indexes
+            await db.collection(this.userPreferenceCollection).createIndex({ userId: 1 }, { unique: true });
+            await db.collection(this.userPreferenceCollection).createIndex({ updatedAt: -1 });
 
             logger.info('MongoDB indexes set up successfully');
         } catch (error) {
@@ -353,8 +358,25 @@ class CaptionLearningService {
 
             logger.info(`Found ${highQualityCaptions.length} high-quality captions for training data`);
             const trainingData = [];
+            const userProfileCache = new Map();
 
             for (const caption of highQualityCaptions) {
+                let styleProfile = null;
+                const captionUserId = caption.userId?.toString();
+
+                if (captionUserId) {
+                    if (userProfileCache.has(captionUserId)) {
+                        styleProfile = userProfileCache.get(captionUserId);
+                    } else {
+                        try {
+                            styleProfile = await this.getUserPreferenceProfile(captionUserId, { forceRefresh: false });
+                            userProfileCache.set(captionUserId, styleProfile);
+                        } catch (profileError) {
+                            logger.warn('Unable to load user style profile for training data', { error: profileError.message, userId: captionUserId });
+                        }
+                    }
+                }
+
                 // Get all feedback for this caption to find user edits
                 const allFeedback = await feedbackColl.find({
                     captionId: caption._id
@@ -385,7 +407,8 @@ class CaptionLearningService {
                         songFeatures: caption.songFeatures || null,
                         relationshipAnalysis: caption.relationshipAnalysis || null,
                         userContext: caption.userContext,
-                        options: caption.options
+                        options: caption.options,
+                        styleProfile: styleProfile || null
                     },
                     caption: finalCaption,
                     originalCaption: caption.caption,
@@ -964,6 +987,233 @@ class CaptionLearningService {
     }
 
     /**
+     * Build a lightweight preference profile for a user based on their caption history and feedback
+     *
+     * @param {string} userId - User ID to build preferences for (required)
+     * @param {Object} options - Optional configuration
+     * @param {number} options.historyLimit - Number of recent captions to consider
+     * @param {number} options.feedbackLimit - Number of feedback entries to consider
+     * @returns {Promise<Object|null>} Preference profile or null if no history
+     */
+    async getUserPreferenceProfile(userId, options = {}) {
+        const {
+            historyLimit = 12,
+            feedbackLimit = 20,
+            forceRefresh = false
+        } = options;
+
+        if (!userId) {
+            throw new Error('User ID is required to build preference profile');
+        }
+
+        if (!ObjectId.isValid(userId)) {
+            throw new Error('Invalid user ID format');
+        }
+
+        try {
+            await this._initializeConnection();
+            const db = this.getDb();
+            const captionColl = db.collection(this.captionCollection);
+            const feedbackColl = db.collection(this.feedbackCollection);
+            const preferenceColl = db.collection(this.userPreferenceCollection);
+            const userObjectId = new ObjectId(userId);
+
+            // Return existing cached profile unless forced to refresh
+            if (!forceRefresh) {
+                const existing = await preferenceColl.findOne({ userId: userObjectId });
+                if (existing) {
+                    return this._sanitizeObject({
+                        ...existing,
+                        id: existing._id?.toString()
+                    });
+                }
+            }
+
+            // Recent captions for this user
+            const captions = await captionColl.find({ userId: userObjectId, status: 'active' })
+                .sort({ createdAt: -1 })
+                .limit(historyLimit)
+                .project({
+                    caption: 1,
+                    options: 1,
+                    avgRating: 1,
+                    feedbackCount: 1,
+                    createdAt: 1,
+                    userContext: 1
+                })
+                .toArray();
+
+            if (!captions.length) {
+                return null;
+            }
+
+            const captionIds = captions.map(c => c._id);
+            const feedback = await feedbackColl.find({
+                captionId: { $in: captionIds },
+                userId: userObjectId
+            })
+                .sort({ createdAt: -1 })
+                .limit(feedbackLimit)
+                .project({
+                    captionId: 1,
+                    rating: 1,
+                    comments: 1,
+                    userEdits: 1,
+                    createdAt: 1
+                })
+                .toArray();
+
+            const optionStats = this._collectOptionStats(captions);
+            const preferredOptions = {
+                tone: this._topOption(optionStats.tone, 'casual'),
+                length: this._topOption(optionStats.length, 'medium'),
+                emoji: this._topOption(optionStats.emoji, 'moderate'),
+                hashtags: this._topOption(optionStats.hashtags, 'moderate'),
+                language: this._topOption(optionStats.language, 'english')
+            };
+
+            // Pick top-rated or most recent captions as examples
+            const scoredCaptions = [...captions].sort((a, b) => {
+                const scoreA = (a.avgRating || 0) + (a.feedbackCount || 0) * 0.1;
+                const scoreB = (b.avgRating || 0) + (b.feedbackCount || 0) * 0.1;
+                if (scoreA === scoreB) {
+                    return (b.createdAt || 0) - (a.createdAt || 0);
+                }
+                return scoreB - scoreA;
+            });
+
+            const topCaptions = scoredCaptions.slice(0, 5).map(caption => {
+                const relatedFeedback = feedback.filter(f => f.captionId.toString() === caption._id.toString());
+                const bestEdit = relatedFeedback.find(f => f.userEdits && f.userEdits.trim().length > 0);
+
+                return {
+                    captionId: caption._id?.toString(),
+                    caption: caption.caption,
+                    createdAt: caption.createdAt,
+                    avgRating: caption.avgRating || 0,
+                    feedbackCount: caption.feedbackCount || 0,
+                    options: caption.options || {},
+                    userContext: caption.userContext || '',
+                    userEdits: bestEdit?.userEdits || null,
+                    feedbackSample: relatedFeedback.slice(0, 2).map(fb => ({
+                        rating: fb.rating,
+                        comments: fb.comments || '',
+                        userEdits: fb.userEdits || ''
+                    }))
+                };
+            });
+
+            // Attempt to summarize preferences using OpenAI
+            let aiProfile = null;
+            if (process.env.OPENAI_API_KEY) {
+                try {
+                    const response = await this.openai.chat.completions.create({
+                        model: "gpt-4o-mini",
+                        messages: [
+                            {
+                                role: "system",
+                                content: "You are a social media strategist who summarizes a user's captioning style from examples and feedback."
+                            },
+                            {
+                                role: "user",
+                                content: `
+Review these past Instagram captions, their options, and feedback. Extract what the user likes, avoids, and how they typically sound. Keep it concise and actionable.
+
+EXAMPLES:
+${topCaptions.map((c, idx) => `${idx + 1}. Caption: "${c.caption}"
+- Options: ${JSON.stringify(c.options)}
+- Avg rating: ${c.avgRating} (feedback count: ${c.feedbackCount})
+- User edits: ${c.userEdits || 'none'}
+- Feedback: ${c.feedbackSample.map(f => `rating ${f.rating}${f.comments ? `, comment: ${f.comments}` : ''}${f.userEdits ? `, edits: ${f.userEdits}` : ''}`).join(' | ') || 'none'}
+`).join('\n')}
+
+Return a JSON object with:
+- summary: short sentence describing their vibe
+- stylePrinciples: 3-5 bullet rules that capture their voice
+- dos: 2-4 things to lean into
+- donts: 2-4 things to avoid
+- examplePhrases: 2-4 short snippets of wording they like (do not repeat captions verbatim)
+- preferredOptions: optional overrides for tone/length/emoji/hashtags/language if obvious
+`
+                            }
+                        ],
+                        temperature: 0.35,
+                        max_tokens: 400,
+                        response_format: { type: "json_object" }
+                    });
+
+                    aiProfile = JSON.parse(response.choices[0].message.content);
+                } catch (aiError) {
+                    logger.warn('Failed to build AI preference profile, using heuristics', { error: aiError.message });
+                }
+            }
+
+            const profile = {
+                summary: aiProfile?.summary || `Prefers ${preferredOptions.tone} captions of ${preferredOptions.length} length with ${preferredOptions.emoji} emoji use.`,
+                stylePrinciples: aiProfile?.stylePrinciples || [
+                    'Keep captions specific to the moment',
+                    'Maintain a natural, non-robotic tone',
+                    'Blend feelings with concise observations'
+                ],
+                dos: aiProfile?.dos || [
+                    'Reference concrete details from the scene',
+                    'Keep language relaxed and personable'
+                ],
+                donts: aiProfile?.donts || [
+                    'Avoid generic inspirational filler',
+                    'Avoid repetitive phrasing'
+                ],
+                preferredOptions: {
+                    tone: aiProfile?.preferredOptions?.tone || preferredOptions.tone,
+                    length: aiProfile?.preferredOptions?.length || preferredOptions.length,
+                    emoji: aiProfile?.preferredOptions?.emoji || preferredOptions.emoji,
+                    hashtags: aiProfile?.preferredOptions?.hashtags || preferredOptions.hashtags,
+                    language: aiProfile?.preferredOptions?.language || preferredOptions.language
+                },
+                examplePhrases: aiProfile?.examplePhrases || topCaptions.map(c => c.caption).slice(0, 3),
+                samplesUsed: topCaptions
+            };
+
+            // Persist the preference profile for reuse and fine-tuning
+            const now = new Date();
+            const profileDoc = {
+                userId: userObjectId,
+                summary: this._sanitizeText(profile.summary),
+                stylePrinciples: this._sanitizeArray(profile.stylePrinciples || []),
+                dos: this._sanitizeArray(profile.dos || []),
+                donts: this._sanitizeArray(profile.donts || []),
+                preferredOptions: this._sanitizeObject(profile.preferredOptions || {}),
+                examplePhrases: this._sanitizeArray(profile.examplePhrases || []),
+                samplesUsed: this._sanitizeArray(profile.samplesUsed || []),
+                sourceStats: {
+                    captionCount: captions.length,
+                    feedbackCount: feedback.length,
+                    historyLimit,
+                    feedbackLimit,
+                    aiGenerated: !!aiProfile
+                },
+                version: 1,
+                createdAt: now,
+                updatedAt: now
+            };
+
+            await preferenceColl.updateOne(
+                { userId: userObjectId },
+                { $set: profileDoc, $setOnInsert: { createdAt: now } },
+                { upsert: true }
+            );
+
+            return {
+                ...profile,
+                sourceStats: profileDoc.sourceStats
+            };
+        } catch (error) {
+            logger.error('Error building user preference profile:', error);
+            return null;
+        }
+    }
+
+    /**
      * Helper method to format the prompt for fine-tuning
      * @private
      */
@@ -1001,6 +1251,19 @@ IMAGE-SONG RELATIONSHIP:
 `
             : '';
 
+        const styleProfileSection = item.context.styleProfile
+            ? `
+USER STYLE PROFILE:
+- Summary: ${item.context.styleProfile.summary || 'Keep it human and specific'}
+- Style principles: ${(item.context.styleProfile.stylePrinciples || []).join('; ') || 'Stay specific; keep it natural'}
+- Dos: ${(item.context.styleProfile.dos || []).join('; ') || 'Lean into concrete details'}
+- Donts: ${(item.context.styleProfile.donts || []).join('; ') || 'Avoid generic filler'}
+- Preferred options: ${JSON.stringify(item.context.styleProfile.preferredOptions || {})}
+- Example snippets: ${(item.context.styleProfile.examplePhrases || []).slice(0, 3).join(' | ') || 'n/a'}
+Use this to match the user voice without copying prior captions verbatim.
+`
+            : '';
+
         return `
 Create a caption for my Instagram post with this image and song.
 
@@ -1013,6 +1276,7 @@ SONG:
 ${item.context.songAnalysis?.description || ''}
 ${songFeaturesSection}
 ${relationshipSection}
+${styleProfileSection}
 
 CAPTION STYLE:
 - Tone: ${item.context.options?.tone || 'casual'}
@@ -1042,21 +1306,86 @@ ${item.context.userContext ? `ADDITIONAL CONTEXT: ${item.context.userContext}` :
      * @private
      */
     _sanitizeObject(obj) {
-        if (!obj || typeof obj !== 'object') return {};
+        if (obj === null || obj === undefined) return {};
+        if (Array.isArray(obj)) {
+            return this._sanitizeArray(obj);
+        }
+        if (typeof obj !== 'object') return obj;
 
         const sanitized = {};
         for (const [key, value] of Object.entries(obj)) {
             if (typeof value === 'string') {
                 sanitized[key] = this._sanitizeText(value);
+            } else if (value instanceof Date) {
+                sanitized[key] = value;
             } else if (typeof value === 'number' || typeof value === 'boolean') {
                 sanitized[key] = value;
             } else if (value === null) {
                 sanitized[key] = null;
+            } else if (Array.isArray(value)) {
+                sanitized[key] = this._sanitizeArray(value);
             } else if (typeof value === 'object') {
                 sanitized[key] = this._sanitizeObject(value);
             }
         }
         return sanitized;
+    }
+
+    /**
+     * Sanitize array data
+     * @private
+     */
+    _sanitizeArray(arr) {
+        if (!Array.isArray(arr)) return [];
+
+        return arr
+            .map(item => {
+                if (typeof item === 'string') return this._sanitizeText(item);
+                if (typeof item === 'number' || typeof item === 'boolean') return item;
+                if (item === null) return null;
+                if (Array.isArray(item)) return this._sanitizeArray(item);
+                if (typeof item === 'object') return this._sanitizeObject(item);
+                return null;
+            })
+            .filter(item => item !== undefined);
+    }
+
+    /**
+     * Collect option usage statistics from captions
+     * @private
+     */
+    _collectOptionStats(captions) {
+        const stats = {
+            tone: {},
+            length: {},
+            emoji: {},
+            hashtags: {},
+            language: {}
+        };
+
+        captions.forEach(caption => {
+            const options = caption.options || {};
+            ['tone', 'length', 'emoji', 'hashtags', 'language'].forEach(key => {
+                const value = options[key];
+                if (value) {
+                    stats[key][value] = (stats[key][value] || 0) + 1;
+                }
+            });
+        });
+
+        return stats;
+    }
+
+    /**
+     * Get the most common option value
+     * @private
+     */
+    _topOption(countMap, fallback) {
+        const entries = Object.entries(countMap || {});
+        if (!entries.length) return fallback;
+
+        entries.sort((a, b) => b[1] - a[1]);
+        return entries[0][0] || fallback;
     }
 }
 
