@@ -120,7 +120,7 @@ const ProfileSummary = () => {
                         </div>
                         <Link
                             to="/generator"
-                            className="inline-flex items-center px-4 py-2 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white text-sm font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all duration-200"
+                            className="btn-primary text-sm"
                         >
                             Start Generating
                         </Link>
@@ -221,7 +221,7 @@ const ProfileSummary = () => {
                             <button
                                 type="submit"
                                 disabled={saving}
-                                className="inline-flex items-center px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white text-sm font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-60 disabled:transform-none"
+                                className="btn-primary text-sm"
                             >
                                 {saving ? 'Saving...' : 'Save changes'}
                             </button>
