@@ -583,6 +583,13 @@
     filter: none;
 }
 
+.btn-primary-compact {
+    padding: 0.6rem 1rem;
+    border-radius: 1rem;
+    font-size: 0.95rem;
+    line-height: 1;
+}
+
 .btn-secondary {
     background: rgba(255, 255, 255, 0.9);
     color: #334155;
