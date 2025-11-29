@@ -13,6 +13,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import BackButton from '../BackButton';
+import Navigation from '../Navigation';
 
 const DashboardCard = ({ label, value, description }) => (
     <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 transform transition-all duration-300 hover:shadow-xl hover:scale-105 border border-slate-100">
@@ -142,47 +143,49 @@ const UserDashboard = () => {
     }
 
     return (
-        <div className="min-h-screen relative overflow-hidden py-10 px-6">
-            {/* Animated Gradient Background */}
-            <div className="absolute inset-0 animate-gradient-xy opacity-30" style={{
-                background: 'linear-gradient(-45deg, #9333ea, #ec4899, #f97316, #9333ea, #ec4899, #f97316)',
-                backgroundSize: '400% 400%'
-            }}></div>
-            
-            {/* Floating Orbs */}
-            <div className="absolute top-20 left-10 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-            <div className="absolute top-40 right-10 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-            <div className="absolute -bottom-20 left-1/2 w-96 h-96 bg-orange-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
-            
-            <div className="relative z-10 max-w-5xl mx-auto space-y-8">
-            <div className="flex justify-start animate-fade-in">
-                <BackButton to="/" label="Back to Profile" />
-            </div>
-            <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between transform transition-all duration-300 hover:shadow-2xl animate-fade-in-up animation-delay-100">
-                <div>
-                    <p className="text-sm text-gray-500">Welcome back</p>
-                    <h1 className="text-2xl font-bold text-gray-900">{user.fullName || (user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || user.lastName || 'User')}</h1>
-                    <p className="text-sm text-gray-500">{user.email}</p>
-                </div>
-                <div className="mt-4 md:mt-0 flex items-center space-x-6 text-sm text-gray-600">
-                    <div>
-                        <p className="text-xs uppercase tracking-wide">Last Login</p>
-                        <p className="font-medium">
-                            {user.lastLoginAt
-                                ? new Date(user.lastLoginAt).toLocaleString()
-                                : 'First time here'}
-                        </p>
+        <div className="min-h-screen relative overflow-hidden">
+            <Navigation />
+            <div className="py-10 px-6">
+                {/* Animated Gradient Background */}
+                <div className="absolute inset-0 animate-gradient-xy opacity-30" style={{
+                    background: 'linear-gradient(-45deg, #9333ea, #ec4899, #f97316, #9333ea, #ec4899, #f97316)',
+                    backgroundSize: '400% 400%'
+                }}></div>
+                
+                {/* Floating Orbs */}
+                <div className="absolute top-20 left-10 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+                <div className="absolute top-40 right-10 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+                <div className="absolute -bottom-20 left-1/2 w-96 h-96 bg-orange-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+                
+                <div className="relative z-10 max-w-5xl mx-auto space-y-8">
+                    <div className="flex justify-start animate-fade-in">
+                        <BackButton to="/" label="Back to Profile" />
                     </div>
-                    <div>
-                        <p className="text-xs uppercase tracking-wide">Member Since</p>
-                        <p className="font-medium">
-                            {user.createdAt
-                                ? new Date(user.createdAt).toLocaleDateString()
-                                : '—'}
-                        </p>
+                    <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between transform transition-all duration-300 hover:shadow-2xl animate-fade-in-up animation-delay-100">
+                        <div>
+                            <p className="text-sm text-gray-500">Welcome back</p>
+                            <h1 className="text-2xl font-bold text-gray-900">{user.fullName || (user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || user.lastName || 'User')}</h1>
+                            <p className="text-sm text-gray-500">{user.email}</p>
+                        </div>
+                        <div className="mt-4 md:mt-0 flex items-center space-x-6 text-sm text-gray-600">
+                            <div>
+                                <p className="text-xs uppercase tracking-wide">Last Login</p>
+                                <p className="font-medium">
+                                    {user.lastLoginAt
+                                        ? new Date(user.lastLoginAt).toLocaleString()
+                                        : 'First time here'}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-xs uppercase tracking-wide">Member Since</p>
+                                <p className="font-medium">
+                                    {user.createdAt
+                                        ? new Date(user.createdAt).toLocaleDateString()
+                                        : '—'}
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
 
             {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg">{error}</div>}
 
@@ -353,6 +356,7 @@ const UserDashboard = () => {
                     Nothing to show yet. Generate a caption to kickstart your insights!
                 </div>
             )}
+            </div>
             </div>
         </div>
     );

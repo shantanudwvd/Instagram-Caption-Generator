@@ -1,4 +1,3 @@
-// src/components/SpotifyPlayer.js
 import React from 'react';
 import { ExternalLink, Play } from 'lucide-react';
 
@@ -8,7 +7,7 @@ const SpotifyPlayer = ({ track }) => {
     // Format track ID for Spotify URL
     const spotifyId = track.id;
     const spotifyUri = `spotify:track:${spotifyId}`;
-    const spotifyEmbedUrl = `https://open.spotify.com/embed/track/${spotifyId}`;
+    const spotifyEmbedUrl = `https://open.spotify.com/embed/track/${spotifyId}?utm_source=captionmuse&theme=0`;
     const spotifyUrl = `https://open.spotify.com/track/${spotifyId}`;
 
     // Open in Spotify app or web
@@ -46,15 +45,18 @@ const SpotifyPlayer = ({ track }) => {
                 </div>
 
                 {/* Spotify iframe embed */}
-                <div className="w-full h-[80px] bg-gray-100 rounded overflow-hidden">
+                <div className="w-full h-[80px] bg-slate-900/90 dark:bg-slate-900/90 rounded overflow-hidden border border-slate-800/60">
                     <iframe
                         title="Spotify Player"
                         src={spotifyEmbedUrl}
                         width="100%"
                         height="80"
                         frameBorder="0"
-                        allowtransparency="true"
+                        allowTransparency="true"
                         allow="encrypted-media"
+                        loading="lazy"
+                        className="w-full h-full bg-slate-900 text-white"
+                        style={{ backgroundColor: '#0b1224' }}
                     ></iframe>
                 </div>
 
