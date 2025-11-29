@@ -79,9 +79,9 @@ if [ -z "$AWS_ACCOUNT_ID" ] || [ "$AWS_ACCOUNT_ID" = "YOUR_ACCOUNT_ID" ]; then
         print_error "  3. Or set AWS_ACCOUNT_ID environment variable manually"
         print_error ""
         print_error "You can test your AWS credentials with: aws sts get-caller-identity"
-        exit 1
-    fi
-    
+    exit 1
+fi
+
     print_info "Using AWS Account ID: $AWS_ACCOUNT_ID"
 fi
 
@@ -105,8 +105,8 @@ if [ "$DRY_RUN" = true ]; then
     print_info "[DRY RUN] Would login to Amazon ECR: $ECR_URI"
     print_info "[DRY RUN] Would execute: aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_URI"
 else
-    print_info "Logging in to Amazon ECR..."
-    aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_URI
+print_info "Logging in to Amazon ECR..."
+aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_URI
 fi
 
 # Step 2: Check if ECR repository exists, create if not
@@ -137,8 +137,8 @@ if [ $REPO_EXISTS -ne 0 ]; then
         print_info "[DRY RUN] Would execute: aws ecr create-repository --repository-name $ECR_REPOSITORY --region $AWS_REGION"
     else
         print_warn "Creating repository: $ECR_REPOSITORY"
-        aws ecr create-repository --repository-name $ECR_REPOSITORY --region $AWS_REGION
-        print_info "ECR repository created successfully"
+    aws ecr create-repository --repository-name $ECR_REPOSITORY --region $AWS_REGION
+    print_info "ECR repository created successfully"
     fi
 else
     print_info "ECR repository '$ECR_REPOSITORY' exists"
@@ -158,9 +158,9 @@ if [ "$DRY_RUN" = true ]; then
     print_info "[DRY RUN] Would execute: docker push ${ECR_URI}:latest"
     print_info "[DRY RUN] Image built locally but not pushed to ECR"
 else
-    print_info "Pushing image to ECR..."
-    docker push ${ECR_URI}:${IMAGE_TAG}
-    docker push ${ECR_URI}:latest
+print_info "Pushing image to ECR..."
+docker push ${ECR_URI}:${IMAGE_TAG}
+docker push ${ECR_URI}:latest
 fi
 
 # Step 5: Check and update ECS service (read operation to check, write to update)
@@ -177,30 +177,30 @@ if [ $ECS_SERVICE_EXISTS -eq 0 ] && [ "$ECS_SERVICE_STATUS" = "ACTIVE" ]; then
         print_info "[DRY RUN] Would execute: aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --force-new-deployment --region $AWS_REGION"
         print_info "[DRY RUN] Would wait for deployment to stabilize"
     else
-        print_info "Updating ECS service to use new image..."
-        aws ecs update-service \
-            --cluster $ECS_CLUSTER \
-            --service $ECS_SERVICE \
-            --force-new-deployment \
-            --region $AWS_REGION \
-            > /dev/null
-        
-        print_info "Service update initiated. Waiting for deployment to stabilize..."
-        aws ecs wait services-stable \
-            --cluster $ECS_CLUSTER \
-            --services $ECS_SERVICE \
-            --region $AWS_REGION
-        
-        print_info "Deployment completed successfully!"
+    print_info "Updating ECS service to use new image..."
+    aws ecs update-service \
+        --cluster $ECS_CLUSTER \
+        --service $ECS_SERVICE \
+        --force-new-deployment \
+        --region $AWS_REGION \
+        > /dev/null
+    
+    print_info "Service update initiated. Waiting for deployment to stabilize..."
+    aws ecs wait services-stable \
+        --cluster $ECS_CLUSTER \
+        --services $ECS_SERVICE \
+        --region $AWS_REGION
+    
+    print_info "Deployment completed successfully!"
     fi
 else
     if [ "$DRY_RUN" = true ]; then
         print_warn "ECS service '$ECS_SERVICE' does not exist or is not ACTIVE"
         print_info "[DRY RUN] Image would be ready in ECR but service update would be skipped"
-    else
-        print_warn "ECS service does not exist. Image has been pushed to ECR."
-        print_warn "Please create the ECS service manually or use the provided task definition."
-    fi
+else
+    print_warn "ECS service does not exist. Image has been pushed to ECR."
+    print_warn "Please create the ECS service manually or use the provided task definition."
+fi
 fi
 
 if [ "$DRY_RUN" = true ]; then
@@ -216,6 +216,6 @@ if [ "$DRY_RUN" = true ]; then
     print_info ""
     print_info "To perform actual deployment, run without --dry-run flag"
 else
-    print_info "Deployment process completed!"
+print_info "Deployment process completed!"
 fi
 

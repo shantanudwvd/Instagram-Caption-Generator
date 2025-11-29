@@ -64,7 +64,69 @@ refreshSpotifyToken();
 setInterval(refreshSpotifyToken, 50 * 60 * 1000);
 
 // Configure multer for file uploads
-const upload = multer({ dest: 'uploads/' });
+const uploadDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const SUPPORTED_AUDIO_EXTENSIONS = new Set([
+    '.flac', '.m4a', '.mp3', '.mp4', '.mpeg', '.mpga', '.oga', '.ogg', '.wav', '.webm'
+]);
+
+const AUDIO_MIME_EXTENSIONS = {
+    'audio/flac': '.flac',
+    'audio/m4a': '.m4a',
+    'audio/mp3': '.mp3',
+    'audio/mpeg': '.mp3',
+    'audio/mp4': '.mp4',
+    'audio/mpga': '.mpga',
+    'audio/ogg': '.ogg',
+    'audio/oga': '.oga',
+    'audio/wav': '.wav',
+    'audio/x-wav': '.wav',
+    'audio/webm': '.webm'
+};
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, uploadDir),
+    filename: (req, file, cb) => {
+        const originalExt = path.extname(file.originalname || '').toLowerCase();
+        const mimeExt = file.fieldname === 'audio' ? (AUDIO_MIME_EXTENSIONS[file.mimetype] || '') : '';
+        const fallbackImageExt = file.fieldname === 'image' ? '.jpg' : '';
+        const finalExt = originalExt || mimeExt || fallbackImageExt;
+        cb(null, `${file.fieldname}-${Date.now()}-${uuidv4()}${finalExt}`);
+    }
+});
+
+const upload = multer({
+    storage,
+    limits: {
+        fileSize: 20 * 1024 * 1024 // 20MB max to keep audio readable by Whisper
+    },
+    fileFilter: (req, file, cb) => {
+        if (file.fieldname === 'image') {
+            if (!file.mimetype.startsWith('image/')) {
+                return cb(new Error('Only image uploads are allowed'));
+            }
+            return cb(null, true);
+        }
+
+        if (file.fieldname === 'audio') {
+            const ext = path.extname(file.originalname || '').toLowerCase();
+            const hasSupportedExt = SUPPORTED_AUDIO_EXTENSIONS.has(ext);
+            const hasSupportedMime = Boolean(AUDIO_MIME_EXTENSIONS[file.mimetype]);
+
+            if (!hasSupportedExt && !hasSupportedMime) {
+                return cb(new Error('Unsupported audio format for transcription'));
+            }
+
+            return cb(null, true);
+        }
+
+        // Reject any unexpected fields
+        return cb(new Error('Unsupported upload field'));
+    }
+});
 
 // Require authentication for all caption routes
 router.use(authMiddleware);
@@ -133,13 +195,31 @@ router.post('/generate-caption', upload.fields([
             hasFeatures: !!imageFeatures 
         });
 
+        // Build a user-specific style profile from past captions/feedback
+        let userStyleProfile = null;
+        try {
+            userStyleProfile = await captionLearningService.getUserPreferenceProfile(req.user.id);
+            if (userStyleProfile?.preferredOptions) {
+                logger.debug('Loaded user style profile', { 
+                    userId: req.user?.id,
+                    preferredOptions: userStyleProfile.preferredOptions 
+                });
+            }
+        } catch (profileError) {
+            logger.error('Error loading user style profile', { 
+                error: profileError.message, 
+                stack: profileError.stack,
+                userId: req.user?.id 
+            });
+        }
+
         // Setup customization options
         const customization = {
-            tone: tone || 'casual',
-            length: length || 'medium',
-            language: language || 'english',
-            emoji: emoji || 'moderate',
-            hashtags: hashtags || 'moderate'
+            tone: tone || userStyleProfile?.preferredOptions?.tone || 'casual',
+            length: length || userStyleProfile?.preferredOptions?.length || 'medium',
+            language: language || userStyleProfile?.preferredOptions?.language || 'english',
+            emoji: emoji || userStyleProfile?.preferredOptions?.emoji || 'moderate',
+            hashtags: hashtags || userStyleProfile?.preferredOptions?.hashtags || 'moderate'
         };
 
         logger.debug('Using caption options', { customization, userId: req.user?.id });
@@ -197,7 +277,8 @@ router.post('/generate-caption', upload.fields([
             songFeatures,
             relationshipAnalysis,
             userContext,
-            customization
+            customization,
+            userStyleProfile
         );
         logger.info('Caption generated successfully', { userId: req.user?.id });
 
@@ -838,7 +919,7 @@ Keep your response under 150 words, focusing on the most distinctive elements of
 
 
 // Update the generateCaption function to incorporate structured features and relationship analysis
-async function generateCaption(imageAnalysis, imageFeatures, songAnalysis, songFeatures, relationshipAnalysis, userContext = '', customization = {}) {
+async function generateCaption(imageAnalysis, imageFeatures, songAnalysis, songFeatures, relationshipAnalysis, userContext = '', customization = {}, userStyleProfile = null) {
     // Set default values if customization options are not provided
     const options = {
         tone: customization.tone || 'casual',
@@ -931,6 +1012,19 @@ async function generateCaption(imageAnalysis, imageFeatures, songAnalysis, songF
 
     const toneParams = toneExamples[options.tone] || toneExamples.casual;
 
+    const preferredOptions = userStyleProfile?.preferredOptions;
+    const styleProfileSection = userStyleProfile ? `
+LEARNED USER STYLE (from their past, highly-rated captions):
+- Summary: ${userStyleProfile.summary || 'Keep it natural and personal'}
+- Preferred defaults: tone ${preferredOptions?.tone || 'casual'}, length ${preferredOptions?.length || 'medium'}, emoji ${preferredOptions?.emoji || 'moderate'}, hashtags ${preferredOptions?.hashtags || 'moderate'}, language ${preferredOptions?.language || 'english'}
+- Style principles: ${(userStyleProfile.stylePrinciples || []).join('; ') || 'Stay specific, personal, and non-robotic'}
+- Lean into: ${(userStyleProfile.dos || []).join('; ') || 'Concrete observations and genuine feelings'}
+- Avoid: ${(userStyleProfile.donts || []).join('; ') || 'Generic inspirational filler or repetitive wording'}
+- Snippets they liked (vibe only—do not copy verbatim): ${(userStyleProfile.examplePhrases || []).slice(0, 3).join(' | ') || 'n/a'}
+Use this profile to subtly match their voice unless the user explicitly requested a different style for this caption.
+`
+        : '';
+
     // Prepare user context section - only include if there is actual context
     const userContextSection = userContext
         ? `
@@ -1018,6 +1112,7 @@ THE IMAGE SHOWS:
 ${typeof imageAnalysis === 'string' ? imageAnalysis : imageAnalysis.text}
 ${imageFeaturesSection}
 ${userContextSection}
+${styleProfileSection}
 ${songSection}
 ${songFeaturesSection}
 ${relationshipSection}
@@ -1073,10 +1168,11 @@ For reference, here's an example of the TONE I want (but create a totally new ca
 Please write a caption that:
 1. Makes a natural, specific connection ${songAnalysis ? 'between the image and the song' : 'to the image'}
 2. Includes personal perspective and subjective feelings${userContext ? "\n3. Incorporates the personal context I've shared about the image" : ""}
-${userContext ? "4" : "3"}. Feels like something a real person would actually post on Instagram
-${userContext ? "5" : "4"}. Avoids clichéd phrases and overly formal language
-${userContext ? "6" : "5"}. Sounds relaxed and authentic, not formulaic
-${songAnalysis ? (userContext ? "7" : "6") + ". Includes the song credit at the end" : ""}
+${userContext ? "4" : "3"}. Respects the learned user style above while honoring any explicit options provided
+${userContext ? "5" : "4"}. Feels like something a real person would actually post on Instagram
+${userContext ? "6" : "5"}. Avoids clichéd phrases and overly formal language
+${userContext ? "7" : "6"}. Sounds relaxed and authentic, not formulaic
+${songAnalysis ? (userContext ? "8" : "7") + ". Includes the song credit at the end" : ""}
 
 ${formatInstructions}
 `

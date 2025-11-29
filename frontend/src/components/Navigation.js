@@ -27,7 +27,7 @@ const Navigation = () => {
                 <div className="flex items-center gap-4">
                     <button
                         onClick={toggleTheme}
-                        className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-xl border text-slate-600 border-slate-200 hover:text-slate-900 hover:border-purple-300 hover:bg-purple-50 transition-all duration-200 transform hover:scale-105"
+                        className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-xl border text-slate-600 border-slate-200 hover:text-slate-900 hover:border-purple-300 hover:bg-purple-50 dark:text-slate-200 dark:border-slate-700 dark:hover:text-white dark:hover:border-purple-400 dark:hover:bg-slate-800/70 transition-all duration-200 transform hover:scale-105"
                         aria-label="Toggle color theme"
                     >
                         {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -38,7 +38,7 @@ const Navigation = () => {
                         className={`hidden sm:inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-xl border transition-all duration-200 transform hover:scale-105 ${
                             location.pathname === '/generator'
                                 ? 'bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white border-transparent shadow-lg'
-                                : 'text-slate-600 border-slate-200 hover:text-slate-900 hover:border-purple-300 hover:bg-purple-50'
+                                : 'text-slate-600 border-slate-200 hover:text-slate-900 hover:border-purple-300 hover:bg-purple-50 dark:text-slate-200 dark:border-slate-700 dark:hover:text-white dark:hover:border-purple-400 dark:hover:bg-slate-800/70'
                         }`}
                     >
                         <Sparkles className="w-4 h-4" />
@@ -49,7 +49,7 @@ const Navigation = () => {
                         className={`hidden sm:inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-xl border transition-all duration-200 transform hover:scale-105 ${
                             location.pathname === '/dashboard'
                                 ? 'bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white border-transparent shadow-lg'
-                                : 'text-slate-600 border-slate-200 hover:text-slate-900 hover:border-purple-300 hover:bg-purple-50'
+                                : 'text-slate-600 border-slate-200 hover:text-slate-900 hover:border-purple-300 hover:bg-purple-50 dark:text-slate-200 dark:border-slate-700 dark:hover:text-white dark:hover:border-purple-400 dark:hover:bg-slate-800/70'
                         }`}
                     >
                         <LayoutDashboard className="w-4 h-4" />
