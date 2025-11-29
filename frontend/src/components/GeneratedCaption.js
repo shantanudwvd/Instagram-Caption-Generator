@@ -16,8 +16,8 @@ const GeneratedCaption = ({ caption }) => {
     return (
         <div className="space-y-3 animate-fade-in-up">
             <h2 className="text-xl font-semibold bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent">Generated Caption</h2>
-            <div className="p-4 bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 rounded-xl border border-purple-100 shadow-md transform transition-all duration-300 hover:shadow-lg">
-                <p className="text-slate-800 leading-relaxed">{caption}</p>
+            <div className="p-4 bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 dark:from-slate-900/80 dark:via-slate-900/80 dark:to-slate-900/80 rounded-xl border border-purple-100 dark:border-slate-800 shadow-md transform transition-all duration-300 hover:shadow-lg dark:shadow-[0_20px_60px_rgba(0,0,0,0.55)]">
+                <p className="text-slate-800 dark:text-slate-100 leading-relaxed">{caption}</p>
             </div>
             <button
                 onClick={handleCopy}
@@ -25,7 +25,7 @@ const GeneratedCaption = ({ caption }) => {
             >
                 {copied ? (
                     <>
-                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 text-green-500 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                         <span>Copied!</span>
