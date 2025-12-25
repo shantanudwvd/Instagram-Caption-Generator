@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
 import { Star, Copy, Check, Image as ImageIcon } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
-const CaptionCard = ({ caption, createdAt, avgRating, feedbackCount, tone, length, imageUrl, onImageClick }) => {
+const CaptionCard = ({ id, caption, createdAt, avgRating, feedbackCount, tone, length, imageUrl, onImageClick }) => {
+    console.log("Caption::", caption);
+    const captionId = id;
     const [copied, setCopied] = useState(false);
     const [imageLoaded, setImageLoaded] = useState(false);
     const [imageError, setImageError] = useState(false);
-
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const { token } = useAuth();
+    const backendUrl = process.env.REACT_APP_BACKEND_URL;
     const handleCopy = async () => {
         try {
             await navigator.clipboard.writeText(caption);
@@ -13,6 +19,23 @@ const CaptionCard = ({ caption, createdAt, avgRating, feedbackCount, tone, lengt
             setTimeout(() => setCopied(false), 2000);
         } catch (err) {
             console.error('Failed to copy:', err);
+        }
+    };
+
+    const handleDelete = async (captionId) => {
+        try {
+            const response = await fetch(`${backendUrl}/api/captions/${captionId}`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (data.error) {
+                throw new Error(data.error);
+            }
+        } catch (err) {
+            setError(err.message || 'Error deleting caption');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -38,9 +61,9 @@ const CaptionCard = ({ caption, createdAt, avgRating, feedbackCount, tone, lengt
         }
     };
 
-    const fullImageUrl = imageUrl && imageUrl.startsWith('http') 
-        ? imageUrl 
-        : imageUrl 
+    const fullImageUrl = imageUrl && imageUrl.startsWith('http')
+        ? imageUrl
+        : imageUrl
             ? `${process.env.REACT_APP_BACKEND_URL}${imageUrl}`
             : null;
 
@@ -97,7 +120,7 @@ const CaptionCard = ({ caption, createdAt, avgRating, feedbackCount, tone, lengt
 
                 {/* Image Section - Right Side */}
                 {fullImageUrl && (
-                    <div 
+                    <div
                         className="relative w-full md:w-64 md:min-w-[256px] h-48 md:h-full bg-slate-100 dark:bg-slate-900/60 overflow-hidden cursor-pointer group flex-shrink-0 border-t border-slate-200 dark:border-slate-800 md:border-l md:border-t-0"
                         onClick={handleImageClick}
                     >
@@ -117,9 +140,8 @@ const CaptionCard = ({ caption, createdAt, avgRating, feedbackCount, tone, lengt
                             <img
                                 src={fullImageUrl}
                                 alt="Caption"
-                                className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-110 ${
-                                    imageLoaded ? 'opacity-100' : 'opacity-0'
-                                }`}
+                                className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0'
+                                    }`}
                                 loading="lazy"
                                 onLoad={() => setImageLoaded(true)}
                                 onError={() => {
@@ -135,6 +157,8 @@ const CaptionCard = ({ caption, createdAt, avgRating, feedbackCount, tone, lengt
                         </div>
                     </div>
                 )}
+
+                <button onClick={() => handleDelete(captionId)}> delete </button>
             </div>
         </div>
     );

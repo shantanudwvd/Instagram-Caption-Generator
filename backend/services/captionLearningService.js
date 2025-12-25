@@ -1387,6 +1387,42 @@ ${item.context.userContext ? `ADDITIONAL CONTEXT: ${item.context.userContext}` :
         entries.sort((a, b) => b[1] - a[1]);
         return entries[0][0] || fallback;
     }
+
+    async deleteCaption(captionId) {
+        if (!captionId) {
+            throw new Error('Invalid caption data: caption id is required');
+        }
+        try {
+            await this._initializeConnection();
+            const db = this.getDb();
+            const collection = db.collection(this.captionCollection);
+            console.log("Caption ID::", captionId)
+            // Validate captionId is a valid ObjectId
+            // if (!ObjectId.isValid(captionId)) {
+            //     throw new Error('Invalid caption ID format');
+            // }
+            const captionData = collection.find({ captionId, status: 'active' });
+            if (!captionData) {
+                throw new Error('Caption is either already deleted or does not exist');
+            }
+
+            const result = await collection.updateOne(
+                { _id: new ObjectId(captionId) },
+                {
+                    $set: {
+                        status: 'inactive',
+                        updatedAt: new Date()
+                    }
+                }
+            );
+            logger.info(`Delete caption with ID: ${JSON.stringify(result)}`);
+            return result.deletedId;
+        } catch (error) {
+            logger.error('Error deleting caption:', error);
+            throw new Error(`Failed to deleting caption: ${error.message}`);
+        }
+
+    }
 }
 
 module.exports = CaptionLearningService;
