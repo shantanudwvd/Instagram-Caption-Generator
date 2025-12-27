@@ -1,17 +1,11 @@
-import React, { useState } from 'react';
-import { Star, Copy, Check, Image as ImageIcon } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import React, { useEffect, useState } from 'react';
+import { Star, Copy, Check, Trash, Image as ImageIcon } from 'lucide-react';
 
-const CaptionCard = ({ id, caption, createdAt, avgRating, feedbackCount, tone, length, imageUrl, onImageClick }) => {
-    console.log("Caption::", caption);
+const CaptionCard = ({ id, caption, createdAt, avgRating, feedbackCount, tone, length, imageUrl, onImageClick, onDelete }) => {
     const captionId = id;
     const [copied, setCopied] = useState(false);
     const [imageLoaded, setImageLoaded] = useState(false);
     const [imageError, setImageError] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const { token } = useAuth();
-    const backendUrl = process.env.REACT_APP_BACKEND_URL;
     const handleCopy = async () => {
         try {
             await navigator.clipboard.writeText(caption);
@@ -19,23 +13,6 @@ const CaptionCard = ({ id, caption, createdAt, avgRating, feedbackCount, tone, l
             setTimeout(() => setCopied(false), 2000);
         } catch (err) {
             console.error('Failed to copy:', err);
-        }
-    };
-
-    const handleDelete = async (captionId) => {
-        try {
-            const response = await fetch(`${backendUrl}/api/captions/${captionId}`, {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const data = await response.json();
-            if (data.error) {
-                throw new Error(data.error);
-            }
-        } catch (err) {
-            setError(err.message || 'Error deleting caption');
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -75,6 +52,10 @@ const CaptionCard = ({ id, caption, createdAt, avgRating, feedbackCount, tone, l
         }
     };
 
+    useEffect(() => {
+
+    }, [])
+
     return (
         <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800/50 bg-gradient-to-r from-white/95 via-white/90 to-slate-50/90 dark:from-slate-900/90 dark:via-slate-900/80 dark:to-slate-800/85 shadow-[0_12px_30px_rgba(15,23,42,0.08)] dark:shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
             <div className="flex flex-col md:flex-row">
@@ -91,6 +72,17 @@ const CaptionCard = ({ id, caption, createdAt, avgRating, feedbackCount, tone, l
                                 <Check className="w-4 h-4 text-green-500 dark:text-green-400" />
                             ) : (
                                 <Copy className="w-4 h-4 text-purple-600 dark:text-purple-300" />
+                            )}
+                        </button>
+                        <button
+                            onClick={() => onDelete(captionId)}
+                            className="flex-shrink-0 p-2 rounded-lg bg-white/80 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-slate-700/80 transition-all duration-200 transform hover:scale-110"
+                            title="Copy caption"
+                        >
+                            {copied ? (
+                                <Check className="w-4 h-4 text-green-500 dark:text-green-400" />
+                            ) : (
+                                <Trash className="w-4 h-4 text-purple-600 dark:text-purple-300" />
                             )}
                         </button>
                     </div>
@@ -157,8 +149,6 @@ const CaptionCard = ({ id, caption, createdAt, avgRating, feedbackCount, tone, l
                         </div>
                     </div>
                 )}
-
-                <button onClick={() => handleDelete(captionId)}> delete </button>
             </div>
         </div>
     );

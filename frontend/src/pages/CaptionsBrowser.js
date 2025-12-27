@@ -10,6 +10,7 @@ import { Search, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const CaptionsBrowser = () => {
     const { user, token, isInitializing } = useAuth();
+    const backendUrl = process.env.REACT_APP_BACKEND_URL;
     const navigate = useNavigate();
 
     // Redirect to login if user logs out
@@ -22,18 +23,18 @@ const CaptionsBrowser = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [totalCount, setTotalCount] = useState(0);
-    
+
     // Image modal state
     const [modalImage, setModalImage] = useState(null);
     const [modalCaption, setModalCaption] = useState(null);
-    
+
     // Filter states
     const [searchQuery, setSearchQuery] = useState('');
     const [toneFilter, setToneFilter] = useState('');
     const [lengthFilter, setLengthFilter] = useState('');
     const [sortBy, setSortBy] = useState('createdAt');
     const [sortOrder, setSortOrder] = useState('desc');
-    
+
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 20;
@@ -124,9 +125,7 @@ const CaptionsBrowser = () => {
         }
     }, [token, debouncedSearch, toneFilter, lengthFilter, sortBy, sortOrder, offset]);
 
-    useEffect(() => {
-        fetchCaptions();
-    }, [fetchCaptions]);
+
 
     const clearFilters = () => {
         setSearchQuery('');
@@ -136,6 +135,30 @@ const CaptionsBrowser = () => {
         setSortOrder('desc');
         setCurrentPage(1);
     };
+    const handleDeleteCaption = useCallback(async (captionId) => {
+        try {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/captions/${captionId}`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            setCaptions(prev =>
+                prev.filter(caption => caption.id !== captionId)
+            );
+            setTotalCount(prev => Math.max(0, prev - 1));
+        } catch (err) {
+            setError(err.message || 'Error deleting caption');
+        } finally {
+            setLoading(false);
+        }
+    }, [backendUrl, token, captions]);
+
+    useEffect(() => {
+        fetchCaptions();
+    }, [fetchCaptions]);
 
     const activeFiltersCount = [debouncedSearch, toneFilter, lengthFilter].filter(Boolean).length;
     const totalPages = Math.ceil(totalCount / itemsPerPage);
@@ -157,7 +180,6 @@ const CaptionsBrowser = () => {
     if (!user) {
         return null; // Redirect handled by useEffect
     }
-
     return (
         <>
             <Navigation />
@@ -167,12 +189,12 @@ const CaptionsBrowser = () => {
                     background: 'linear-gradient(-45deg, #9333ea, #ec4899, #f97316, #9333ea, #ec4899, #f97316)',
                     backgroundSize: '400% 400%'
                 }}></div>
-                
+
                 {/* Floating Orbs */}
                 <div className="absolute top-20 left-10 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
                 <div className="absolute top-40 right-10 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
                 <div className="absolute -bottom-20 left-1/2 w-96 h-96 bg-orange-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
-                
+
                 <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 space-y-6">
                     <div className="flex justify-start animate-fade-in">
                         <BackButton to="/" label="Back to Profile" />
@@ -350,12 +372,13 @@ const CaptionsBrowser = () => {
                                             className="animate-fade-in-up"
                                             style={{ animationDelay: `${index * 50}ms` }}
                                         >
-                                            <CaptionCard 
+                                            <CaptionCard
                                                 {...caption}
                                                 onImageClick={(imageUrl, captionText) => {
                                                     setModalImage(imageUrl);
                                                     setModalCaption(captionText);
                                                 }}
+                                                onDelete={handleDeleteCaption}
                                             />
                                         </div>
                                     ))}
