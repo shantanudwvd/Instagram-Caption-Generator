@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Star, Copy, Check, Trash, Image as ImageIcon } from 'lucide-react';
-
 const CaptionCard = ({ id, caption, createdAt, avgRating, feedbackCount, tone, length, imageUrl, onImageClick, onDelete }) => {
     const captionId = id;
     const [copied, setCopied] = useState(false);
