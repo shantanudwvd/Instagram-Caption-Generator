@@ -1396,11 +1396,6 @@ ${item.context.userContext ? `ADDITIONAL CONTEXT: ${item.context.userContext}` :
             await this._initializeConnection();
             const db = this.getDb();
             const collection = db.collection(this.captionCollection);
-            console.log("Caption ID::", captionId)
-            // Validate captionId is a valid ObjectId
-            // if (!ObjectId.isValid(captionId)) {
-            //     throw new Error('Invalid caption ID format');
-            // }
             const captionData = collection.find({ captionId, status: 'active' });
             if (!captionData) {
                 throw new Error('Caption is either already deleted or does not exist');

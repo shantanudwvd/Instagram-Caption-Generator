@@ -125,7 +125,9 @@ const CaptionsBrowser = () => {
         }
     }, [token, debouncedSearch, toneFilter, lengthFilter, sortBy, sortOrder, offset]);
 
-
+    useEffect(() => {
+        fetchCaptions();
+    }, [fetchCaptions]);
 
     const clearFilters = () => {
         setSearchQuery('');
@@ -155,10 +157,6 @@ const CaptionsBrowser = () => {
             setLoading(false);
         }
     }, [backendUrl, token, captions]);
-
-    useEffect(() => {
-        fetchCaptions();
-    }, [fetchCaptions]);
 
     const activeFiltersCount = [debouncedSearch, toneFilter, lengthFilter].filter(Boolean).length;
     const totalPages = Math.ceil(totalCount / itemsPerPage);

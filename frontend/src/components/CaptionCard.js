@@ -52,10 +52,6 @@ const CaptionCard = ({ id, caption, createdAt, avgRating, feedbackCount, tone, l
         }
     };
 
-    useEffect(() => {
-
-    }, [])
-
     return (
         <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800/50 bg-gradient-to-r from-white/95 via-white/90 to-slate-50/90 dark:from-slate-900/90 dark:via-slate-900/80 dark:to-slate-800/85 shadow-[0_12px_30px_rgba(15,23,42,0.08)] dark:shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
             <div className="flex flex-col md:flex-row">
