@@ -393,8 +393,8 @@ router.post(
                         // Fall back to local storage
                         const imageExt = path.extname(
                             imageFile.originalname ||
-                                imageFile.filename ||
-                                '.jpg'
+                            imageFile.filename ||
+                            '.jpg'
                         );
                         const captionsDir = path.join(
                             process.cwd(),
@@ -1388,27 +1388,21 @@ async function generateCaption(
         ? `
 LEARNED USER STYLE (from their past, highly-rated captions):
 - Summary: ${userStyleProfile.summary || 'Keep it natural and personal'}
-- Preferred defaults: tone ${preferredOptions?.tone || 'casual'}, length ${
-              preferredOptions?.length || 'medium'
-          }, emoji ${preferredOptions?.emoji || 'moderate'}, hashtags ${
-              preferredOptions?.hashtags || 'moderate'
-          }, language ${preferredOptions?.language || 'english'}
-- Style principles: ${
-              (userStyleProfile.stylePrinciples || []).join('; ') ||
-              'Stay specific, personal, and non-robotic'
-          }
-- Lean into: ${
-              (userStyleProfile.dos || []).join('; ') ||
-              'Concrete observations and genuine feelings'
-          }
-- Avoid: ${
-              (userStyleProfile.donts || []).join('; ') ||
-              'Generic inspirational filler or repetitive wording'
-          }
-- Snippets they liked (vibe only—do not copy verbatim): ${
-              (userStyleProfile.examplePhrases || []).slice(0, 3).join(' | ') ||
-              'n/a'
-          }
+- Preferred defaults: tone ${preferredOptions?.tone || 'casual'}, length ${preferredOptions?.length || 'medium'
+        }, emoji ${preferredOptions?.emoji || 'moderate'}, hashtags ${preferredOptions?.hashtags || 'moderate'
+        }, language ${preferredOptions?.language || 'english'}
+- Style principles: ${(userStyleProfile.stylePrinciples || []).join('; ') ||
+        'Stay specific, personal, and non-robotic'
+        }
+- Lean into: ${(userStyleProfile.dos || []).join('; ') ||
+        'Concrete observations and genuine feelings'
+        }
+- Avoid: ${(userStyleProfile.donts || []).join('; ') ||
+        'Generic inspirational filler or repetitive wording'
+        }
+- Snippets they liked (vibe only—do not copy verbatim): ${(userStyleProfile.examplePhrases || []).slice(0, 3).join(' | ') ||
+        'n/a'
+        }
 Use this profile to subtly match their voice unless the user explicitly requested a different style for this caption.
 `
         : '';
@@ -1463,22 +1457,18 @@ SONG FEATURES:
             ? `
 IMAGE-SONG RELATIONSHIP ANALYSIS:
 - Compatibility: ${relationshipAnalysis.compatibility}
-- Thematic Connections: ${
-                  relationshipAnalysis.thematicConnections?.join(', ') ||
-                  'Various connections'
-              }
-- Emotional Resonance: ${
-                  relationshipAnalysis.emotionalResonance ||
-                  'The image and song create a cohesive emotional experience'
-              }
-- Contrast Opportunities: ${
-                  relationshipAnalysis.contrastOpportunities ||
-                  'Consider exploring subtle contrasts'
-              }
-- Integration Suggestions: ${
-                  relationshipAnalysis.integrationSuggestions?.join('; ') ||
-                  'Weave image and song elements naturally together'
-              }
+- Thematic Connections: ${relationshipAnalysis.thematicConnections?.join(', ') ||
+            'Various connections'
+            }
+- Emotional Resonance: ${relationshipAnalysis.emotionalResonance ||
+            'The image and song create a cohesive emotional experience'
+            }
+- Contrast Opportunities: ${relationshipAnalysis.contrastOpportunities ||
+            'Consider exploring subtle contrasts'
+            }
+- Integration Suggestions: ${relationshipAnalysis.integrationSuggestions?.join('; ') ||
+            'Weave image and song elements naturally together'
+            }
 
 IMPORTANT: Use these relationship insights to create a caption that naturally integrates both the image and song. Don't just mention them separately - find authentic connections and weave them together organically.
 `
@@ -1487,21 +1477,19 @@ IMPORTANT: Use these relationship insights to create a caption that naturally in
     // Modify the formatting instructions based on whether a song is included
     const formatInstructions = songAnalysis
         ? `FORMAT:
-[Main caption text in ${options.language}${
-              options.language === 'hinglish'
-                  ? ' (mix of Hindi and English)'
-                  : ''
-          }]
+[Main caption text in ${options.language}${options.language === 'hinglish'
+            ? ' (mix of Hindi and English)'
+            : ''
+        }]
 
 [Hashtags if requested, placed below the main caption]
 
 🎵: "${songAnalysis.name}" - ${songAnalysis.artist}`
         : `FORMAT:
-[Main caption text in ${options.language}${
-              options.language === 'hinglish'
-                  ? ' (mix of Hindi and English)'
-                  : ''
-          }]
+[Main caption text in ${options.language}${options.language === 'hinglish'
+            ? ' (mix of Hindi and English)'
+            : ''
+        }]
 
 [Hashtags if requested, placed below the main caption]`;
 
@@ -1528,16 +1516,14 @@ ${songFeaturesSection}
 ${relationshipSection}
 CAPTION STYLE:
 - Tone: ${toneParams.description}
-- Length: ${lengthParams.description} (around ${
-                    lengthParams.maxWords
-                } words max)
+- Length: ${lengthParams.description} (around ${lengthParams.maxWords
+                    } words max)
 - Emoji usage: ${emojiParams}
 - Hashtags: ${hashtagParams}
-- Language: ${options.language}${
-                    options.language === 'hinglish'
+- Language: ${options.language}${options.language === 'hinglish'
                         ? ' (mix of Hindi and English)'
                         : ''
-                }
+                    }
 
 WHAT MAKES HUMAN CAPTIONS DIFFERENT FROM AI CAPTIONS:
 1. Humans are subjective and speak from personal experience
@@ -1548,9 +1534,8 @@ WHAT MAKES HUMAN CAPTIONS DIFFERENT FROM AI CAPTIONS:
 6. Humans use varied sentence structure and conversational patterns
 7. Humans sometimes include casual interjections or asides
 
-${
-    options.language === 'hindi'
-        ? `
+${options.language === 'hindi'
+                        ? `
 SPECIFIC GUIDELINES FOR HINDI CAPTIONS:
 - Use natural Hindi expressions and colloquialisms that a native speaker would use
 - Incorporate common Hindi slang or phrases used on social media
@@ -1558,12 +1543,11 @@ SPECIFIC GUIDELINES FOR HINDI CAPTIONS:
 - Mix formal and informal Hindi as appropriate for social media
 - Use culturally relevant references that would resonate with Hindi speakers
 `
-        : ''
-}
+                        : ''
+                    }
 
-${
-    options.language === 'hinglish'
-        ? `
+${options.language === 'hinglish'
+                        ? `
 SPECIFIC GUIDELINES FOR HINGLISH CAPTIONS:
 - Naturally mix Hindi and English the way young Indians do on social media
 - Use Romanized Hindi (Hindi written in English letters) for Hindi words
@@ -1572,12 +1556,11 @@ SPECIFIC GUIDELINES FOR HINGLISH CAPTIONS:
 - Keep the tone conversational and authentic to how young Indians actually write
 - Use phrases like "yaar", "matlab", "bas", "ekdum", etc. where they naturally fit
 `
-        : ''
-}
+                        : ''
+                    }
 
-${
-    options.tone === 'dark-humor'
-        ? `
+${options.tone === 'dark-humor'
+                        ? `
 SPECIFIC GUIDELINES FOR DARK HUMOR TONE:
 - Use irony, sarcasm, and self-deprecation
 - Balance edginess with accessibility - don't go too extreme
@@ -1587,38 +1570,32 @@ SPECIFIC GUIDELINES FOR DARK HUMOR TONE:
 - Avoid content that would be genuinely hurtful or offensive
 - Focus on relatable dark humor about everyday life struggles
 `
-        : ''
-}
+                        : ''
+                    }
 
-For reference, here's an example of the TONE I want (but create a totally new caption specific to my image${
-                    songAnalysis ? ' and song' : ''
-                }):
+For reference, here's an example of the TONE I want (but create a totally new caption specific to my image${songAnalysis ? ' and song' : ''
+                    }):
 "${toneParams.example}"
 
 Please write a caption that:
-1. Makes a natural, specific connection ${
-                    songAnalysis
+1. Makes a natural, specific connection ${songAnalysis
                         ? 'between the image and the song'
                         : 'to the image'
-                }
-2. Includes personal perspective and subjective feelings${
-                    userContext
+                    }
+2. Includes personal perspective and subjective feelings${userContext
                         ? "\n3. Incorporates the personal context I've shared about the image"
                         : ''
-                }
-${
-    userContext ? '4' : '3'
-}. Respects the learned user style above while honoring any explicit options provided
-${
-    userContext ? '5' : '4'
-}. Feels like something a real person would actually post on Instagram
+                    }
+${userContext ? '4' : '3'
+                    }. Respects the learned user style above while honoring any explicit options provided
+${userContext ? '5' : '4'
+                    }. Feels like something a real person would actually post on Instagram
 ${userContext ? '6' : '5'}. Avoids clichéd phrases and overly formal language
 ${userContext ? '7' : '6'}. Sounds relaxed and authentic, not formulaic
-${
-    songAnalysis
-        ? (userContext ? '8' : '7') + '. Includes the song credit at the end'
-        : ''
-}
+${songAnalysis
+                        ? (userContext ? '8' : '7') + '. Includes the song credit at the end'
+                        : ''
+                    }
 
 ${formatInstructions}
 `,
