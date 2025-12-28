@@ -453,7 +453,21 @@ router.post('/captions/:captionId', async (req, res) => {
             stack: error.stack,
             userId: req.user?.id 
         });
-        const status = error.message === 'Unauthorized to delete this caption' ? 403 : 400;
+
+        const validationErrors = [
+            'Invalid caption data: caption id and user id are required',
+            'Invalid caption ID format',
+            'Invalid user ID format',
+            'Caption is either already deleted or does not exist'
+        ];
+
+        let status = 500;
+        if (error.message === 'Unauthorized to delete this caption') {
+            status = 403;
+        } else if (validationErrors.includes(error.message)) {
+            status = 400;
+        }
+
         res.status(status).json({ error: error.message || 'Error deleting caption' });
     }
 });

@@ -145,3 +145,7 @@ uploads/
 
 # Developer documentation (optional - remove if you want to track it)
 CLAUDE.md
+
+# Local-only components (not tracked)
+frontend/src/components/InstagramProfile.js
+frontend/src/components/InstagramSync.js

@@ -139,7 +139,6 @@ const CaptionsBrowser = () => {
     };
     const handleDeleteCaption = useCallback(async (captionId) => {
         setError('');
-        setLoading(true);
         try {
             const response = await fetch(`${backendUrl}/api/captions/${captionId}`, {
                 method: 'POST',
@@ -155,8 +154,6 @@ const CaptionsBrowser = () => {
             setTotalCount(prev => Math.max(0, prev - 1));
         } catch (err) {
             setError(err.message || 'Error deleting caption');
-        } finally {
-            setLoading(false);
         }
     }, [backendUrl, token]);
 
