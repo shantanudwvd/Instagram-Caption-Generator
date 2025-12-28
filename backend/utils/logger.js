@@ -34,7 +34,7 @@ const consoleFormat = winston.format.combine(
     winston.format.timestamp({ format: 'HH:mm:ss' }),
     winston.format.printf(({ timestamp, level, message, ...meta }) => {
         let log = `${timestamp} [${level}]: ${message}`;
-        
+
         // Add metadata if present
         if (Object.keys(meta).length > 0) {
             // Filter out internal winston properties
@@ -44,12 +44,12 @@ const consoleFormat = winston.format.combine(
                     obj[key] = meta[key];
                     return obj;
                 }, {});
-            
+
             if (Object.keys(cleanMeta).length > 0) {
                 log += ` ${JSON.stringify(cleanMeta, null, 2)}`;
             }
         }
-        
+
         return log;
     })
 );

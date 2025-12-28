@@ -9,4 +9,3 @@ repos:
         args: ["--fix=lf"]
       - id: detect-private-key
       - id: check-yaml
-

@@ -36,11 +36,11 @@ router.post('/caption-feedback/:captionId', async (req, res) => {
 
         res.json({ success });
     } catch (error) {
-        logger.error('Error recording feedback', { 
-            error: error.message, 
+        logger.error('Error recording feedback', {
+            error: error.message,
             stack: error.stack,
             captionId: req.params.captionId,
-            userId: req.user?.id 
+            userId: req.user?.id
         });
         res.status(500).json({ error: 'Failed to record feedback' });
     }

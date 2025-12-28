@@ -17,7 +17,7 @@ function splitName(name) {
     if (!name || typeof name !== 'string') {
         return { firstName: '', lastName: '' };
     }
-    
+
     const trimmed = name.trim();
     if (trimmed.length === 0) {
         return { firstName: '', lastName: '' };
@@ -47,7 +47,7 @@ function computeFullName(firstName, lastName) {
 
 async function migrateUserNames() {
     let client;
-    
+
     try {
         console.log('Connecting to MongoDB...');
         client = new MongoClient(MONGODB_URI, {
@@ -56,13 +56,13 @@ async function migrateUserNames() {
             socketTimeoutMS: 45000,
             connectTimeoutMS: 10000
         });
-        
+
         await client.connect();
         console.log('Connected to MongoDB');
-        
+
         const db = client.db(MONGODB_NAME);
         const collection = db.collection(COLLECTION_NAME);
-        
+
         // Find all users that need migration (missing firstName, lastName, or fullName)
         console.log('Finding users to migrate...');
         const usersToMigrate = await collection.find({
@@ -72,24 +72,24 @@ async function migrateUserNames() {
                 { fullName: { $exists: false } }
             ]
         }).toArray();
-        
+
         console.log(`Found ${usersToMigrate.length} users to migrate`);
-        
+
         if (usersToMigrate.length === 0) {
             console.log('No users need migration. Exiting.');
             return;
         }
-        
+
         let successCount = 0;
         let errorCount = 0;
         const errors = [];
-        
+
         for (const user of usersToMigrate) {
             try {
                 // Get firstName and lastName (may already exist or need to be split from name)
                 let firstName = user.firstName;
                 let lastName = user.lastName;
-                
+
                 // If firstName or lastName is missing, try to split from name field
                 if (!firstName || !lastName) {
                     if (user.name) {
@@ -101,22 +101,22 @@ async function migrateUserNames() {
                         lastName = lastName || '';
                     }
                 }
-                
+
                 // Compute fullName
                 const fullName = computeFullName(firstName, lastName) || user.name || '';
-                
+
                 const updateDoc = {};
                 if (!user.firstName) updateDoc.firstName = firstName;
                 if (!user.lastName) updateDoc.lastName = lastName;
                 if (!user.fullName) updateDoc.fullName = fullName;
                 // Keep name field for backward compatibility if it doesn't exist
                 if (!user.name && fullName) updateDoc.name = fullName;
-                
+
                 const updateResult = await collection.updateOne(
                     { _id: user._id },
                     { $set: updateDoc }
                 );
-                
+
                 if (updateResult.modifiedCount === 1) {
                     successCount++;
                     console.log(`✓ Migrated user ${user._id}: firstName: "${firstName}", lastName: "${lastName}", fullName: "${fullName}"`);
@@ -131,21 +131,21 @@ async function migrateUserNames() {
                 console.error(`✗ Error migrating user ${user._id}:`, error.message);
             }
         }
-        
+
         console.log('\n=== Migration Summary ===');
         console.log(`Total users found: ${usersToMigrate.length}`);
         console.log(`Successfully migrated: ${successCount}`);
         console.log(`Errors: ${errorCount}`);
-        
+
         if (errors.length > 0) {
             console.log('\nErrors:');
             errors.forEach(err => {
                 console.log(`  - User ${err.userId}: ${err.error}`);
             });
         }
-        
+
         console.log('\nMigration completed!');
-        
+
     } catch (error) {
         console.error('Migration failed:', error);
         process.exit(1);
@@ -167,4 +167,3 @@ migrateUserNames()
         console.error('Migration script failed:', error);
         process.exit(1);
     });
-

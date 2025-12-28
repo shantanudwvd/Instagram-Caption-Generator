@@ -91,11 +91,11 @@ Instagram-Caption-Generator/
    ```bash
    # Install root dependencies (if any)
    npm install
-   
+
    # Install backend dependencies
    cd backend
    npm install
-   
+
    # Install frontend dependencies
    cd ../frontend
    npm install
@@ -108,26 +108,26 @@ Instagram-Caption-Generator/
    # Server
    PORT=3001
    NODE_ENV=development
-   
+
    # Database
    MONGODB_URI=your_mongodb_connection_string
-   
+
    # Authentication
    JWT_SECRET=your_jwt_secret_key
-   
+
    # OpenAI
    OPENAI_API_KEY=your_openai_api_key
-   
+
    # Spotify
    SPOTIFY_CLIENT_ID=your_spotify_client_id
    SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
    SPOTIFY_REDIRECT_URI=http://localhost:3000/callback
-   
+
    # Cloudinary (optional, for image storage)
    CLOUDINARY_CLOUD_NAME=your_cloud_name
    CLOUDINARY_API_KEY=your_api_key
    CLOUDINARY_API_SECRET=your_api_secret
-   
+
    # CORS
    CORS_ORIGINS=http://localhost:3000
    FRONTEND_URL=http://localhost:3000

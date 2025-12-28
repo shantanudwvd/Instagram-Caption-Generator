@@ -23,8 +23,8 @@ const ProfileSummary = () => {
     }
 
     const memberDate = user.createdAt ? new Date(user.createdAt) : null;
-    const fullName = user.fullName || (user.firstName && user.lastName 
-        ? `${user.firstName} ${user.lastName}` 
+    const fullName = user.fullName || (user.firstName && user.lastName
+        ? `${user.firstName} ${user.lastName}`
         : user.firstName || user.lastName || '');
     const initials = fullName
         ? fullName.split(' ').map((part) => part.charAt(0).toUpperCase()).join('').slice(0, 2)

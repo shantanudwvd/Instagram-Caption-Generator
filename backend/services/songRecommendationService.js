@@ -41,9 +41,9 @@ class SongRecommendationService {
             // Return top 5 recommendations
             return filteredRecommendations.slice(0, 5);
         } catch (error) {
-            logger.error('Error generating recommendations', { 
-                error: error.message, 
-                stack: error.stack 
+            logger.error('Error generating recommendations', {
+                error: error.message,
+                stack: error.stack
             });
 
             // Fallback: Use default queries if there's an error
@@ -119,9 +119,9 @@ class SongRecommendationService {
             return ["chill music", "relaxing songs", "popular hits", "mood music", "vibes"];
 
         } catch (error) {
-            logger.error('Error generating search queries', { 
-                error: error.message, 
-                stack: error.stack 
+            logger.error('Error generating search queries', {
+                error: error.message,
+                stack: error.stack
             });
             return ["chill music", "relaxing songs", "popular hits", "mood music", "vibes"];
         }
@@ -162,9 +162,9 @@ class SongRecommendationService {
                     }
                 }
             } catch (error) {
-                logger.warn('Error searching for tracks with query', { 
-                    query, 
-                    error: error.message 
+                logger.warn('Error searching for tracks with query', {
+                    query,
+                    error: error.message
                 });
                 // Continue with next query
             }

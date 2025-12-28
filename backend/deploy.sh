@@ -60,13 +60,13 @@ fi
 # Get AWS account ID automatically from AWS CLI if not set
 if [ -z "$AWS_ACCOUNT_ID" ] || [ "$AWS_ACCOUNT_ID" = "YOUR_ACCOUNT_ID" ]; then
     print_info "Getting AWS account ID from AWS CLI..."
-    
+
     # Temporarily disable exit on error for this command
     set +e
     AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text 2>&1)
     AWS_CLI_EXIT_CODE=$?
     set -e
-    
+
     if [ $AWS_CLI_EXIT_CODE -ne 0 ] || [ -z "$AWS_ACCOUNT_ID" ] || [ "$AWS_ACCOUNT_ID" = "null" ]; then
         print_error "Failed to get AWS account ID from AWS CLI."
         if [ $AWS_CLI_EXIT_CODE -ne 0 ]; then
@@ -122,7 +122,7 @@ if [ $REPO_EXISTS -ne 0 ]; then
     set +e
     EXISTING_REPOS=$(aws ecr describe-repositories --region $AWS_REGION --query 'repositories[*].repositoryName' --output text 2>/dev/null)
     set -e
-    
+
     if [ -n "$EXISTING_REPOS" ]; then
         print_info "Existing repositories:"
         for repo in $EXISTING_REPOS; do
@@ -131,7 +131,7 @@ if [ $REPO_EXISTS -ne 0 ]; then
     else
         print_info "No repositories found in this region"
     fi
-    
+
     if [ "$DRY_RUN" = true ]; then
         print_warn "[DRY RUN] Would create repository: $ECR_REPOSITORY"
         print_info "[DRY RUN] Would execute: aws ecr create-repository --repository-name $ECR_REPOSITORY --region $AWS_REGION"
@@ -184,13 +184,13 @@ if [ $ECS_SERVICE_EXISTS -eq 0 ] && [ "$ECS_SERVICE_STATUS" = "ACTIVE" ]; then
         --force-new-deployment \
         --region $AWS_REGION \
         > /dev/null
-    
+
     print_info "Service update initiated. Waiting for deployment to stabilize..."
     aws ecs wait services-stable \
         --cluster $ECS_CLUSTER \
         --services $ECS_SERVICE \
         --region $AWS_REGION
-    
+
     print_info "Deployment completed successfully!"
     fi
 else
@@ -218,4 +218,3 @@ if [ "$DRY_RUN" = true ]; then
 else
 print_info "Deployment process completed!"
 fi
-

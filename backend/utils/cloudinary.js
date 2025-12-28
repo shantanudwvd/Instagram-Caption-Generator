@@ -2,8 +2,8 @@ const cloudinary = require('cloudinary').v2;
 const logger = require('./logger');
 
 // Configure Cloudinary only if credentials are provided
-const hasCloudinaryConfig = process.env.CLOUDINARY_CLOUD_NAME && 
-                             process.env.CLOUDINARY_API_KEY && 
+const hasCloudinaryConfig = process.env.CLOUDINARY_CLOUD_NAME &&
+                             process.env.CLOUDINARY_API_KEY &&
                              process.env.CLOUDINARY_API_SECRET;
 
 if (hasCloudinaryConfig) {
@@ -42,7 +42,7 @@ async function uploadImage(filePath, folder, publicId = null) {
         }
 
         const result = await cloudinary.uploader.upload(filePath, options);
-        
+
         logger.info('Image uploaded to Cloudinary', {
             folder,
             publicId: result.public_id,
@@ -124,4 +124,3 @@ module.exports = {
     extractPublicId,
     cloudinary
 };
-

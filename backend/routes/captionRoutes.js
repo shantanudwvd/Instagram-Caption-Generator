@@ -160,9 +160,9 @@ router.post('/generate-caption', upload.fields([
         // Process text context if provided
         if (textContext) {
             userContext = textContext;
-            logger.debug('Using text context', { 
+            logger.debug('Using text context', {
                 contextPreview: textContext.substring(0, 100) + (textContext.length > 100 ? '...' : ''),
-                userId: req.user?.id 
+                userId: req.user?.id
             });
         }
 
@@ -171,15 +171,15 @@ router.post('/generate-caption', upload.fields([
             try {
                 logger.debug('Transcribing audio file', { userId: req.user?.id });
                 userContext = await transcribeAudio(audioFile.path);
-                logger.debug('Audio transcription complete', { 
+                logger.debug('Audio transcription complete', {
                     transcriptionPreview: userContext.substring(0, 100) + (userContext.length > 100 ? '...' : ''),
-                    userId: req.user?.id 
+                    userId: req.user?.id
                 });
             } catch (transcriptionError) {
-                logger.error('Error transcribing audio', { 
-                    error: transcriptionError.message, 
+                logger.error('Error transcribing audio', {
+                    error: transcriptionError.message,
                     stack: transcriptionError.stack,
-                    userId: req.user?.id 
+                    userId: req.user?.id
                 });
                 // Continue without transcription if it fails
             }
@@ -190,9 +190,9 @@ router.post('/generate-caption', upload.fields([
         const imageAnalysisResult = await analyzeImage(imageBase64);
         const imageAnalysisText = imageAnalysisResult.text || imageAnalysisResult;
         const imageFeatures = imageAnalysisResult.features || null;
-        logger.debug('Image analysis complete', { 
+        logger.debug('Image analysis complete', {
             userId: req.user?.id,
-            hasFeatures: !!imageFeatures 
+            hasFeatures: !!imageFeatures
         });
 
         // Build a user-specific style profile from past captions/feedback
@@ -200,16 +200,16 @@ router.post('/generate-caption', upload.fields([
         try {
             userStyleProfile = await captionLearningService.getUserPreferenceProfile(req.user.id);
             if (userStyleProfile?.preferredOptions) {
-                logger.debug('Loaded user style profile', { 
+                logger.debug('Loaded user style profile', {
                     userId: req.user?.id,
-                    preferredOptions: userStyleProfile.preferredOptions 
+                    preferredOptions: userStyleProfile.preferredOptions
                 });
             }
         } catch (profileError) {
-            logger.error('Error loading user style profile', { 
-                error: profileError.message, 
+            logger.error('Error loading user style profile', {
+                error: profileError.message,
                 stack: profileError.stack,
-                userId: req.user?.id 
+                userId: req.user?.id
             });
         }
 
@@ -228,15 +228,15 @@ router.post('/generate-caption', upload.fields([
         let songAnalysis = null;
         let songFeatures = null;
         let relationshipAnalysis = null;
-        
+
         if (trackId) {
             try {
                 songAnalysis = await analyzeSong(trackId);
                 songFeatures = songAnalysis.features || null;
-                logger.debug('Song analysis complete', { 
-                    trackId, 
+                logger.debug('Song analysis complete', {
+                    trackId,
                     userId: req.user?.id,
-                    hasSpotifyFeatures: !!songAnalysis.spotifyAudioFeatures 
+                    hasSpotifyFeatures: !!songAnalysis.spotifyAudioFeatures
                 });
 
                 // Analyze relationship between image and song if both are available
@@ -250,20 +250,20 @@ router.post('/generate-caption', upload.fields([
                         );
                         logger.debug('Relationship analysis complete', { userId: req.user?.id });
                     } catch (relationshipError) {
-                        logger.error('Error analyzing image-song relationship', { 
-                            error: relationshipError.message, 
+                        logger.error('Error analyzing image-song relationship', {
+                            error: relationshipError.message,
                             stack: relationshipError.stack,
-                            userId: req.user?.id 
+                            userId: req.user?.id
                         });
                         // Continue without relationship analysis if it fails
                     }
                 }
             } catch (songError) {
-                logger.error('Error analyzing song', { 
-                    error: songError.message, 
+                logger.error('Error analyzing song', {
+                    error: songError.message,
                     stack: songError.stack,
                     trackId,
-                    userId: req.user?.id 
+                    userId: req.user?.id
                 });
                 // Continue without song analysis if it fails
             }
@@ -292,12 +292,12 @@ router.post('/generate-caption', upload.fields([
                 try {
                     // Generate unique public ID for Cloudinary
                     const publicId = `caption_${uuidv4()}`;
-                    
+
                     // Upload to Cloudinary
                     const uploadResult = await uploadImage(imageFile.path, 'captions', publicId);
                     imageUrl = uploadResult.url;
                     cloudinaryPublicId = uploadResult.publicId;
-                    
+
                     logger.debug('Image uploaded to Cloudinary', { imageUrl, publicId: cloudinaryPublicId, userId: req.user?.id });
                 } catch (cloudinaryError) {
                     logger.error('Cloudinary upload failed, falling back to local storage', {
@@ -307,7 +307,7 @@ router.post('/generate-caption', upload.fields([
                     // Fall back to local storage
                     const imageExt = path.extname(imageFile.originalname || imageFile.filename || '.jpg');
                     const captionsDir = path.join(process.cwd(), 'uploads', 'captions');
-                    
+
                     // Ensure captions directory exists
                     if (!fs.existsSync(captionsDir)) {
                         fs.mkdirSync(captionsDir, { recursive: true });
@@ -316,11 +316,11 @@ router.post('/generate-caption', upload.fields([
                     // Generate unique filename using UUID
                     const imageFilename = `${uuidv4()}${imageExt}`;
                     const imagePath = path.join(captionsDir, imageFilename);
-                    
+
                     // Copy image to captions directory
                     fs.copyFileSync(imageFile.path, imagePath);
                     imageUrl = `/uploads/captions/${imageFilename}`;
-                    
+
                     logger.debug('Image saved locally for caption', { imageUrl, userId: req.user?.id });
                 }
             } else {
@@ -328,7 +328,7 @@ router.post('/generate-caption', upload.fields([
                 logger.warn('Cloudinary not configured, using local storage', { userId: req.user?.id });
                 const imageExt = path.extname(imageFile.originalname || imageFile.filename || '.jpg');
                 const captionsDir = path.join(process.cwd(), 'uploads', 'captions');
-                
+
                 // Ensure captions directory exists
                 if (!fs.existsSync(captionsDir)) {
                     fs.mkdirSync(captionsDir, { recursive: true });
@@ -337,11 +337,11 @@ router.post('/generate-caption', upload.fields([
                 // Generate unique filename using UUID
                 const imageFilename = `${uuidv4()}${imageExt}`;
                 const imagePath = path.join(captionsDir, imageFilename);
-                
+
                 // Copy image to captions directory
                 fs.copyFileSync(imageFile.path, imagePath);
                 imageUrl = `/uploads/captions/${imageFilename}`;
-                
+
                 logger.debug('Image saved locally for caption', { imageUrl, userId: req.user?.id });
             }
 
@@ -359,10 +359,10 @@ router.post('/generate-caption', upload.fields([
             });
             logger.debug('Caption stored for learning', { captionId, userId: req.user?.id });
         } catch (storeError) {
-            logger.error('Error storing caption for learning', { 
-                error: storeError.message, 
+            logger.error('Error storing caption for learning', {
+                error: storeError.message,
                 stack: storeError.stack,
-                userId: req.user?.id 
+                userId: req.user?.id
             });
             // Delete saved image if caption storage failed
             if (imageUrl) {
@@ -393,10 +393,10 @@ router.post('/generate-caption', upload.fields([
 
         res.json({ caption, captionId, imageUrl });
     } catch (error) {
-        logger.error('Error generating caption', { 
-            error: error.message, 
+        logger.error('Error generating caption', {
+            error: error.message,
             stack: error.stack,
-            userId: req.user?.id 
+            userId: req.user?.id
         });
         res.status(500).json({ error: 'Error generating caption' });
     }
@@ -422,10 +422,10 @@ router.post('/captions', async (req, res) => {
 
         res.json({ success: true, captionId });
     } catch (error) {
-        logger.error('Error storing caption', { 
-            error: error.message, 
+        logger.error('Error storing caption', {
+            error: error.message,
             stack: error.stack,
-            userId: req.user?.id 
+            userId: req.user?.id
         });
         res.status(500).json({ error: 'Failed to store caption' });
     }
@@ -448,10 +448,10 @@ router.post('/captions/:captionId', async (req, res) => {
         const deletedCaptionId = await captionLearningService.deleteCaption(captionId, userId);
         res.json({ success: true, deletedCaptionId });
     } catch (error) {
-        logger.error('Error deleting caption', { 
-            error: error.message, 
+        logger.error('Error deleting caption', {
+            error: error.message,
             stack: error.stack,
-            userId: req.user?.id 
+            userId: req.user?.id
         });
 
         const validationErrors = [
@@ -485,11 +485,11 @@ router.get('/search-tracks', async (req, res) => {
         }));
         res.json({tracks});
     } catch (error) {
-        logger.error('Error searching tracks', { 
-            error: error.message, 
+        logger.error('Error searching tracks', {
+            error: error.message,
             stack: error.stack,
             query: req.query.query,
-            userId: req.user?.id 
+            userId: req.user?.id
         });
         res.status(500).json({error: 'Error searching tracks'});
     }
@@ -503,16 +503,16 @@ router.post('/analyze-image', upload.single('image'), async (req, res) => {
             return res.status(400).json({error: 'Image is required'});
         }
 
-        logger.debug('Analyzing image', { 
+        logger.debug('Analyzing image', {
             filename: imageFile.originalname || 'uploaded image',
-            userId: req.user?.id 
+            userId: req.user?.id
         });
 
         // Analyze image using GPT-4 Vision (returns object with text and features)
         const imageBase64 = fs.readFileSync(imageFile.path, {encoding: 'base64'});
         const imageAnalysisResult = await analyzeImage(imageBase64);
-        const imageAnalysis = typeof imageAnalysisResult === 'string' 
-            ? imageAnalysisResult 
+        const imageAnalysis = typeof imageAnalysisResult === 'string'
+            ? imageAnalysisResult
             : imageAnalysisResult.text;
 
         logger.debug('Image analysis complete', { userId: req.user?.id });
@@ -522,11 +522,11 @@ router.post('/analyze-image', upload.single('image'), async (req, res) => {
 
         res.json({analysis: imageAnalysis});
     } catch (error) {
-        logger.error('Error analyzing image', { 
-            error: error.message, 
+        logger.error('Error analyzing image', {
+            error: error.message,
             stack: error.stack,
             filename: req.file?.originalname,
-            userId: req.user?.id 
+            userId: req.user?.id
         });
 
         // Try to clean up the file if it exists
@@ -535,9 +535,9 @@ router.post('/analyze-image', upload.single('image'), async (req, res) => {
                 fs.unlinkSync(req.file.path);
             }
         } catch (cleanupError) {
-            logger.error('Error cleaning up file', { 
-                error: cleanupError.message, 
-                stack: cleanupError.stack 
+            logger.error('Error cleaning up file', {
+                error: cleanupError.message,
+                stack: cleanupError.stack
             });
         }
 
@@ -556,9 +556,9 @@ router.post('/get-recommendations', async (req, res) => {
             return res.status(400).json({error: 'Image analysis is required'});
         }
 
-        logger.debug('Getting recommendations for image analysis', { 
+        logger.debug('Getting recommendations for image analysis', {
             hasCurrentTrack: !!currentTrack,
-            userId: req.user?.id 
+            userId: req.user?.id
         });
 
         // Ensure Spotify token is valid
@@ -567,17 +567,17 @@ router.post('/get-recommendations', async (req, res) => {
         // Get recommendations - explicitly pass null if currentTrack is undefined
         const recommendations = await recommendationService.getRecommendations(imageAnalysis, currentTrack || null);
 
-        logger.debug('Found recommendations', { 
+        logger.debug('Found recommendations', {
             count: recommendations.length,
-            userId: req.user?.id 
+            userId: req.user?.id
         });
 
         res.json({recommendations});
     } catch (error) {
-        logger.error('Error getting recommendations', { 
-            error: error.message, 
+        logger.error('Error getting recommendations', {
+            error: error.message,
             stack: error.stack,
-            userId: req.user?.id 
+            userId: req.user?.id
         });
 
         try {
@@ -594,10 +594,10 @@ router.post('/get-recommendations', async (req, res) => {
                 note: "Using default recommendations due to an error"
             });
         } catch (fallbackError) {
-            logger.error('Error with fallback recommendations', { 
-                error: fallbackError.message, 
+            logger.error('Error with fallback recommendations', {
+                error: fallbackError.message,
                 stack: fallbackError.stack,
-                userId: req.user?.id 
+                userId: req.user?.id
             });
             res.status(500).json({
                 error: 'Error getting song recommendations',
@@ -630,7 +630,7 @@ function extractImageFeatures(imageAnalysisText) {
     const text = imageAnalysisText.toLowerCase();
 
     // Extract mood
-    if (text.includes('happy') || text.includes('joyful') || text.includes('cheerful') || 
+    if (text.includes('happy') || text.includes('joyful') || text.includes('cheerful') ||
         text.includes('bright') || text.includes('uplifting') || text.includes('positive')) {
         features.mood = 'positive';
     } else if (text.includes('sad') || text.includes('melancholic') || text.includes('somber') ||
@@ -729,7 +729,7 @@ function extractImageFeatures(imageAnalysisText) {
     }
 
     // Extract dominant elements (first 3-4 key elements mentioned)
-    const elementKeywords = ['light', 'shadow', 'color', 'texture', 'composition', 'angle', 'perspective', 
+    const elementKeywords = ['light', 'shadow', 'color', 'texture', 'composition', 'angle', 'perspective',
                              'subject', 'background', 'foreground', 'detail', 'pattern', 'reflection'];
     for (const keyword of elementKeywords) {
         if (text.includes(keyword) && features.dominantElements.length < 4) {
@@ -874,7 +874,7 @@ Base your extraction on the description, song title, artist, genre, release date
         });
 
         const extractedFeatures = JSON.parse(response.choices[0].message.content);
-        
+
         // Validate and normalize the extracted features
         const features = {
             energy: Math.max(0, Math.min(1, extractedFeatures.energy || 0.5)),
@@ -884,17 +884,17 @@ Base your extraction on the description, song title, artist, genre, release date
             vibe: extractedFeatures.vibe || 'general'
         };
 
-        logger.debug('Extracted song features using GPT-4', { 
+        logger.debug('Extracted song features using GPT-4', {
             trackId: songData.id,
-            features 
+            features
         });
 
         return features;
     } catch (error) {
-        logger.error('Error extracting song features with GPT-4', { 
-            error: error.message, 
+        logger.error('Error extracting song features with GPT-4', {
+            error: error.message,
             stack: error.stack,
-            songName: songData.name 
+            songName: songData.name
         });
         // Fall back to keyword-based extraction
         return extractFeaturesFromDescription(description);
@@ -948,11 +948,11 @@ Keep your response under 150 words, focusing on the most distinctive elements of
 
         return response.choices[0].message.content.trim();
     } catch (error) {
-        logger.error('Error generating song analysis with OpenAI', { 
-            error: error.message, 
+        logger.error('Error generating song analysis with OpenAI', {
+            error: error.message,
             stack: error.stack,
             songName: songData.name,
-            artist: songData.artist 
+            artist: songData.artist
         });
         return `"${songData.name}" by ${songData.artist} is a track with distinctive qualities that could match the mood of your image.`;
     }
@@ -1270,7 +1270,7 @@ async function analyzeImage(base64Image) {
 
         logger.debug('Received OpenAI response');
         const imageAnalysisText = response.choices[0].message.content;
-        
+
         // Extract structured features from the analysis text
         const imageFeatures = extractImageFeatures(imageAnalysisText);
         logger.debug('Image features extracted', { imageFeatures });
@@ -1280,14 +1280,14 @@ async function analyzeImage(base64Image) {
             features: imageFeatures
         };
     } catch (error) {
-        logger.error('Error in image analysis API call', { 
-            error: error.message, 
-            stack: error.stack 
+        logger.error('Error in image analysis API call', {
+            error: error.message,
+            stack: error.stack
         });
 
         if (error.response) {
-            logger.error('OpenAI API error details', { 
-                errorDetails: error.response.data 
+            logger.error('OpenAI API error details', {
+                errorDetails: error.response.data
             });
         }
 
@@ -1374,9 +1374,9 @@ Focus on finding authentic, natural connections that would make sense in an Inst
 
         return relationshipAnalysis;
     } catch (error) {
-        logger.error('Error analyzing image-song relationship', { 
-            error: error.message, 
-            stack: error.stack 
+        logger.error('Error analyzing image-song relationship', {
+            error: error.message,
+            stack: error.stack
         });
 
         // Return fallback relationship analysis
@@ -1500,23 +1500,23 @@ async function analyzeSong(trackId) {
 
             // Ensure token is still valid before making the call
             await ensureSpotifyToken();
-            
+
             // Check if the method exists
             if (typeof spotifyApi.getAudioFeaturesForTrack !== 'function') {
                 throw new Error('getAudioFeaturesForTrack method not available on spotifyApi');
             }
-            
-            logger.debug('Fetching Spotify audio features', { 
+
+            logger.debug('Fetching Spotify audio features', {
                 trackId,
                 hasAccessToken: !!spotifyApi.getAccessToken(),
                 accessTokenPreview: spotifyApi.getAccessToken() ? spotifyApi.getAccessToken().substring(0, 10) + '...' : 'none'
             });
-            
+
             const audioFeaturesResponse = await spotifyApi.getAudioFeaturesForTrack(trackId);
-            
+
             if (audioFeaturesResponse && audioFeaturesResponse.body) {
                 spotifyAudioFeatures = audioFeaturesResponse.body;
-                logger.debug('Spotify audio features fetched successfully', { 
+                logger.debug('Spotify audio features fetched successfully', {
                     trackId,
                     energy: spotifyAudioFeatures.energy,
                     valence: spotifyAudioFeatures.valence,
@@ -1524,9 +1524,9 @@ async function analyzeSong(trackId) {
                     danceability: spotifyAudioFeatures.danceability
                 });
             } else {
-                logger.warn('Spotify audio features response missing body', { 
+                logger.warn('Spotify audio features response missing body', {
                     trackId,
-                    response: audioFeaturesResponse 
+                    response: audioFeaturesResponse
                 });
             }
         } catch (audioFeaturesError) {
@@ -1560,9 +1560,9 @@ async function analyzeSong(trackId) {
 
         // Use OpenAI to analyze the song
         const description = await generateSongAnalysis(songData);
-        logger.debug('Song description generated', { 
+        logger.debug('Song description generated', {
             trackId,
-            descriptionPreview: description.substring(0, 100) 
+            descriptionPreview: description.substring(0, 100)
         });
 
         // Extract features - use Spotify if available, otherwise use enhanced GPT-4 extraction
@@ -1575,17 +1575,17 @@ async function analyzeSong(trackId) {
                 // Keep genre from GPT-4 analysis as Spotify doesn't provide it
                 genre: extractFeaturesFromDescription(description).genre
             };
-            logger.debug('Features extracted from Spotify audio features', { 
+            logger.debug('Features extracted from Spotify audio features', {
                 trackId,
-                features 
+                features
             });
         } else {
             // Use enhanced GPT-4 based feature extraction as fallback
             logger.debug('Using GPT-4 based feature extraction (Spotify features not available)', { trackId });
             features = await extractSongFeaturesWithGPT(songData, description);
-            logger.debug('Song features extracted using GPT-4', { 
+            logger.debug('Song features extracted using GPT-4', {
                 trackId,
-                features 
+                features
             });
         }
 
@@ -1596,10 +1596,10 @@ async function analyzeSong(trackId) {
             spotifyAudioFeatures: spotifyAudioFeatures || null
         };
     } catch (error) {
-        logger.error('Error in analyzeSong', { 
-            error: error.message, 
+        logger.error('Error in analyzeSong', {
+            error: error.message,
             stack: error.stack,
-            trackId 
+            trackId
         });
 
         // Provide fallback analysis if there's an error
@@ -1632,9 +1632,9 @@ async function transcribeAudio(audioFilePath) {
 
         return response.text;
     } catch (error) {
-        logger.error('OpenAI transcription error', { 
-            error: error.message, 
-            stack: error.stack 
+        logger.error('OpenAI transcription error', {
+            error: error.message,
+            stack: error.stack
         });
         throw new Error('Failed to transcribe audio');
     }

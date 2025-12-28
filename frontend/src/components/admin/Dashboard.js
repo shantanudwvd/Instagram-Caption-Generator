@@ -151,12 +151,12 @@ const UserDashboard = () => {
                     background: 'linear-gradient(-45deg, #9333ea, #ec4899, #f97316, #9333ea, #ec4899, #f97316)',
                     backgroundSize: '400% 400%'
                 }}></div>
-                
+
                 {/* Floating Orbs */}
                 <div className="absolute top-20 left-10 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
                 <div className="absolute top-40 right-10 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
                 <div className="absolute -bottom-20 left-1/2 w-96 h-96 bg-orange-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
-                
+
                 <div className="relative z-10 max-w-5xl mx-auto space-y-8">
                     <div className="flex justify-start animate-fade-in">
                         <BackButton to="/" label="Back to Profile" />

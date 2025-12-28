@@ -37,7 +37,7 @@ router.post('/register', async (req, res) => {
         // Support both new format (firstName/lastName) and legacy format (name)
         let firstNameValue = firstName;
         let lastNameValue = lastName;
-        
+
         // If name is provided but firstName/lastName are not, split the name
         if (name && firstName === undefined && lastName === undefined) {
             const trimmed = (name || '').trim();
@@ -53,12 +53,12 @@ router.post('/register', async (req, res) => {
             }
         }
 
-        const user = await userService.registerUser({ 
-            firstName: firstNameValue, 
-            lastName: lastNameValue, 
-            email, 
-            password, 
-            photoUrl 
+        const user = await userService.registerUser({
+            firstName: firstNameValue,
+            lastName: lastNameValue,
+            email,
+            password,
+            photoUrl
         });
         const token = userService.generateToken(user);
 
@@ -100,7 +100,7 @@ router.put('/me', authMiddleware, async (req, res) => {
         const { firstName, lastName, name, email, password } = req.body;
 
         const updates = {};
-        
+
         // Support both new format (firstName/lastName) and legacy format (name)
         if (firstName !== undefined || lastName !== undefined) {
             if (firstName !== undefined) updates.firstName = firstName;
@@ -108,7 +108,7 @@ router.put('/me', authMiddleware, async (req, res) => {
         } else if (name !== undefined) {
             updates.name = name; // Legacy support
         }
-        
+
         if (email !== undefined) updates.email = email;
         if (password !== undefined) updates.password = password;
 
@@ -126,7 +126,7 @@ router.put('/me', authMiddleware, async (req, res) => {
 // Upload and attach profile photo
 router.post('/photo', authMiddleware, upload.single('photo'), async (req, res) => {
     let tempFilePath = null;
-    
+
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'Photo file is required' });
@@ -134,27 +134,27 @@ router.post('/photo', authMiddleware, upload.single('photo'), async (req, res) =
 
         // Debug logging
         if (!req.user) {
-            logger.error('No user found in request', { 
+            logger.error('No user found in request', {
                 hasAuthHeader: !!req.headers.authorization,
                 method: req.method,
-                path: req.path 
+                path: req.path
             });
             return res.status(401).json({ error: 'User not authenticated' });
         }
 
         const userId = req.user.id || req.user._id;
         if (!userId) {
-            logger.error('User ID not found in req.user', { 
+            logger.error('User ID not found in req.user', {
                 userKeys: Object.keys(req.user),
-                user: req.user 
+                user: req.user
             });
             return res.status(400).json({ error: 'User ID not found' });
         }
 
-        logger.debug('Uploading profile photo', { 
+        logger.debug('Uploading profile photo', {
             userId,
             email: req.user.email,
-            hasFile: !!req.file 
+            hasFile: !!req.file
         });
 
         tempFilePath = req.file.path;
@@ -179,10 +179,10 @@ router.post('/photo', authMiddleware, upload.single('photo'), async (req, res) =
                             await deleteImage(oldPublicId);
                             logger.info('Deleted old profile photo from Cloudinary', { userId, oldPublicId });
                         } catch (deleteError) {
-                            logger.warn('Failed to delete old profile photo from Cloudinary', { 
-                                userId, 
-                                oldPublicId, 
-                                error: deleteError.message 
+                            logger.warn('Failed to delete old profile photo from Cloudinary', {
+                                userId,
+                                oldPublicId,
+                                error: deleteError.message
                             });
                             // Don't fail the upload if deletion fails
                         }
@@ -201,12 +201,12 @@ router.post('/photo', authMiddleware, upload.single('photo'), async (req, res) =
             logger.warn('Cloudinary not configured, using local storage', { userId });
             photoUrl = `${req.protocol}://${req.get('host')}/uploads/profile_photos/${req.file.filename}`;
         }
-        
+
         const updatedUser = await userService.updateProfile(userId, {
             photoUrl,
             email: req.user.email // fallback lookup by email if needed
         });
-        
+
         const token = userService.generateToken(updatedUser);
 
         // Clean up temporary file if uploaded to Cloudinary
@@ -215,9 +215,9 @@ router.post('/photo', authMiddleware, upload.single('photo'), async (req, res) =
                 fs.unlinkSync(tempFilePath);
                 logger.debug('Cleaned up temporary file', { tempFilePath });
             } catch (cleanupError) {
-                logger.warn('Failed to clean up temporary file', { 
-                    tempFilePath, 
-                    error: cleanupError.message 
+                logger.warn('Failed to clean up temporary file', {
+                    tempFilePath,
+                    error: cleanupError.message
                 });
             }
         }
@@ -230,20 +230,20 @@ router.post('/photo', authMiddleware, upload.single('photo'), async (req, res) =
             try {
                 fs.unlinkSync(tempFilePath);
             } catch (cleanupError) {
-                logger.warn('Failed to clean up temporary file on error', { 
-                    tempFilePath, 
-                    error: cleanupError.message 
+                logger.warn('Failed to clean up temporary file on error', {
+                    tempFilePath,
+                    error: cleanupError.message
                 });
             }
         }
 
-        logger.error('Error uploading profile photo', { 
+        logger.error('Error uploading profile photo', {
             error: error.message,
             stack: error.stack,
             userId: req.user?.id || req.user?._id,
             userEmail: req.user?.email
         });
-        
+
         const status = error.message.includes('image') || error.message.includes('User not found') || error.message.includes('Invalid user ID') ? 400 : 500;
         res.status(status).json({ error: error.message || 'Failed to upload photo' });
     }

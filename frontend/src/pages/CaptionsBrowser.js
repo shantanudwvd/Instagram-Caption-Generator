@@ -425,4 +425,3 @@ const CaptionsBrowser = () => {
 };
 
 export default CaptionsBrowser;
-

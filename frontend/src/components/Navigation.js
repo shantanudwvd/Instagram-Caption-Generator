@@ -9,8 +9,8 @@ const Navigation = () => {
     const { user, logout } = useAuth();
     const location = useLocation();
     const { theme, toggleTheme } = useTheme();
-    const fullName = user?.fullName || (user?.firstName && user?.lastName 
-        ? `${user.firstName} ${user.lastName}` 
+    const fullName = user?.fullName || (user?.firstName && user?.lastName
+        ? `${user.firstName} ${user.lastName}`
         : user?.firstName || user?.lastName || '');
     const initials = fullName
         ? fullName.split(' ').map((part) => part.charAt(0).toUpperCase()).join('').slice(0, 2)

@@ -20,8 +20,8 @@ const ImageModal = ({ imageUrl, caption, onClose }) => {
 
     if (!imageUrl) return null;
 
-    const fullImageUrl = imageUrl.startsWith('http') 
-        ? imageUrl 
+    const fullImageUrl = imageUrl.startsWith('http')
+        ? imageUrl
         : `${process.env.REACT_APP_BACKEND_URL}${imageUrl}`;
 
     return (
@@ -56,4 +56,3 @@ const ImageModal = ({ imageUrl, caption, onClose }) => {
 };
 
 export default ImageModal;
-

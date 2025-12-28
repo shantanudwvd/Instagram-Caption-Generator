@@ -90,7 +90,7 @@ class UserService {
         if (!name || typeof name !== 'string') {
             return { firstName: '', lastName: '' };
         }
-        
+
         const trimmed = name.trim();
         if (trimmed.length === 0) {
             return { firstName: '', lastName: '' };
@@ -321,7 +321,7 @@ class UserService {
 
     generateToken(user) {
         const fullName = user.fullName || this._computeFullName(user.firstName || '', user.lastName || '') || user.name || '';
-        
+
         return this._buildToken({
             userId: user.id,
             email: user.email,
@@ -339,9 +339,9 @@ class UserService {
         const collection = db.collection(this.collectionName);
 
         const logger = require('../utils/logger');
-        
-        logger.debug('updateProfile called', { 
-            userId, 
+
+        logger.debug('updateProfile called', {
+            userId,
             userIdType: typeof userId,
             hasEmail: !!updates.email,
             updateKeys: Object.keys(updates)
@@ -355,7 +355,7 @@ class UserService {
         let existingUser = null;
         if (isValidObjectId) {
             existingUser = await collection.findOne({ _id: new ObjectId(userId) });
-            logger.debug('User existence check by _id', { 
+            logger.debug('User existence check by _id', {
                 found: !!existingUser,
                 userId,
                 foundUserId: existingUser?._id?.toString()
@@ -369,8 +369,8 @@ class UserService {
             const trimmed = updates.firstName.trim();
             updateDoc.firstName = trimmed;
             // Compute fullName
-            const lastName = updates.lastName !== undefined 
-                ? (updates.lastName || '') 
+            const lastName = updates.lastName !== undefined
+                ? (updates.lastName || '')
                 : (existingUser?.lastName || '');
             updateDoc.fullName = this._computeFullName(trimmed, lastName);
             updateDoc.name = updateDoc.fullName; // Keep name for backward compatibility
@@ -381,8 +381,8 @@ class UserService {
             const trimmed = updates.lastName.trim();
             updateDoc.lastName = trimmed;
             // Compute fullName
-            const firstName = updates.firstName !== undefined 
-                ? (updates.firstName || '') 
+            const firstName = updates.firstName !== undefined
+                ? (updates.firstName || '')
                 : (existingUser?.firstName || updateDoc.firstName || '');
             updateDoc.fullName = this._computeFullName(firstName, trimmed);
             updateDoc.name = updateDoc.fullName; // Keep name for backward compatibility
@@ -421,10 +421,10 @@ class UserService {
 
         // If not found by _id, try by email (case-insensitive)
         if (!existingUser && updateDoc.email) {
-            existingUser = await collection.findOne({ 
-                email: { $regex: new RegExp(`^${updateDoc.email}$`, 'i') } 
+            existingUser = await collection.findOne({
+                email: { $regex: new RegExp(`^${updateDoc.email}$`, 'i') }
             });
-            logger.debug('User existence check by email', { 
+            logger.debug('User existence check by email', {
                 found: !!existingUser,
                 email: updateDoc.email,
                 foundEmail: existingUser?.email,
@@ -439,19 +439,19 @@ class UserService {
             if (updateDoc.email) {
                 try {
                     const emailPrefix = updateDoc.email.split('@')[0];
-                    similarUsers = await collection.find({ 
-                        email: { $regex: emailPrefix, $options: 'i' } 
+                    similarUsers = await collection.find({
+                        email: { $regex: emailPrefix, $options: 'i' }
                     }).limit(3).toArray();
-                    similarUsers = similarUsers.map(u => ({ 
-                        id: u._id.toString(), 
-                        email: u.email 
+                    similarUsers = similarUsers.map(u => ({
+                        id: u._id.toString(),
+                        email: u.email
                     }));
                 } catch (debugError) {
                     // Ignore debug query errors
                 }
             }
 
-            logger.error('User not found in database', { 
+            logger.error('User not found in database', {
                 userId,
                 isValidObjectId,
                 email: updateDoc.email,
@@ -462,7 +462,7 @@ class UserService {
 
         // Now perform the update - use the found user's _id
         const updateFilter = { _id: existingUser._id };
-        
+
         // Perform the update
         await collection.updateOne(
             updateFilter,
@@ -471,8 +471,8 @@ class UserService {
 
         // Fetch the updated user
         const updatedUser = await collection.findOne({ _id: existingUser._id });
-        
-        logger.debug('Update result', { 
+
+        logger.debug('Update result', {
             found: !!updatedUser,
             updatedUserId: updatedUser?._id?.toString(),
             updatedFields: updatedUser ? Object.keys(updateDoc) : []
@@ -480,7 +480,7 @@ class UserService {
 
         // If update didn't return a document, something went wrong
         if (!updatedUser) {
-            logger.error('Update operation failed - user not found after update', { 
+            logger.error('Update operation failed - user not found after update', {
                 userId,
                 existingUserId: existingUser._id.toString(),
                 updateDoc
@@ -499,23 +499,23 @@ class UserService {
             throw new Error('Token has expired');
         }
 
-        logger.debug('verifyToken - looking up user', { 
+        logger.debug('verifyToken - looking up user', {
             userIdFromToken: payload.userId,
-            emailFromToken: payload.email 
+            emailFromToken: payload.email
         });
 
         const user = await this.findUserById(payload.userId);
         if (!user) {
-            logger.error('User not found in verifyToken', { 
+            logger.error('User not found in verifyToken', {
                 userIdFromToken: payload.userId,
-                emailFromToken: payload.email 
+                emailFromToken: payload.email
             });
             throw new Error('User not found');
         }
 
-        logger.debug('verifyToken - user found', { 
+        logger.debug('verifyToken - user found', {
             userId: user.id,
-            email: user.email 
+            email: user.email
         });
 
         return user;

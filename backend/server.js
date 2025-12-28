@@ -51,11 +51,11 @@ const corsOptions = {
         }
 
         const allowedOrigins = getAllowedOrigins();
-        
+
         // Normalize origin (remove trailing slash, lowercase for comparison)
         const normalizedOrigin = origin.toLowerCase().replace(/\/$/, '');
         const normalizedAllowed = allowedOrigins.map(o => o.toLowerCase().replace(/\/$/, ''));
-        
+
         // Check if origin is in allowed list (case-insensitive)
         if (normalizedAllowed.indexOf(normalizedOrigin) !== -1) {
             logger.debug('CORS allowed origin (exact match)', { origin, normalizedOrigin });
@@ -80,11 +80,11 @@ const corsOptions = {
             return callback(null, true);
         }
 
-        logger.warn('CORS blocked origin', { 
-            origin, 
+        logger.warn('CORS blocked origin', {
+            origin,
             normalizedOrigin,
             allowedOrigins,
-            normalizedAllowed 
+            normalizedAllowed
         });
         callback(new Error('Not allowed by CORS'));
     },
@@ -132,8 +132,8 @@ app.use((err, req, res, next) => {
 
     // Don't leak error details in production
     const statusCode = err.statusCode || 500;
-    const message = process.env.NODE_ENV === 'production' 
-        ? 'Internal server error' 
+    const message = process.env.NODE_ENV === 'production'
+        ? 'Internal server error'
         : err.message;
 
     res.status(statusCode).json({
