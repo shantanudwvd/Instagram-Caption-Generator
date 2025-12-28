@@ -87,6 +87,7 @@ router.get('/images/:imageId', async (req, res) => {
 
         res.setHeader('Content-Type', contentType);
         res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+        
         // Stream the file
         const fileStream = fs.createReadStream(imagePath);
         fileStream.pipe(res);
