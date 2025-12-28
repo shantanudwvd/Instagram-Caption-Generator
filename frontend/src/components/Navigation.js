@@ -9,17 +9,26 @@ const Navigation = () => {
     const { user, logout } = useAuth();
     const location = useLocation();
     const { theme, toggleTheme } = useTheme();
-    const fullName = user?.fullName || (user?.firstName && user?.lastName
-        ? `${user.firstName} ${user.lastName}`
-        : user?.firstName || user?.lastName || '');
+    const fullName =
+        user?.fullName ||
+        (user?.firstName && user?.lastName
+            ? `${user.firstName} ${user.lastName}`
+            : user?.firstName || user?.lastName || '');
     const initials = fullName
-        ? fullName.split(' ').map((part) => part.charAt(0).toUpperCase()).join('').slice(0, 2)
+        ? fullName
+              .split(' ')
+              .map((part) => part.charAt(0).toUpperCase())
+              .join('')
+              .slice(0, 2)
         : 'CM';
 
     return (
         <nav className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-lg shadow-sm">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
-                <Link to="/" className="flex items-center gap-3 group transition-transform duration-200 hover:scale-105">
+                <Link
+                    to="/"
+                    className="flex items-center gap-3 group transition-transform duration-200 hover:scale-105"
+                >
                     <div className="h-16 w-44 flex items-center justify-start">
                         <CaptionMuseLogo className="h-full w-full" />
                     </div>
@@ -30,8 +39,14 @@ const Navigation = () => {
                         className="btn-primary btn-primary-compact text-sm"
                         aria-label="Toggle color theme"
                     >
-                        {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                        <span className="hidden sm:inline">{theme === 'dark' ? 'Light' : 'Dark'} mode</span>
+                        {theme === 'dark' ? (
+                            <Sun className="w-4 h-4" />
+                        ) : (
+                            <Moon className="w-4 h-4" />
+                        )}
+                        <span className="hidden sm:inline">
+                            {theme === 'dark' ? 'Light' : 'Dark'} mode
+                        </span>
                     </button>
                     <Link
                         to="/generator"
@@ -55,7 +70,9 @@ const Navigation = () => {
                         <div className="flex items-center gap-3">
                             <div className="hidden sm:flex flex-col text-right leading-tight">
                                 <span className="text-xs text-slate-500">Logged in</span>
-                                <span className="text-sm font-semibold text-slate-900">{fullName}</span>
+                                <span className="text-sm font-semibold text-slate-900">
+                                    {fullName}
+                                </span>
                             </div>
                             {user.photoUrl ? (
                                 <img

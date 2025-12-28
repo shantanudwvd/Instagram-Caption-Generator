@@ -18,7 +18,7 @@ router.get('/overview', async (req, res) => {
         res.json({
             user: req.user,
             stats,
-            recentCaptions
+            recentCaptions,
         });
     } catch (error) {
         logger.error('Error loading dashboard overview:', error);
@@ -46,7 +46,7 @@ router.get('/captions', async (req, res) => {
             sortBy: req.query.sortBy || 'createdAt',
             sortOrder: req.query.sortOrder || 'desc',
             limit: req.query.limit || 50,
-            offset: req.query.offset || 0
+            offset: req.query.offset || 0,
         };
 
         const result = await captionLearningService.getFilteredCaptions(filters);
@@ -81,7 +81,7 @@ router.get('/images/:imageId', async (req, res) => {
             '.jpeg': 'image/jpeg',
             '.png': 'image/png',
             '.gif': 'image/gif',
-            '.webp': 'image/webp'
+            '.webp': 'image/webp',
         };
         const contentType = contentTypes[ext] || 'image/jpeg';
 

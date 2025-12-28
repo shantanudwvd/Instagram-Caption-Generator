@@ -5,9 +5,13 @@ const ImageUpload = ({ imagePreview, onImageSelect, fileInputRef }) => {
     return (
         <div className="space-y-4">
             <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-blue-500 font-semibold">Step 1</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-blue-500 font-semibold">
+                    Step 1
+                </p>
                 <h2 className="text-2xl font-semibold text-slate-900">Upload your image</h2>
-                <p className="text-sm text-slate-500">Drop in a photo or browse your files to let the muse analyze it.</p>
+                <p className="text-sm text-slate-500">
+                    Drop in a photo or browse your files to let the muse analyze it.
+                </p>
             </div>
             <div
                 onClick={() => fileInputRef.current?.click()}
@@ -25,7 +29,9 @@ const ImageUpload = ({ imagePreview, onImageSelect, fileInputRef }) => {
                 ) : (
                     <div className="space-y-3 relative z-10">
                         <Upload className="w-12 h-12 mx-auto text-slate-400 transform transition-transform duration-300 group-hover:scale-110 group-hover:text-purple-500" />
-                        <p className="text-base font-medium text-slate-700">Click to browse or drag & drop</p>
+                        <p className="text-base font-medium text-slate-700">
+                            Click to browse or drag & drop
+                        </p>
                         <p className="text-sm text-slate-500">PNG, JPG up to 10MB</p>
                         <div className="flex justify-center">
                             <span className="px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white text-sm font-medium shadow-md transform transition-transform duration-300 group-hover:scale-105">

@@ -32,7 +32,7 @@ function splitName(name) {
 
     return {
         firstName: trimmed.substring(0, lastSpaceIndex).trim(),
-        lastName: trimmed.substring(lastSpaceIndex + 1).trim()
+        lastName: trimmed.substring(lastSpaceIndex + 1).trim(),
     };
 }
 
@@ -54,7 +54,7 @@ async function migrateUserNames() {
             maxPoolSize: 10,
             serverSelectionTimeoutMS: 5000,
             socketTimeoutMS: 45000,
-            connectTimeoutMS: 10000
+            connectTimeoutMS: 10000,
         });
 
         await client.connect();
@@ -65,13 +65,15 @@ async function migrateUserNames() {
 
         // Find all users that need migration (missing firstName, lastName, or fullName)
         console.log('Finding users to migrate...');
-        const usersToMigrate = await collection.find({
-            $or: [
-                { firstName: { $exists: false } },
-                { lastName: { $exists: false } },
-                { fullName: { $exists: false } }
-            ]
-        }).toArray();
+        const usersToMigrate = await collection
+            .find({
+                $or: [
+                    { firstName: { $exists: false } },
+                    { lastName: { $exists: false } },
+                    { fullName: { $exists: false } },
+                ],
+            })
+            .toArray();
 
         console.log(`Found ${usersToMigrate.length} users to migrate`);
 
@@ -119,10 +121,15 @@ async function migrateUserNames() {
 
                 if (updateResult.modifiedCount === 1) {
                     successCount++;
-                    console.log(`✓ Migrated user ${user._id}: firstName: "${firstName}", lastName: "${lastName}", fullName: "${fullName}"`);
+                    console.log(
+                        `✓ Migrated user ${user._id}: firstName: "${firstName}", lastName: "${lastName}", fullName: "${fullName}"`
+                    );
                 } else {
                     errorCount++;
-                    errors.push({ userId: user._id.toString(), error: 'Update did not modify document' });
+                    errors.push({
+                        userId: user._id.toString(),
+                        error: 'Update did not modify document',
+                    });
                     console.log(`✗ Failed to migrate user ${user._id}`);
                 }
             } catch (error) {
@@ -139,13 +146,12 @@ async function migrateUserNames() {
 
         if (errors.length > 0) {
             console.log('\nErrors:');
-            errors.forEach(err => {
+            errors.forEach((err) => {
                 console.log(`  - User ${err.userId}: ${err.error}`);
             });
         }
 
         console.log('\nMigration completed!');
-
     } catch (error) {
         console.error('Migration failed:', error);
         process.exit(1);

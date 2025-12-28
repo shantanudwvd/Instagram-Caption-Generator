@@ -27,7 +27,7 @@ const TipsPage = () => {
                     style={{
                         background:
                             'linear-gradient(-45deg, #9333ea, #ec4899, #f97316, #9333ea, #ec4899, #f97316)',
-                        backgroundSize: '400% 400%'
+                        backgroundSize: '400% 400%',
                     }}
                 />
 
@@ -45,7 +45,8 @@ const TipsPage = () => {
                             Craft captions that feel human
                         </h1>
                         <p className="text-base text-slate-600 dark:text-slate-300 max-w-3xl mx-auto">
-                            Use these patterns to get vivid, on-brand captions faster. Start with intent, add context, and let Caption Muse do the heavy lifting.
+                            Use these patterns to get vivid, on-brand captions faster. Start with
+                            intent, add context, and let Caption Muse do the heavy lifting.
                         </p>
                     </header>
 
@@ -57,7 +58,7 @@ const TipsPage = () => {
                             points={[
                                 'Mention the scene, mood, or event (e.g., sunset rooftop, graduation, café with friends).',
                                 'Drop 2–3 keywords you care about: brand voice, vibe, and sentiment.',
-                                'If a product is present, name it and what makes it special.'
+                                'If a product is present, name it and what makes it special.',
                             ]}
                         />
                         <TipCard
@@ -67,7 +68,7 @@ const TipsPage = () => {
                             points={[
                                 'Pick tone and length sliders in the Studio to avoid over/under-writing.',
                                 'For playful posts, ask for emojis sparingly; for professional, skip them.',
-                                'Add one personality trait (witty, heartfelt, confident) for consistency.'
+                                'Add one personality trait (witty, heartfelt, confident) for consistency.',
                             ]}
                         />
                         <TipCard
@@ -77,7 +78,7 @@ const TipsPage = () => {
                             points={[
                                 'Avoid sensitive topics and inside jokes that need heavy context.',
                                 'Check brand guidelines: banned words, required hashtags, or disclosures.',
-                                'Use “sounds like me” feedback to fine-tune style over time.'
+                                'Use “sounds like me” feedback to fine-tune style over time.',
                             ]}
                         />
                     </section>
@@ -86,20 +87,37 @@ const TipsPage = () => {
                         <div className="bg-white/90 dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-lg">
                             <div className="flex items-center gap-2 mb-4">
                                 <Zap className="w-5 h-5 text-orange-500" />
-                                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Prompt recipes that work</h2>
+                                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                                    Prompt recipes that work
+                                </h2>
                             </div>
                             <div className="space-y-4 text-sm text-slate-600 dark:text-slate-300">
                                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
-                                    <p className="text-slate-900 dark:text-slate-100 font-medium mb-1">Event recap</p>
-                                    <p>“Celebrating with close friends at a rooftop sunset in NYC. Keep it warm, 1–2 emojis, casual tone.”</p>
+                                    <p className="text-slate-900 dark:text-slate-100 font-medium mb-1">
+                                        Event recap
+                                    </p>
+                                    <p>
+                                        “Celebrating with close friends at a rooftop sunset in NYC.
+                                        Keep it warm, 1–2 emojis, casual tone.”
+                                    </p>
                                 </div>
                                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
-                                    <p className="text-slate-900 dark:text-slate-100 font-medium mb-1">Product highlight</p>
-                                    <p>“Showcasing a handmade ceramic mug, earthy tones, cozy morning vibe. Short, inviting, no salesy language.”</p>
+                                    <p className="text-slate-900 dark:text-slate-100 font-medium mb-1">
+                                        Product highlight
+                                    </p>
+                                    <p>
+                                        “Showcasing a handmade ceramic mug, earthy tones, cozy
+                                        morning vibe. Short, inviting, no salesy language.”
+                                    </p>
                                 </div>
                                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
-                                    <p className="text-slate-900 dark:text-slate-100 font-medium mb-1">Travel moment</p>
-                                    <p>“Sunrise hike in the mountains, foggy horizon, feeling grateful. Add one nature emoji, medium length.”</p>
+                                    <p className="text-slate-900 dark:text-slate-100 font-medium mb-1">
+                                        Travel moment
+                                    </p>
+                                    <p>
+                                        “Sunrise hike in the mountains, foggy horizon, feeling
+                                        grateful. Add one nature emoji, medium length.”
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -107,13 +125,27 @@ const TipsPage = () => {
                         <div className="bg-white/90 dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-lg">
                             <div className="flex items-center gap-2 mb-4">
                                 <ArrowLeftCircle className="w-5 h-5 text-purple-500" />
-                                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Make the most of feedback</h2>
+                                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                                    Make the most of feedback
+                                </h2>
                             </div>
                             <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-300 list-disc list-inside">
-                                <li>Rate and adjust captions in Dashboard so the model learns your style.</li>
-                                <li>Flag overused phrases; ask for “swap clichés for fresh phrasing.”</li>
-                                <li>When a caption misses, specify what felt off (too long, too formal, wrong vibe).</li>
-                                <li>Save a few “golden” captions as reference text for future generations.</li>
+                                <li>
+                                    Rate and adjust captions in Dashboard so the model learns your
+                                    style.
+                                </li>
+                                <li>
+                                    Flag overused phrases; ask for “swap clichés for fresh
+                                    phrasing.”
+                                </li>
+                                <li>
+                                    When a caption misses, specify what felt off (too long, too
+                                    formal, wrong vibe).
+                                </li>
+                                <li>
+                                    Save a few “golden” captions as reference text for future
+                                    generations.
+                                </li>
                             </ul>
                         </div>
                     </section>

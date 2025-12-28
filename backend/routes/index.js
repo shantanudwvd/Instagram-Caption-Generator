@@ -4,7 +4,7 @@ const feedbackRoutes = require('./feedbackRoutes');
 const authRoutes = require('./authRoutes');
 const dashboardRoutes = require('./dashboardRoutes');
 
-module.exports = function(app) {
+module.exports = function (app) {
     // Public auth routes
     app.use('/api/auth', authRoutes);
 

@@ -2,15 +2,16 @@ const cloudinary = require('cloudinary').v2;
 const logger = require('./logger');
 
 // Configure Cloudinary only if credentials are provided
-const hasCloudinaryConfig = process.env.CLOUDINARY_CLOUD_NAME &&
-                             process.env.CLOUDINARY_API_KEY &&
-                             process.env.CLOUDINARY_API_SECRET;
+const hasCloudinaryConfig =
+    process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET;
 
 if (hasCloudinaryConfig) {
     cloudinary.config({
         cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
         api_key: process.env.CLOUDINARY_API_KEY,
-        api_secret: process.env.CLOUDINARY_API_SECRET
+        api_secret: process.env.CLOUDINARY_API_SECRET,
     });
     logger.info('Cloudinary configured successfully');
 } else {
@@ -26,7 +27,9 @@ if (hasCloudinaryConfig) {
  */
 async function uploadImage(filePath, folder, publicId = null) {
     if (!hasCloudinaryConfig) {
-        throw new Error('Cloudinary is not configured. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET environment variables.');
+        throw new Error(
+            'Cloudinary is not configured. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET environment variables.'
+        );
     }
 
     try {
@@ -34,7 +37,7 @@ async function uploadImage(filePath, folder, publicId = null) {
             folder: folder,
             resource_type: 'image',
             overwrite: false,
-            invalidate: true
+            invalidate: true,
         };
 
         if (publicId) {
@@ -46,7 +49,7 @@ async function uploadImage(filePath, folder, publicId = null) {
         logger.info('Image uploaded to Cloudinary', {
             folder,
             publicId: result.public_id,
-            url: result.secure_url
+            url: result.secure_url,
         });
 
         return {
@@ -54,14 +57,14 @@ async function uploadImage(filePath, folder, publicId = null) {
             publicId: result.public_id,
             width: result.width,
             height: result.height,
-            format: result.format
+            format: result.format,
         };
     } catch (error) {
         logger.error('Error uploading image to Cloudinary', {
             error: error.message,
             stack: error.stack,
             folder,
-            filePath
+            filePath,
         });
         throw new Error(`Failed to upload image to Cloudinary: ${error.message}`);
     }
@@ -81,7 +84,7 @@ async function deleteImage(publicId) {
         logger.error('Error deleting image from Cloudinary', {
             error: error.message,
             stack: error.stack,
-            publicId
+            publicId,
         });
         throw new Error(`Failed to delete image from Cloudinary: ${error.message}`);
     }
@@ -113,7 +116,10 @@ function extractPublicId(url) {
         }
         return null;
     } catch (error) {
-        logger.error('Error extracting public ID from URL', { url, error: error.message });
+        logger.error('Error extracting public ID from URL', {
+            url,
+            error: error.message,
+        });
         return null;
     }
 }
@@ -122,5 +128,5 @@ module.exports = {
     uploadImage,
     deleteImage,
     extractPublicId,
-    cloudinary
+    cloudinary,
 };

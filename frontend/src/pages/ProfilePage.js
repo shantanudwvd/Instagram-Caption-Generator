@@ -24,10 +24,14 @@ const ProfilePage = () => {
     if (isInitializing) {
         return (
             <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
-                <div className="absolute inset-0 animate-gradient-xy opacity-30" style={{
-                    background: 'linear-gradient(-45deg, #9333ea, #ec4899, #f97316, #9333ea, #ec4899, #f97316)',
-                    backgroundSize: '400% 400%'
-                }}></div>
+                <div
+                    className="absolute inset-0 animate-gradient-xy opacity-30"
+                    style={{
+                        background:
+                            'linear-gradient(-45deg, #9333ea, #ec4899, #f97316, #9333ea, #ec4899, #f97316)',
+                        backgroundSize: '400% 400%',
+                    }}
+                ></div>
                 <div className="relative z-10">
                     <LoadingSpinner />
                 </div>
@@ -44,10 +48,14 @@ const ProfilePage = () => {
             <Navigation />
             <div className="min-h-screen relative overflow-hidden py-12">
                 {/* Animated Gradient Background */}
-                <div className="absolute inset-0 animate-gradient-xy opacity-30" style={{
-                    background: 'linear-gradient(-45deg, #9333ea, #ec4899, #f97316, #9333ea, #ec4899, #f97316)',
-                    backgroundSize: '400% 400%'
-                }}></div>
+                <div
+                    className="absolute inset-0 animate-gradient-xy opacity-30"
+                    style={{
+                        background:
+                            'linear-gradient(-45deg, #9333ea, #ec4899, #f97316, #9333ea, #ec4899, #f97316)',
+                        backgroundSize: '400% 400%',
+                    }}
+                ></div>
 
                 {/* Floating Orbs */}
                 <div className="absolute top-20 left-10 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
@@ -60,10 +68,15 @@ const ProfilePage = () => {
                             My Profile
                         </span>
                         <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent animate-fade-in-up animation-delay-100">
-                            Welcome back, {user.fullName || (user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || user.lastName || 'User')}
+                            Welcome back,{' '}
+                            {user.fullName ||
+                                (user.firstName && user.lastName
+                                    ? `${user.firstName} ${user.lastName}`
+                                    : user.firstName || user.lastName || 'User')}
                         </h1>
                         <p className="text-base text-slate-600 max-w-3xl mx-auto animate-fade-in-up animation-delay-200">
-                            Update your account details, change your password, and jump into the studio whenever inspiration hits.
+                            Update your account details, change your password, and jump into the
+                            studio whenever inspiration hits.
                         </p>
                     </section>
 

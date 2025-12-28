@@ -23,7 +23,7 @@ async function migrateCaptionsToUserScoped() {
             maxPoolSize: 10,
             serverSelectionTimeoutMS: 5000,
             socketTimeoutMS: 45000,
-            connectTimeoutMS: 10000
+            connectTimeoutMS: 10000,
         });
 
         await client.connect();
@@ -35,9 +35,11 @@ async function migrateCaptionsToUserScoped() {
 
         // Find all captions without userId field
         console.log('Finding captions to migrate...');
-        const captionsToMigrate = await captionColl.find({
-            userId: { $exists: false }
-        }).toArray();
+        const captionsToMigrate = await captionColl
+            .find({
+                userId: { $exists: false },
+            })
+            .toArray();
 
         console.log(`Found ${captionsToMigrate.length} captions without userId`);
 
@@ -63,7 +65,7 @@ async function migrateCaptionsToUserScoped() {
         console.log(`\n${captionsToMigrate.length} captions will be deleted.`);
         console.log('Press Ctrl+C to cancel, or wait 5 seconds to continue...\n');
 
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        await new Promise((resolve) => setTimeout(resolve, 5000));
 
         let deletedCount = 0;
         let errorCount = 0;
@@ -84,11 +86,17 @@ async function migrateCaptionsToUserScoped() {
                     }
                 } else {
                     errorCount++;
-                    errors.push({ captionId: caption._id.toString(), error: 'Delete did not remove document' });
+                    errors.push({
+                        captionId: caption._id.toString(),
+                        error: 'Delete did not remove document',
+                    });
                 }
             } catch (error) {
                 errorCount++;
-                errors.push({ captionId: caption._id.toString(), error: error.message });
+                errors.push({
+                    captionId: caption._id.toString(),
+                    error: error.message,
+                });
                 console.error(`✗ Error deleting caption ${caption._id}:`, error.message);
             }
         }
@@ -100,7 +108,7 @@ async function migrateCaptionsToUserScoped() {
 
         if (errors.length > 0) {
             console.log('\nErrors:');
-            errors.slice(0, 10).forEach(err => {
+            errors.slice(0, 10).forEach((err) => {
                 console.log(`  - Caption ${err.captionId}: ${err.error}`);
             });
             if (errors.length > 10) {
@@ -120,7 +128,6 @@ async function migrateCaptionsToUserScoped() {
         }
 
         console.log('\nMigration completed!');
-
     } catch (error) {
         console.error('Migration failed:', error);
         process.exit(1);

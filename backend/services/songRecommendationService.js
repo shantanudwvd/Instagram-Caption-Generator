@@ -6,7 +6,7 @@ dotenv.config();
 
 // Initialize OpenAI
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
+    apiKey: process.env.OPENAI_API_KEY,
 });
 
 /**
@@ -35,7 +35,7 @@ class SongRecommendationService {
 
             // Filter out the current track if it exists
             const filteredRecommendations = currentTrack
-                ? recommendations.filter(track => track.id !== currentTrack.id)
+                ? recommendations.filter((track) => track.id !== currentTrack.id)
                 : recommendations;
 
             // Return top 5 recommendations
@@ -43,12 +43,18 @@ class SongRecommendationService {
         } catch (error) {
             logger.error('Error generating recommendations', {
                 error: error.message,
-                stack: error.stack
+                stack: error.stack,
             });
 
             // Fallback: Use default queries if there's an error
             logger.warn('Using fallback search queries');
-            const defaultQueries = ["chill music", "relaxing songs", "popular hits", "mood music", "vibes"];
+            const defaultQueries = [
+                'chill music',
+                'relaxing songs',
+                'popular hits',
+                'mood music',
+                'vibes',
+            ];
             const recommendations = await this.searchTracksWithQueries(defaultQueries);
             return recommendations.slice(0, 5);
         }
@@ -63,16 +69,16 @@ class SongRecommendationService {
      */
     async generateSearchQueries(imageAnalysis, currentTrack) {
         // Create a prompt for GPT to generate search queries
-        const currentTrackInfo = currentTrack ?
-            `Currently selected song: "${currentTrack.name}" by ${currentTrack.artist} from album "${currentTrack.album}"` :
-            'No song currently selected.';
+        const currentTrackInfo = currentTrack
+            ? `Currently selected song: "${currentTrack.name}" by ${currentTrack.artist} from album "${currentTrack.album}"`
+            : 'No song currently selected.';
 
         try {
             const response = await openai.chat.completions.create({
-                model: "gpt-4o-2024-11-20",
+                model: 'gpt-4o-2024-11-20',
                 messages: [
                     {
-                        role: "user",
+                        role: 'user',
                         content: `
                         Based on the following image analysis, generate 5 distinct search queries for finding songs that would match the mood, theme, and aesthetics of this image.
 
@@ -96,19 +102,22 @@ class SongRecommendationService {
                         upbeat morning motivation
                         peaceful ambient sounds
                         energetic workout music
-                        `
-                    }
+                        `,
+                    },
                 ],
-                max_tokens: 300
+                max_tokens: 300,
             });
 
             const content = response.choices[0].message.content.trim();
             logger.debug('GPT raw response for search queries', { content });
 
             // Split by new lines and filter empty lines
-            const queries = content.split('\n')
-                .map(line => line.trim())
-                .filter(line => line.length > 0 && !line.startsWith('#') && !line.match(/^\d+\.\s/));
+            const queries = content
+                .split('\n')
+                .map((line) => line.trim())
+                .filter(
+                    (line) => line.length > 0 && !line.startsWith('#') && !line.match(/^\d+\.\s/)
+                );
 
             // Ensure we have at least some queries
             if (queries.length > 0) {
@@ -116,14 +125,13 @@ class SongRecommendationService {
             }
 
             // Fallback
-            return ["chill music", "relaxing songs", "popular hits", "mood music", "vibes"];
-
+            return ['chill music', 'relaxing songs', 'popular hits', 'mood music', 'vibes'];
         } catch (error) {
             logger.error('Error generating search queries', {
                 error: error.message,
-                stack: error.stack
+                stack: error.stack,
             });
-            return ["chill music", "relaxing songs", "popular hits", "mood music", "vibes"];
+            return ['chill music', 'relaxing songs', 'popular hits', 'mood music', 'vibes'];
         }
     }
 
@@ -139,7 +147,7 @@ class SongRecommendationService {
 
         for (const query of queries) {
             try {
-                const data = await this.spotifyApi.searchTracks(query, {limit: 5});
+                const data = await this.spotifyApi.searchTracks(query, { limit: 5 });
 
                 if (!data.body || !data.body.tracks || !data.body.tracks.items) {
                     logger.warn('No results found for query', { query });
@@ -157,14 +165,14 @@ class SongRecommendationService {
                             album: track.album?.name || 'Unknown Album',
                             albumArt: track.album?.images[0]?.url || null,
                             popularity: track.popularity || 0,
-                            relevanceScore: this.calculateRelevanceScore(track, query)
+                            relevanceScore: this.calculateRelevanceScore(track, query),
                         });
                     }
                 }
             } catch (error) {
                 logger.warn('Error searching for tracks with query', {
                     query,
-                    error: error.message
+                    error: error.message,
                 });
                 // Continue with next query
             }
@@ -196,11 +204,17 @@ class SongRecommendationService {
             score += 20;
         }
 
-        if (normalizedArtist.includes(normalizedQuery) || normalizedQuery.includes(normalizedArtist)) {
+        if (
+            normalizedArtist.includes(normalizedQuery) ||
+            normalizedQuery.includes(normalizedArtist)
+        ) {
             score += 15;
         }
 
-        if (normalizedAlbum.includes(normalizedQuery) || normalizedQuery.includes(normalizedAlbum)) {
+        if (
+            normalizedAlbum.includes(normalizedQuery) ||
+            normalizedQuery.includes(normalizedAlbum)
+        ) {
             score += 10;
         }
 

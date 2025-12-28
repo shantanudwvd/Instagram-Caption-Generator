@@ -18,11 +18,14 @@ const ProfileStats = () => {
             setLoading(true);
             setError('');
             try {
-                const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/dashboard/overview`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
+                const response = await fetch(
+                    `${process.env.REACT_APP_BACKEND_URL}/api/dashboard/overview`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
                     }
-                });
+                );
 
                 if (!response.ok) {
                     throw new Error('Unable to load stats.');
@@ -49,7 +52,7 @@ const ProfileStats = () => {
             icon: FileText,
             gradient: 'from-purple-500 to-purple-600',
             bgGradient: 'from-purple-50 to-purple-100',
-            sparkle: 'glow-pulse-purple'
+            sparkle: 'glow-pulse-purple',
         },
         {
             label: 'Average Rating',
@@ -57,7 +60,7 @@ const ProfileStats = () => {
             icon: Star,
             gradient: 'from-pink-500 to-pink-600',
             bgGradient: 'from-pink-50 to-pink-100',
-            sparkle: 'glow-pulse-pink'
+            sparkle: 'glow-pulse-pink',
         },
         {
             label: 'Feedback Received',
@@ -65,7 +68,7 @@ const ProfileStats = () => {
             icon: MessageSquare,
             gradient: 'from-orange-500 to-orange-600',
             bgGradient: 'from-orange-50 to-orange-100',
-            sparkle: 'glow-pulse-orange'
+            sparkle: 'glow-pulse-orange',
         },
         {
             label: 'Total Activity',
@@ -73,8 +76,8 @@ const ProfileStats = () => {
             icon: Activity,
             gradient: 'from-purple-500 via-pink-500 to-orange-500',
             bgGradient: 'from-purple-50 via-pink-50 to-orange-50',
-            sparkle: 'glow-pulse-multi'
-        }
+            sparkle: 'glow-pulse-multi',
+        },
     ];
 
     if (loading) {
@@ -112,12 +115,22 @@ const ProfileStats = () => {
                         className={`bg-white/90 backdrop-blur-sm rounded-xl border-2 border-slate-200 p-6 shadow-lg transform transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in-up`}
                         style={{ animationDelay: `${index * 100}ms` }}
                     >
-                        <div className={`relative inline-flex p-3 rounded-xl bg-gradient-to-br ${stat.bgGradient} mb-4 overflow-visible`}>
-                            <span className={`absolute inset-0 rounded-xl ${stat.sparkle} pointer-events-none`}></span>
-                            <Icon className={`relative w-6 h-6 icon-animated ${stat.gradient === 'from-purple-500 via-pink-500 to-orange-500' ? 'text-purple-600' : stat.gradient.includes('purple') ? 'text-purple-600' : stat.gradient.includes('pink') ? 'text-pink-600' : 'text-orange-600'} transition-transform duration-300 group-hover:scale-110`} />
+                        <div
+                            className={`relative inline-flex p-3 rounded-xl bg-gradient-to-br ${stat.bgGradient} mb-4 overflow-visible`}
+                        >
+                            <span
+                                className={`absolute inset-0 rounded-xl ${stat.sparkle} pointer-events-none`}
+                            ></span>
+                            <Icon
+                                className={`relative w-6 h-6 icon-animated ${stat.gradient === 'from-purple-500 via-pink-500 to-orange-500' ? 'text-purple-600' : stat.gradient.includes('purple') ? 'text-purple-600' : stat.gradient.includes('pink') ? 'text-pink-600' : 'text-orange-600'} transition-transform duration-300 group-hover:scale-110`}
+                            />
                         </div>
-                        <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">{stat.label}</p>
-                        <p className={`text-3xl font-bold bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}>
+                        <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">
+                            {stat.label}
+                        </p>
+                        <p
+                            className={`text-3xl font-bold bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}
+                        >
                             {stat.value}
                         </p>
                     </div>

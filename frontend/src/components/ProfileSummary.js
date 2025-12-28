@@ -10,7 +10,7 @@ const ProfileSummary = () => {
         lastName: user?.lastName || '',
         email: user?.email || '',
         photoUrl: user?.photoUrl || '',
-        password: ''
+        password: '',
     });
     const [photoFile, setPhotoFile] = useState(null);
     const [photoPreview, setPhotoPreview] = useState(user?.photoUrl || '');
@@ -23,11 +23,17 @@ const ProfileSummary = () => {
     }
 
     const memberDate = user.createdAt ? new Date(user.createdAt) : null;
-    const fullName = user.fullName || (user.firstName && user.lastName
-        ? `${user.firstName} ${user.lastName}`
-        : user.firstName || user.lastName || '');
+    const fullName =
+        user.fullName ||
+        (user.firstName && user.lastName
+            ? `${user.firstName} ${user.lastName}`
+            : user.firstName || user.lastName || '');
     const initials = fullName
-        ? fullName.split(' ').map((part) => part.charAt(0).toUpperCase()).join('').slice(0, 2)
+        ? fullName
+              .split(' ')
+              .map((part) => part.charAt(0).toUpperCase())
+              .join('')
+              .slice(0, 2)
         : 'YOU';
 
     const handleChange = (event) => {
@@ -59,7 +65,7 @@ const ProfileSummary = () => {
                 firstName: formData.firstName,
                 lastName: formData.lastName,
                 email: formData.email,
-                photoUrl: uploadedPhotoUrl
+                photoUrl: uploadedPhotoUrl,
             };
 
             if (formData.password.trim().length > 0) {
@@ -71,7 +77,7 @@ const ProfileSummary = () => {
             setFormData((prev) => ({
                 ...prev,
                 photoUrl: uploadedPhotoUrl || prev.photoUrl,
-                password: ''
+                password: '',
             }));
             setPhotoFile(null);
             setIsEditing(false);
@@ -101,27 +107,32 @@ const ProfileSummary = () => {
                             </div>
                         )}
                         <div>
-                            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Signed in as</p>
-                            <p className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{fullName}</p>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">{user.email}</p>
+                            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                Signed in as
+                            </p>
+                            <p className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                                {fullName}
+                            </p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                {user.email}
+                            </p>
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
                         <div>
-                            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Member since</p>
+                            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                Member since
+                            </p>
                             <p className="text-base font-semibold text-slate-900 dark:text-slate-100">
                                 {memberDate
                                     ? memberDate.toLocaleDateString(undefined, {
-                                        month: 'short',
-                                        year: 'numeric'
-                                    })
+                                          month: 'short',
+                                          year: 'numeric',
+                                      })
                                     : '—'}
                             </p>
                         </div>
-                        <Link
-                            to="/generator"
-                            className="btn-primary text-sm"
-                        >
+                        <Link to="/generator" className="btn-primary text-sm">
                             Start Generating
                         </Link>
                         <Link
@@ -145,10 +156,15 @@ const ProfileSummary = () => {
                 </button>
 
                 {isEditing && (
-                    <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-slate-100 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
+                    <form
+                        onSubmit={handleSubmit}
+                        className="space-y-4 rounded-2xl border border-slate-100 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/70"
+                    >
                         <div className="grid gap-4 md:grid-cols-2">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">First Name</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                    First Name
+                                </label>
                                 <input
                                     type="text"
                                     name="firstName"
@@ -159,7 +175,9 @@ const ProfileSummary = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Last Name</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                    Last Name
+                                </label>
                                 <input
                                     type="text"
                                     name="lastName"
@@ -170,7 +188,9 @@ const ProfileSummary = () => {
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                Email
+                            </label>
                             <input
                                 type="email"
                                 name="email"
@@ -181,7 +201,9 @@ const ProfileSummary = () => {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">New Password</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                New Password
+                            </label>
                             <input
                                 type="password"
                                 name="password"
@@ -191,10 +213,14 @@ const ProfileSummary = () => {
                                 placeholder="Leave blank to keep current password"
                                 minLength={8}
                             />
-                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">At least 8 characters. Leave empty to keep existing password.</p>
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                At least 8 characters. Leave empty to keep existing password.
+                            </p>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Profile Photo</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                Profile Photo
+                            </label>
                             <div className="flex items-center gap-3">
                                 <label className="inline-flex items-center px-3 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer dark:border-slate-700 dark:text-slate-200 dark:bg-slate-900/70 dark:hover:bg-slate-800">
                                     <input
@@ -211,18 +237,22 @@ const ProfileSummary = () => {
                                     </span>
                                 )}
                             </div>
-                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Upload a JPG or PNG (max 5MB) to update your avatar.</p>
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                Upload a JPG or PNG (max 5MB) to update your avatar.
+                            </p>
                         </div>
 
-                        {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
-                        {success && <p className="text-sm text-emerald-600 dark:text-emerald-400">{success}</p>}
+                        {error && (
+                            <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>
+                        )}
+                        {success && (
+                            <p className="text-sm text-emerald-600 dark:text-emerald-400">
+                                {success}
+                            </p>
+                        )}
 
                         <div className="flex gap-3">
-                            <button
-                                type="submit"
-                                disabled={saving}
-                                className="btn-primary text-sm"
-                            >
+                            <button type="submit" disabled={saving} className="btn-primary text-sm">
                                 {saving ? 'Saving...' : 'Save changes'}
                             </button>
                             <button
@@ -234,7 +264,7 @@ const ProfileSummary = () => {
                                         lastName: user.lastName || '',
                                         email: user.email,
                                         photoUrl: user.photoUrl || '',
-                                        password: ''
+                                        password: '',
                                     });
                                     setPhotoFile(null);
                                     setPhotoPreview(user.photoUrl || '');

@@ -16,14 +16,14 @@ if (!fs.existsSync(profileUploadDir)) {
 const upload = multer({
     dest: profileUploadDir,
     limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB
+        fileSize: 5 * 1024 * 1024, // 5MB
     },
     fileFilter: (req, file, cb) => {
         if (!file.mimetype.startsWith('image/')) {
             return cb(new Error('Only image uploads are allowed'));
         }
         cb(null, true);
-    }
+    },
 });
 
 router.post('/register', async (req, res) => {
@@ -58,7 +58,7 @@ router.post('/register', async (req, res) => {
             lastName: lastNameValue,
             email,
             password,
-            photoUrl
+            photoUrl,
         });
         const token = userService.generateToken(user);
 
@@ -137,7 +137,7 @@ router.post('/photo', authMiddleware, upload.single('photo'), async (req, res) =
             logger.error('No user found in request', {
                 hasAuthHeader: !!req.headers.authorization,
                 method: req.method,
-                path: req.path
+                path: req.path,
             });
             return res.status(401).json({ error: 'User not authenticated' });
         }
@@ -146,7 +146,7 @@ router.post('/photo', authMiddleware, upload.single('photo'), async (req, res) =
         if (!userId) {
             logger.error('User ID not found in req.user', {
                 userKeys: Object.keys(req.user),
-                user: req.user
+                user: req.user,
             });
             return res.status(400).json({ error: 'User ID not found' });
         }
@@ -154,7 +154,7 @@ router.post('/photo', authMiddleware, upload.single('photo'), async (req, res) =
         logger.debug('Uploading profile photo', {
             userId,
             email: req.user.email,
-            hasFile: !!req.file
+            hasFile: !!req.file,
         });
 
         tempFilePath = req.file.path;
@@ -165,10 +165,18 @@ router.post('/photo', authMiddleware, upload.single('photo'), async (req, res) =
 
         // Upload to Cloudinary if configured, otherwise fall back to local storage
         let photoUrl;
-        if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+        if (
+            process.env.CLOUDINARY_CLOUD_NAME &&
+            process.env.CLOUDINARY_API_KEY &&
+            process.env.CLOUDINARY_API_SECRET
+        ) {
             try {
                 // Upload to Cloudinary
-                const uploadResult = await uploadImage(tempFilePath, 'profile_photos', `profile_${userId}`);
+                const uploadResult = await uploadImage(
+                    tempFilePath,
+                    'profile_photos',
+                    `profile_${userId}`
+                );
                 photoUrl = uploadResult.url;
 
                 // Delete old photo from Cloudinary if it exists
@@ -177,12 +185,15 @@ router.post('/photo', authMiddleware, upload.single('photo'), async (req, res) =
                     if (oldPublicId) {
                         try {
                             await deleteImage(oldPublicId);
-                            logger.info('Deleted old profile photo from Cloudinary', { userId, oldPublicId });
+                            logger.info('Deleted old profile photo from Cloudinary', {
+                                userId,
+                                oldPublicId,
+                            });
                         } catch (deleteError) {
                             logger.warn('Failed to delete old profile photo from Cloudinary', {
                                 userId,
                                 oldPublicId,
-                                error: deleteError.message
+                                error: deleteError.message,
                             });
                             // Don't fail the upload if deletion fails
                         }
@@ -191,20 +202,22 @@ router.post('/photo', authMiddleware, upload.single('photo'), async (req, res) =
             } catch (cloudinaryError) {
                 logger.error('Cloudinary upload failed, falling back to local storage', {
                     error: cloudinaryError.message,
-                    userId
+                    userId,
                 });
                 // Fall back to local storage
                 photoUrl = `${req.protocol}://${req.get('host')}/uploads/profile_photos/${req.file.filename}`;
             }
         } else {
             // Use local storage if Cloudinary is not configured
-            logger.warn('Cloudinary not configured, using local storage', { userId });
+            logger.warn('Cloudinary not configured, using local storage', {
+                userId,
+            });
             photoUrl = `${req.protocol}://${req.get('host')}/uploads/profile_photos/${req.file.filename}`;
         }
 
         const updatedUser = await userService.updateProfile(userId, {
             photoUrl,
-            email: req.user.email // fallback lookup by email if needed
+            email: req.user.email, // fallback lookup by email if needed
         });
 
         const token = userService.generateToken(updatedUser);
@@ -217,7 +230,7 @@ router.post('/photo', authMiddleware, upload.single('photo'), async (req, res) =
             } catch (cleanupError) {
                 logger.warn('Failed to clean up temporary file', {
                     tempFilePath,
-                    error: cleanupError.message
+                    error: cleanupError.message,
                 });
             }
         }
@@ -232,7 +245,7 @@ router.post('/photo', authMiddleware, upload.single('photo'), async (req, res) =
             } catch (cleanupError) {
                 logger.warn('Failed to clean up temporary file on error', {
                     tempFilePath,
-                    error: cleanupError.message
+                    error: cleanupError.message,
                 });
             }
         }
@@ -241,10 +254,15 @@ router.post('/photo', authMiddleware, upload.single('photo'), async (req, res) =
             error: error.message,
             stack: error.stack,
             userId: req.user?.id || req.user?._id,
-            userEmail: req.user?.email
+            userEmail: req.user?.email,
         });
 
-        const status = error.message.includes('image') || error.message.includes('User not found') || error.message.includes('Invalid user ID') ? 400 : 500;
+        const status =
+            error.message.includes('image') ||
+            error.message.includes('User not found') ||
+            error.message.includes('Invalid user ID')
+                ? 400
+                : 500;
         res.status(status).json({ error: error.message || 'Failed to upload photo' });
     }
 });

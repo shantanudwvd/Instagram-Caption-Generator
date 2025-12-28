@@ -9,7 +9,7 @@ const CaptionOptions = ({ onOptionsChange }) => {
         length: 'medium',
         language: 'english',
         emoji: 'moderate',
-        hashtags: 'moderate'
+        hashtags: 'moderate',
     });
 
     const toneOptions = [
@@ -23,7 +23,7 @@ const CaptionOptions = ({ onOptionsChange }) => {
         { value: 'poetic', label: 'Poetic' },
         { value: 'sarcastic', label: 'Sarcastic' },
         { value: 'enthusiastic', label: 'Enthusiastic' },
-        { value: 'mysterious', label: 'Mysterious' }
+        { value: 'mysterious', label: 'Mysterious' },
     ];
 
     const lengthOptions = [
@@ -31,21 +31,21 @@ const CaptionOptions = ({ onOptionsChange }) => {
         { value: 'short', label: 'Short' },
         { value: 'medium', label: 'Medium' },
         { value: 'long', label: 'Long' },
-        { value: 'very-long', label: 'Very Long' }
+        { value: 'very-long', label: 'Very Long' },
     ];
 
     const emojiOptions = [
         { value: 'none', label: 'No Emojis' },
         { value: 'minimal', label: 'Minimal (1-2)' },
         { value: 'moderate', label: 'Moderate' },
-        { value: 'abundant', label: 'Abundant' }
+        { value: 'abundant', label: 'Abundant' },
     ];
 
     const hashtagOptions = [
         { value: 'none', label: 'No Hashtags' },
         { value: 'minimal', label: 'Minimal (1-3)' },
         { value: 'moderate', label: 'Moderate (4-7)' },
-        { value: 'abundant', label: 'Abundant (8+)' }
+        { value: 'abundant', label: 'Abundant (8+)' },
     ];
 
     const languageOptions = [
@@ -59,13 +59,13 @@ const CaptionOptions = ({ onOptionsChange }) => {
         { value: 'portuguese', label: 'Portuguese' },
         { value: 'japanese', label: 'Japanese' },
         { value: 'korean', label: 'Korean' },
-        { value: 'mandarin', label: 'Mandarin' }
+        { value: 'mandarin', label: 'Mandarin' },
     ];
 
     const handleChange = (option, value) => {
         const updatedOptions = {
             ...options,
-            [option]: value
+            [option]: value,
         };
         setOptions(updatedOptions);
         onOptionsChange(updatedOptions);
@@ -79,7 +79,9 @@ const CaptionOptions = ({ onOptionsChange }) => {
             >
                 <div className="flex items-center space-x-2">
                     <Settings className="w-5 h-5 text-gray-600 transform transition-transform duration-200 group-hover:rotate-90 group-hover:text-purple-600" />
-                    <h3 className="font-medium bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent">Caption Options</h3>
+                    <h3 className="font-medium bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent">
+                        Caption Options
+                    </h3>
                 </div>
                 {isExpanded ? (
                     <ChevronUp className="w-5 h-5 text-purple-600 transform transition-transform duration-200" />
@@ -97,7 +99,7 @@ const CaptionOptions = ({ onOptionsChange }) => {
                             onChange={(e) => handleChange('tone', e.target.value)}
                             className="block w-full rounded-xl border-2 border-slate-200 shadow-sm p-2 bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-400 transition-all duration-200 hover:border-purple-300"
                         >
-                            {toneOptions.map(option => (
+                            {toneOptions.map((option) => (
                                 <option key={option.value} value={option.value}>
                                     {option.label}
                                 </option>
@@ -106,13 +108,15 @@ const CaptionOptions = ({ onOptionsChange }) => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Length</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Length
+                        </label>
                         <select
                             value={options.length}
                             onChange={(e) => handleChange('length', e.target.value)}
                             className="block w-full rounded-xl border-2 border-slate-200 shadow-sm p-2 bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-400 transition-all duration-200 hover:border-purple-300"
                         >
-                            {lengthOptions.map(option => (
+                            {lengthOptions.map((option) => (
                                 <option key={option.value} value={option.value}>
                                     {option.label}
                                 </option>
@@ -121,13 +125,15 @@ const CaptionOptions = ({ onOptionsChange }) => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Language</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Language
+                        </label>
                         <select
                             value={options.language}
                             onChange={(e) => handleChange('language', e.target.value)}
                             className="block w-full rounded-xl border-2 border-slate-200 shadow-sm p-2 bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-400 transition-all duration-200 hover:border-purple-300"
                         >
-                            {languageOptions.map(option => (
+                            {languageOptions.map((option) => (
                                 <option key={option.value} value={option.value}>
                                     {option.label}
                                 </option>
@@ -136,13 +142,15 @@ const CaptionOptions = ({ onOptionsChange }) => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Emoji Usage</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Emoji Usage
+                        </label>
                         <select
                             value={options.emoji}
                             onChange={(e) => handleChange('emoji', e.target.value)}
                             className="block w-full rounded-xl border-2 border-slate-200 shadow-sm p-2 bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-400 transition-all duration-200 hover:border-purple-300"
                         >
-                            {emojiOptions.map(option => (
+                            {emojiOptions.map((option) => (
                                 <option key={option.value} value={option.value}>
                                     {option.label}
                                 </option>
@@ -151,13 +159,15 @@ const CaptionOptions = ({ onOptionsChange }) => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Hashtags</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Hashtags
+                        </label>
                         <select
                             value={options.hashtags}
                             onChange={(e) => handleChange('hashtags', e.target.value)}
                             className="block w-full rounded-xl border-2 border-slate-200 shadow-sm p-2 bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-400 transition-all duration-200 hover:border-purple-300"
                         >
-                            {hashtagOptions.map(option => (
+                            {hashtagOptions.map((option) => (
                                 <option key={option.value} value={option.value}>
                                     {option.label}
                                 </option>

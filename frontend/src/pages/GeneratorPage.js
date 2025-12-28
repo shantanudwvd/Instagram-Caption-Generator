@@ -42,7 +42,7 @@ const GeneratorPage = () => {
         length: 'medium',
         language: 'english',
         emoji: 'moderate',
-        hashtags: 'moderate'
+        hashtags: 'moderate',
     });
     const [musicIsOptional, setMusicIsOptional] = useState(true);
 
@@ -67,9 +67,12 @@ const GeneratorPage = () => {
 
     const searchTracks = async (query) => {
         try {
-            const response = await fetch(`${backendUrl}/api/search-tracks?query=${encodeURIComponent(query)}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await fetch(
+                `${backendUrl}/api/search-tracks?query=${encodeURIComponent(query)}`,
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                }
+            );
             if (!response.ok) {
                 throw new Error('Failed to search tracks');
             }
@@ -106,7 +109,7 @@ const GeneratorPage = () => {
             const analysisResponse = await fetch(`${backendUrl}/api/analyze-image`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` },
-                body: formData
+                body: formData,
             });
             if (!analysisResponse.ok) {
                 throw new Error('Failed to analyze image');
@@ -121,12 +124,12 @@ const GeneratorPage = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
+                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
                     imageAnalysis: analysisData.analysis,
-                    ...(selectedTrack && { currentTrack: selectedTrack })
-                })
+                    ...(selectedTrack && { currentTrack: selectedTrack }),
+                }),
             });
             if (!recommendationsResponse.ok) {
                 throw new Error('Failed to get recommendations');
@@ -157,9 +160,9 @@ const GeneratorPage = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
+                    Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify({ imageAnalysis, currentTrack: track })
+                body: JSON.stringify({ imageAnalysis, currentTrack: track }),
             });
             if (!response.ok) {
                 throw new Error('Failed to get recommendations');
@@ -205,7 +208,7 @@ const GeneratorPage = () => {
             const response = await fetch(`${backendUrl}/api/generate-caption`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` },
-                body: formData
+                body: formData,
             });
             const data = await response.json();
             if (data.error) {
@@ -230,10 +233,14 @@ const GeneratorPage = () => {
             <Navigation />
             <div className="min-h-screen relative overflow-hidden pb-12">
                 {/* Animated Gradient Background */}
-                <div className="absolute inset-0 animate-gradient-xy opacity-30" style={{
-                    background: 'linear-gradient(-45deg, #9333ea, #ec4899, #f97316, #9333ea, #ec4899, #f97316)',
-                    backgroundSize: '400% 400%'
-                }}></div>
+                <div
+                    className="absolute inset-0 animate-gradient-xy opacity-30"
+                    style={{
+                        background:
+                            'linear-gradient(-45deg, #9333ea, #ec4899, #f97316, #9333ea, #ec4899, #f97316)',
+                        backgroundSize: '400% 400%',
+                    }}
+                ></div>
 
                 {/* Floating Orbs */}
                 <div className="absolute top-20 left-10 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
@@ -253,13 +260,17 @@ const GeneratorPage = () => {
                                 Instagram Caption Generator
                             </h1>
                             <p className="text-base text-slate-600 max-w-3xl mx-auto animate-fade-in-up animation-delay-200">
-                                Upload your moodboard-worthy shots, pick a track, and let Caption Muse craft a caption that feels curated, human, and ready for your feed.
+                                Upload your moodboard-worthy shots, pick a track, and let Caption
+                                Muse craft a caption that feels curated, human, and ready for your
+                                feed.
                             </p>
                         </div>
                     </section>
 
                     <div className="space-y-6">
-                        <section className={`${cardClass} backdrop-blur-sm bg-white/90 animate-fade-in-up animation-delay-300 hover:shadow-xl transition-all duration-300`}>
+                        <section
+                            className={`${cardClass} backdrop-blur-sm bg-white/90 animate-fade-in-up animation-delay-300 hover:shadow-xl transition-all duration-300`}
+                        >
                             <ImageUpload
                                 imagePreview={imagePreview}
                                 onImageSelect={handleImageSelect}
@@ -272,12 +283,21 @@ const GeneratorPage = () => {
                             )}
                         </section>
 
-                        <section className={`${cardClass} backdrop-blur-sm bg-white/90 animate-fade-in-up animation-delay-400 hover:shadow-xl transition-all duration-300`}>
+                        <section
+                            className={`${cardClass} backdrop-blur-sm bg-white/90 animate-fade-in-up animation-delay-400 hover:shadow-xl transition-all duration-300`}
+                        >
                             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                                 <div>
-                                    <p className="text-xs uppercase tracking-[0.3em] text-indigo-500 font-semibold">Step 2</p>
-                                    <h2 className="text-2xl font-semibold text-slate-900">Blend music for extra mood</h2>
-                                    <p className="text-sm text-slate-500">Optional Spotify pairing helps the AI align tone with your soundtrack.</p>
+                                    <p className="text-xs uppercase tracking-[0.3em] text-indigo-500 font-semibold">
+                                        Step 2
+                                    </p>
+                                    <h2 className="text-2xl font-semibold text-slate-900">
+                                        Blend music for extra mood
+                                    </h2>
+                                    <p className="text-sm text-slate-500">
+                                        Optional Spotify pairing helps the AI align tone with your
+                                        soundtrack.
+                                    </p>
                                 </div>
                                 <label className="inline-flex items-center gap-2 text-sm text-slate-600">
                                     <input
@@ -307,11 +327,20 @@ const GeneratorPage = () => {
                             </div>
                         </section>
 
-                        <section className={`${cardClass} backdrop-blur-sm bg-white/90 animate-fade-in-up animation-delay-500 hover:shadow-xl transition-all duration-300`}>
+                        <section
+                            className={`${cardClass} backdrop-blur-sm bg-white/90 animate-fade-in-up animation-delay-500 hover:shadow-xl transition-all duration-300`}
+                        >
                             <div className="space-y-2 mb-4">
-                                <p className="text-xs uppercase tracking-[0.3em] text-emerald-500 font-semibold">Step 3</p>
-                                <h2 className="text-2xl font-semibold text-slate-900">Personalize the caption</h2>
-                                <p className="text-sm text-slate-500">Fine-tune tone, length, emoji, and hashtag flair before generating.</p>
+                                <p className="text-xs uppercase tracking-[0.3em] text-emerald-500 font-semibold">
+                                    Step 3
+                                </p>
+                                <h2 className="text-2xl font-semibold text-slate-900">
+                                    Personalize the caption
+                                </h2>
+                                <p className="text-sm text-slate-500">
+                                    Fine-tune tone, length, emoji, and hashtag flair before
+                                    generating.
+                                </p>
                             </div>
                             {selectedImage ? (
                                 <CaptionOptions onOptionsChange={handleOptionsChange} />
@@ -322,7 +351,11 @@ const GeneratorPage = () => {
                             )}
                             <button
                                 onClick={handleSubmit}
-                                disabled={loading || !selectedImage || (!musicIsOptional && !selectedTrack)}
+                                disabled={
+                                    loading ||
+                                    !selectedImage ||
+                                    (!musicIsOptional && !selectedTrack)
+                                }
                                 className="btn-primary w-full mt-6 flex items-center justify-center gap-2"
                             >
                                 {loading ? (
@@ -331,7 +364,9 @@ const GeneratorPage = () => {
                                         <span>Crafting caption...</span>
                                     </>
                                 ) : (
-                                    <span>Generate Caption{selectedTrack ? ' with Music' : ''}</span>
+                                    <span>
+                                        Generate Caption{selectedTrack ? ' with Music' : ''}
+                                    </span>
                                 )}
                             </button>
                             {error && (
@@ -342,20 +377,19 @@ const GeneratorPage = () => {
                         </section>
 
                         {caption && (
-                            <section className={`${cardClass} backdrop-blur-sm bg-white/90 animate-fade-in-up animation-delay-600 hover:shadow-xl transition-all duration-300`}>
+                            <section
+                                className={`${cardClass} backdrop-blur-sm bg-white/90 animate-fade-in-up animation-delay-600 hover:shadow-xl transition-all duration-300`}
+                            >
                                 <div className="space-y-4">
                                     <GeneratedCaption caption={caption} />
                                     {captionId && (
-                                    <CaptionFeedback
-                                        caption={caption}
-                                        captionId={captionId}
-                                        onCaptionEdit={handleCaptionEdit}
-                                    />
+                                        <CaptionFeedback
+                                            caption={caption}
+                                            captionId={captionId}
+                                            onCaptionEdit={handleCaptionEdit}
+                                        />
                                     )}
-                                    <button
-                                        onClick={handleSubmit}
-                                        className="btn-primary w-full"
-                                    >
+                                    <button onClick={handleSubmit} className="btn-primary w-full">
                                         Regenerate with current options
                                     </button>
                                 </div>
@@ -363,7 +397,9 @@ const GeneratorPage = () => {
                         )}
 
                         {(recommendations.length > 0 || recommendationsLoading) && (
-                            <section className={`${cardClass} backdrop-blur-sm bg-white/90 animate-fade-in-up animation-delay-700 hover:shadow-xl transition-all duration-300`}>
+                            <section
+                                className={`${cardClass} backdrop-blur-sm bg-white/90 animate-fade-in-up animation-delay-700 hover:shadow-xl transition-all duration-300`}
+                            >
                                 <SongRecommendations
                                     recommendations={recommendations}
                                     onTrackSelect={handleTrackSelect}

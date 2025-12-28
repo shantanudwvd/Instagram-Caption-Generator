@@ -1,23 +1,10 @@
 {
-  "watch": [
-    "routes",
-    "services",
-    "middleware",
-    "utils",
-    "server.js"
-  ],
-  "ext": "js,json",
-  "ignore": [
-    "node_modules",
-    "logs",
-    "uploads",
-    "*.log",
-    "*.test.js",
-    ".git"
-  ],
-  "exec": "node server.js",
-  "env": {
-    "NODE_ENV": "development"
-  },
-  "delay": "1000"
+    "watch": ["routes", "services", "middleware", "utils", "server.js"],
+    "ext": "js,json",
+    "ignore": ["node_modules", "logs", "uploads", "*.log", "*.test.js", ".git"],
+    "exec": "node server.js",
+    "env": {
+        "NODE_ENV": "development"
+    },
+    "delay": "1000"
 }

@@ -8,7 +8,7 @@ const AuthGate = () => {
         firstName: '',
         lastName: '',
         email: '',
-        password: ''
+        password: '',
     });
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
@@ -27,7 +27,7 @@ const AuthGate = () => {
         const { name, value } = event.target;
         setFormData((prev) => ({
             ...prev,
-            [name]: value
+            [name]: value,
         }));
     };
 
@@ -52,10 +52,14 @@ const AuthGate = () => {
     return (
         <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
             {/* Animated Gradient Background */}
-            <div className="absolute inset-0 animate-gradient-xy" style={{
-                background: 'linear-gradient(-45deg, #9333ea, #ec4899, #f97316, #9333ea, #ec4899, #f97316)',
-                backgroundSize: '400% 400%'
-            }}></div>
+            <div
+                className="absolute inset-0 animate-gradient-xy"
+                style={{
+                    background:
+                        'linear-gradient(-45deg, #9333ea, #ec4899, #f97316, #9333ea, #ec4899, #f97316)',
+                    backgroundSize: '400% 400%',
+                }}
+            ></div>
 
             {/* Floating Orbs */}
             <div className="absolute top-20 left-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
@@ -63,7 +67,9 @@ const AuthGate = () => {
             <div className="absolute -bottom-8 left-1/2 w-72 h-72 bg-orange-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000"></div>
 
             {/* Main Card */}
-            <div className={`relative z-10 max-w-md w-full bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl p-8 space-y-6 transform transition-all duration-300 ${isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+            <div
+                className={`relative z-10 max-w-md w-full bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl p-8 space-y-6 transform transition-all duration-300 ${isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}
+            >
                 {/* Logo/Brand Section */}
                 <div className="text-center space-y-3">
                     <div className="inline-block">
@@ -72,10 +78,14 @@ const AuthGate = () => {
                         </h1>
                     </div>
                     <div className="h-1 w-20 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 mx-auto rounded-full"></div>
-                    <h2 className={`text-2xl font-bold text-gray-800 transition-all duration-300 ${isAnimating ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}`}>
+                    <h2
+                        className={`text-2xl font-bold text-gray-800 transition-all duration-300 ${isAnimating ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}`}
+                    >
                         {mode === 'login' ? 'Welcome Back' : 'Create an Account'}
                     </h2>
-                    <p className={`text-gray-600 transition-all duration-300 ${isAnimating ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}`}>
+                    <p
+                        className={`text-gray-600 transition-all duration-300 ${isAnimating ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}`}
+                    >
                         {mode === 'login'
                             ? 'Sign in to generate personalized captions.'
                             : 'Join Caption Muse to save and refine your captions.'}
@@ -85,7 +95,9 @@ const AuthGate = () => {
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-5">
                     {/* Name Fields - Animated */}
-                    <div className={`transition-all duration-300 overflow-hidden ${mode === 'register' ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
+                    <div
+                        className={`transition-all duration-300 overflow-hidden ${mode === 'register' ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}
+                    >
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -168,7 +180,9 @@ const AuthGate = () => {
                             <button
                                 type="button"
                                 onClick={async () => {
-                                    const supportEmail = process.env.REACT_APP_SUPPORT_EMAIL || 'support@captionmuse.com';
+                                    const supportEmail =
+                                        process.env.REACT_APP_SUPPORT_EMAIL ||
+                                        'support@captionmuse.com';
                                     const message = `Please email ${supportEmail} to reset your password.`;
                                     try {
                                         if (navigator?.clipboard?.writeText) {
@@ -202,14 +216,32 @@ const AuthGate = () => {
                         <span className="relative z-10 flex items-center justify-center">
                             {submitting ? (
                                 <>
-                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    <svg
+                                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <circle
+                                            className="opacity-25"
+                                            cx="12"
+                                            cy="12"
+                                            r="10"
+                                            stroke="currentColor"
+                                            strokeWidth="4"
+                                        ></circle>
+                                        <path
+                                            className="opacity-75"
+                                            fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                        ></path>
                                     </svg>
                                     Please wait...
                                 </>
+                            ) : mode === 'login' ? (
+                                'Sign In'
                             ) : (
-                                mode === 'login' ? 'Sign In' : 'Create Account'
+                                'Create Account'
                             )}
                         </span>
                         <div className="absolute inset-0 bg-gradient-to-r from-purple-700 via-pink-600 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
@@ -231,7 +263,6 @@ const AuthGate = () => {
                     </p>
                 </div>
             </div>
-
         </div>
     );
 };

@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 
 const ThemeContext = createContext({
     theme: 'light',
-    toggleTheme: () => {}
+    toggleTheme: () => {},
 });
 
 const STORAGE_KEY = 'captionmuse-theme';
@@ -11,7 +11,8 @@ const getInitialTheme = () => {
     if (typeof window === 'undefined') return 'light';
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === 'light' || saved === 'dark') return saved;
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const prefersDark =
+        window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     return prefersDark ? 'dark' : 'light';
 };
 
@@ -41,11 +42,14 @@ export const ThemeProvider = ({ children }) => {
         localStorage.setItem(STORAGE_KEY, theme);
     }, [theme]);
 
-    const value = useMemo(() => ({
-        theme,
-        toggleTheme: () => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark')),
-        setTheme
-    }), [theme]);
+    const value = useMemo(
+        () => ({
+            theme,
+            toggleTheme: () => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark')),
+            setTheme,
+        }),
+        [theme]
+    );
 
     return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 };
