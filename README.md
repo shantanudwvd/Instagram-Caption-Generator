@@ -166,6 +166,23 @@ Instagram-Caption-Generator/
 - `npm test` - Run tests
 - `npm test -- -t "test name"` - Run specific test
 
+## 🧹 Pre-commit hooks
+
+We use [pre-commit](https://pre-commit.com/) to keep basic hygiene checks consistent.
+
+Setup:
+1) Install pre-commit: `pipx install pre-commit` (or `pip install pre-commit`)
+2) Install the git hook: `pre-commit install`
+3) (Optional) Run on all files: `pre-commit run --all-files`
+
+Enabled hooks:
+- trailing whitespace cleanup
+- end-of-file fixer
+- check merge conflicts
+- enforce LF line endings
+- detect private keys
+- YAML syntax check
+
 ## 🚢 Deployment
 
 ### AWS ECS Deployment
