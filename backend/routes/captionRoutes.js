@@ -435,12 +435,17 @@ router.post('/captions', async (req, res) => {
 router.post('/captions/:captionId', async (req, res) => {
     try {
         const { captionId } = req.params;
+        const userId = req.user?.id;
 
         if (!captionId) {
             return res.status(400).json({ error: 'CaptionId is required' });
         }
 
-        const deletedCaptionId = await captionLearningService.deleteCaption(captionId);
+        if (!userId) {
+            return res.status(401).json({ error: 'User is not authenticated' });
+        }
+
+        const deletedCaptionId = await captionLearningService.deleteCaption(captionId, userId);
         res.json({ success: true, deletedCaptionId });
     } catch (error) {
         logger.error('Error deleting caption', { 
@@ -448,7 +453,8 @@ router.post('/captions/:captionId', async (req, res) => {
             stack: error.stack,
             userId: req.user?.id 
         });
-        res.status(400).json({ error: 'Error deleting caption' });
+        const status = error.message === 'Unauthorized to delete this caption' ? 403 : 400;
+        res.status(status).json({ error: error.message || 'Error deleting caption' });
     }
 });
 

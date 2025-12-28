@@ -138,8 +138,10 @@ const CaptionsBrowser = () => {
         setCurrentPage(1);
     };
     const handleDeleteCaption = useCallback(async (captionId) => {
+        setError('');
+        setLoading(true);
         try {
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/captions/${captionId}`, {
+            const response = await fetch(`${backendUrl}/api/captions/${captionId}`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -156,7 +158,7 @@ const CaptionsBrowser = () => {
         } finally {
             setLoading(false);
         }
-    }, [backendUrl, token, captions]);
+    }, [backendUrl, token]);
 
     const activeFiltersCount = [debouncedSearch, toneFilter, lengthFilter].filter(Boolean).length;
     const totalPages = Math.ceil(totalCount / itemsPerPage);

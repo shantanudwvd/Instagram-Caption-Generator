@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Star, Copy, Check, Trash, Image as ImageIcon } from 'lucide-react';
+import { Star, Copy, Check, Trash, Loader2, Image as ImageIcon } from 'lucide-react';
 const CaptionCard = ({ id, caption, createdAt, avgRating, feedbackCount, tone, length, imageUrl, onImageClick, onDelete }) => {
     const captionId = id;
     const [copied, setCopied] = useState(false);
+    const [deleting, setDeleting] = useState(false);
     const [imageLoaded, setImageLoaded] = useState(false);
     const [imageError, setImageError] = useState(false);
     const handleCopy = async () => {
@@ -70,12 +71,20 @@ const CaptionCard = ({ id, caption, createdAt, avgRating, feedbackCount, tone, l
                             )}
                         </button>
                         <button
-                            onClick={() => onDelete(captionId)}
+                            onClick={async () => {
+                                if (deleting) return;
+                                try {
+                                    setDeleting(true);
+                                    await onDelete(captionId);
+                                } finally {
+                                    setDeleting(false);
+                                }
+                            }}
                             className="flex-shrink-0 p-2 rounded-lg bg-white/80 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-slate-700/80 transition-all duration-200 transform hover:scale-110"
-                            title="Copy caption"
+                            title="Delete caption"
                         >
-                            {copied ? (
-                                <Check className="w-4 h-4 text-green-500 dark:text-green-400" />
+                            {deleting ? (
+                                <Loader2 className="w-4 h-4 text-purple-600 dark:text-purple-300 animate-spin" />
                             ) : (
                                 <Trash className="w-4 h-4 text-purple-600 dark:text-purple-300" />
                             )}

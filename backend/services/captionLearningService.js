@@ -1389,13 +1389,14 @@ ${item.context.userContext ? `ADDITIONAL CONTEXT: ${item.context.userContext}` :
     }
 
     /**
-     * Soft-delete a caption by marking it inactive
+     * Soft-delete a caption by marking it inactive for the owning user
      * @param {string} captionId
+     * @param {string} userId
      * @returns {Promise<string>} Deleted caption id
      */
-    async deleteCaption(captionId) {
-        if (!captionId) {
-            throw new Error('Invalid caption data: caption id is required');
+    async deleteCaption(captionId, userId) {
+        if (!captionId || !userId) {
+            throw new Error('Invalid caption data: caption id and user id are required');
         }
 
         await this._initializeConnection();
@@ -1409,13 +1410,23 @@ ${item.context.userContext ? `ADDITIONAL CONTEXT: ${item.context.userContext}` :
             throw new Error('Invalid caption ID format');
         }
 
+        if (!ObjectId.isValid(userId)) {
+            throw new Error('Invalid user ID format');
+        }
+        const userObjectId = new ObjectId(userId);
+
         const existing = await collection.findOne({ _id: objectId, status: 'active' });
         if (!existing) {
             throw new Error('Caption is either already deleted or does not exist');
         }
 
+        if (!existing.userId || existing.userId.toString() !== userId) {
+            logger.warn('Unauthorized caption delete attempt', { captionId, userId });
+            throw new Error('Unauthorized to delete this caption');
+        }
+
         const result = await collection.updateOne(
-            { _id: objectId },
+            { _id: objectId, userId: userObjectId, status: 'active' },
             {
                 $set: {
                     status: 'inactive',
@@ -1424,7 +1435,11 @@ ${item.context.userContext ? `ADDITIONAL CONTEXT: ${item.context.userContext}` :
             }
         );
 
-        logger.info(`Deleted caption ${captionId}`, { modifiedCount: result.modifiedCount });
+        if (!result.matchedCount) {
+            throw new Error('Failed to delete caption');
+        }
+
+        logger.info(`Deleted caption ${captionId}`, { modifiedCount: result.modifiedCount, userId });
         return captionId;
     }
 }
