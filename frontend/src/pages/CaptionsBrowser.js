@@ -10,6 +10,7 @@ import { Search, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const CaptionsBrowser = () => {
     const { user, token, isInitializing } = useAuth();
+    const backendUrl = process.env.REACT_APP_BACKEND_URL;
     const navigate = useNavigate();
 
     // Redirect to login if user logs out
@@ -22,18 +23,18 @@ const CaptionsBrowser = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [totalCount, setTotalCount] = useState(0);
-    
+
     // Image modal state
     const [modalImage, setModalImage] = useState(null);
     const [modalCaption, setModalCaption] = useState(null);
-    
+
     // Filter states
     const [searchQuery, setSearchQuery] = useState('');
     const [toneFilter, setToneFilter] = useState('');
     const [lengthFilter, setLengthFilter] = useState('');
     const [sortBy, setSortBy] = useState('createdAt');
     const [sortOrder, setSortOrder] = useState('desc');
-    
+
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 20;
@@ -51,7 +52,7 @@ const CaptionsBrowser = () => {
         { value: 'poetic', label: 'Poetic' },
         { value: 'sarcastic', label: 'Sarcastic' },
         { value: 'enthusiastic', label: 'Enthusiastic' },
-        { value: 'mysterious', label: 'Mysterious' }
+        { value: 'mysterious', label: 'Mysterious' },
     ];
 
     const lengthOptions = [
@@ -60,13 +61,13 @@ const CaptionsBrowser = () => {
         { value: 'short', label: 'Short' },
         { value: 'medium', label: 'Medium' },
         { value: 'long', label: 'Long' },
-        { value: 'very-long', label: 'Very Long' }
+        { value: 'very-long', label: 'Very Long' },
     ];
 
     const sortOptions = [
         { value: 'createdAt', label: 'Date' },
         { value: 'avgRating', label: 'Rating' },
-        { value: 'feedbackCount', label: 'Feedback' }
+        { value: 'feedbackCount', label: 'Feedback' },
     ];
 
     // Debounced search
@@ -98,15 +99,15 @@ const CaptionsBrowser = () => {
                 sortBy: sortBy,
                 sortOrder: sortOrder,
                 limit: itemsPerPage.toString(),
-                offset: offset.toString()
+                offset: offset.toString(),
             });
 
             const response = await fetch(
                 `${process.env.REACT_APP_BACKEND_URL}/api/dashboard/captions?${params}`,
                 {
                     headers: {
-                        Authorization: `Bearer ${token}`
-                    }
+                        Authorization: `Bearer ${token}`,
+                    },
                 }
             );
 
@@ -136,6 +137,26 @@ const CaptionsBrowser = () => {
         setSortOrder('desc');
         setCurrentPage(1);
     };
+    const handleDeleteCaption = useCallback(
+        async (captionId) => {
+            setError('');
+            try {
+                const response = await fetch(`${backendUrl}/api/captions/${captionId}`, {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                const data = await response.json();
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                setCaptions((prev) => prev.filter((caption) => caption.id !== captionId));
+                setTotalCount((prev) => Math.max(0, prev - 1));
+            } catch (err) {
+                setError(err.message || 'Error deleting caption');
+            }
+        },
+        [backendUrl, token]
+    );
 
     const activeFiltersCount = [debouncedSearch, toneFilter, lengthFilter].filter(Boolean).length;
     const totalPages = Math.ceil(totalCount / itemsPerPage);
@@ -143,10 +164,14 @@ const CaptionsBrowser = () => {
     if (isInitializing) {
         return (
             <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
-                <div className="absolute inset-0 animate-gradient-xy opacity-30" style={{
-                    background: 'linear-gradient(-45deg, #9333ea, #ec4899, #f97316, #9333ea, #ec4899, #f97316)',
-                    backgroundSize: '400% 400%'
-                }}></div>
+                <div
+                    className="absolute inset-0 animate-gradient-xy opacity-30"
+                    style={{
+                        background:
+                            'linear-gradient(-45deg, #9333ea, #ec4899, #f97316, #9333ea, #ec4899, #f97316)',
+                        backgroundSize: '400% 400%',
+                    }}
+                ></div>
                 <div className="relative z-10">
                     <LoadingSpinner />
                 </div>
@@ -157,22 +182,25 @@ const CaptionsBrowser = () => {
     if (!user) {
         return null; // Redirect handled by useEffect
     }
-
     return (
         <>
             <Navigation />
             <div className="min-h-screen relative overflow-hidden py-12">
                 {/* Animated Gradient Background */}
-                <div className="absolute inset-0 animate-gradient-xy opacity-30" style={{
-                    background: 'linear-gradient(-45deg, #9333ea, #ec4899, #f97316, #9333ea, #ec4899, #f97316)',
-                    backgroundSize: '400% 400%'
-                }}></div>
-                
+                <div
+                    className="absolute inset-0 animate-gradient-xy opacity-30"
+                    style={{
+                        background:
+                            'linear-gradient(-45deg, #9333ea, #ec4899, #f97316, #9333ea, #ec4899, #f97316)',
+                        backgroundSize: '400% 400%',
+                    }}
+                ></div>
+
                 {/* Floating Orbs */}
                 <div className="absolute top-20 left-10 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
                 <div className="absolute top-40 right-10 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
                 <div className="absolute -bottom-20 left-1/2 w-96 h-96 bg-orange-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
-                
+
                 <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 space-y-6">
                     <div className="flex justify-start animate-fade-in">
                         <BackButton to="/" label="Back to Profile" />
@@ -236,7 +264,7 @@ const CaptionsBrowser = () => {
                                     }}
                                     className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-400 transition-all duration-200"
                                 >
-                                    {toneOptions.map(option => (
+                                    {toneOptions.map((option) => (
                                         <option key={option.value} value={option.value}>
                                             {option.label}
                                         </option>
@@ -257,7 +285,7 @@ const CaptionsBrowser = () => {
                                     }}
                                     className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-400 transition-all duration-200"
                                 >
-                                    {lengthOptions.map(option => (
+                                    {lengthOptions.map((option) => (
                                         <option key={option.value} value={option.value}>
                                             {option.label}
                                         </option>
@@ -269,7 +297,9 @@ const CaptionsBrowser = () => {
                         <div className="flex flex-wrap items-center gap-4">
                             {/* Sort */}
                             <div className="flex items-center gap-2">
-                                <label className="text-sm font-medium text-slate-700">Sort by:</label>
+                                <label className="text-sm font-medium text-slate-700">
+                                    Sort by:
+                                </label>
                                 <select
                                     value={sortBy}
                                     onChange={(e) => {
@@ -278,7 +308,7 @@ const CaptionsBrowser = () => {
                                     }}
                                     className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-400 text-sm"
                                 >
-                                    {sortOptions.map(option => (
+                                    {sortOptions.map((option) => (
                                         <option key={option.value} value={option.value}>
                                             {option.label}
                                         </option>
@@ -331,7 +361,9 @@ const CaptionsBrowser = () => {
                             </div>
                         ) : captions.length === 0 ? (
                             <div className="text-center py-12">
-                                <p className="text-slate-500 mb-4">No captions found matching your filters.</p>
+                                <p className="text-slate-500 mb-4">
+                                    No captions found matching your filters.
+                                </p>
                                 {activeFiltersCount > 0 && (
                                     <button
                                         onClick={clearFilters}
@@ -350,12 +382,13 @@ const CaptionsBrowser = () => {
                                             className="animate-fade-in-up"
                                             style={{ animationDelay: `${index * 50}ms` }}
                                         >
-                                            <CaptionCard 
+                                            <CaptionCard
                                                 {...caption}
                                                 onImageClick={(imageUrl, captionText) => {
                                                     setModalImage(imageUrl);
                                                     setModalCaption(captionText);
                                                 }}
+                                                onDelete={handleDeleteCaption}
                                             />
                                         </div>
                                     ))}
@@ -365,7 +398,9 @@ const CaptionsBrowser = () => {
                                 {totalPages > 1 && (
                                     <div className="flex items-center justify-center gap-2 mt-6">
                                         <button
-                                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                            onClick={() =>
+                                                setCurrentPage((prev) => Math.max(1, prev - 1))
+                                            }
                                             disabled={currentPage === 1}
                                             className="p-2 rounded-lg border border-slate-200 bg-white/80 backdrop-blur-sm hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                         >
@@ -375,7 +410,11 @@ const CaptionsBrowser = () => {
                                             Page {currentPage} of {totalPages}
                                         </span>
                                         <button
-                                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                            onClick={() =>
+                                                setCurrentPage((prev) =>
+                                                    Math.min(totalPages, prev + 1)
+                                                )
+                                            }
                                             disabled={currentPage === totalPages}
                                             className="p-2 rounded-lg border border-slate-200 bg-white/80 backdrop-blur-sm hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                         >
@@ -405,4 +444,3 @@ const CaptionsBrowser = () => {
 };
 
 export default CaptionsBrowser;
-

@@ -15,7 +15,7 @@ class UserService {
             maxPoolSize: 10,
             serverSelectionTimeoutMS: 5000,
             socketTimeoutMS: 45000,
-            connectTimeoutMS: 10000
+            connectTimeoutMS: 10000,
         };
         this.initializing = null;
     }
@@ -72,7 +72,8 @@ class UserService {
         // Support both old (name) and new (firstName/lastName) formats
         const firstName = user.firstName || (user.name ? this._splitName(user.name).firstName : '');
         const lastName = user.lastName || (user.name ? this._splitName(user.name).lastName : '');
-        const fullName = user.fullName || this._computeFullName(firstName, lastName) || user.name || '';
+        const fullName =
+            user.fullName || this._computeFullName(firstName, lastName) || user.name || '';
 
         return {
             id: user._id ? user._id.toString() : user.id,
@@ -82,7 +83,7 @@ class UserService {
             email: user.email,
             photoUrl: user.photoUrl || null,
             createdAt: user.createdAt,
-            lastLoginAt: user.lastLoginAt
+            lastLoginAt: user.lastLoginAt,
         };
     }
 
@@ -90,7 +91,7 @@ class UserService {
         if (!name || typeof name !== 'string') {
             return { firstName: '', lastName: '' };
         }
-        
+
         const trimmed = name.trim();
         if (trimmed.length === 0) {
             return { firstName: '', lastName: '' };
@@ -105,7 +106,7 @@ class UserService {
 
         return {
             firstName: trimmed.substring(0, lastSpaceIndex).trim(),
-            lastName: trimmed.substring(lastSpaceIndex + 1).trim()
+            lastName: trimmed.substring(lastSpaceIndex + 1).trim(),
         };
     }
 
@@ -155,9 +156,7 @@ class UserService {
 
     _hashPassword(password) {
         const salt = crypto.randomBytes(16).toString('hex');
-        const hash = crypto
-            .pbkdf2Sync(password, salt, 100000, 64, 'sha512')
-            .toString('hex');
+        const hash = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512').toString('hex');
         return `${salt}:${hash}`;
     }
 
@@ -167,9 +166,7 @@ class UserService {
         }
 
         const [salt, originalHash] = storedHash.split(':');
-        const hash = crypto
-            .pbkdf2Sync(password, salt, 100000, 64, 'sha512')
-            .toString('hex');
+        const hash = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512').toString('hex');
 
         return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(originalHash, 'hex'));
     }
@@ -194,7 +191,7 @@ class UserService {
         const tokenPayload = {
             ...payload,
             iat: issuedAt,
-            exp: issuedAt + expiresInSeconds
+            exp: issuedAt + expiresInSeconds,
         };
 
         const headerEncoded = this._base64UrlEncode(JSON.stringify(header));
@@ -225,7 +222,10 @@ class UserService {
             .replace(/\+/g, '-')
             .replace(/\//g, '_');
 
-        const expectedBuffer = Buffer.from(expectedSignature.replace(/-/g, '+').replace(/_/g, '/'), 'base64');
+        const expectedBuffer = Buffer.from(
+            expectedSignature.replace(/-/g, '+').replace(/_/g, '/'),
+            'base64'
+        );
         const actualBuffer = Buffer.from(signature.replace(/-/g, '+').replace(/_/g, '/'), 'base64');
 
         if (
@@ -256,7 +256,10 @@ class UserService {
         }
 
         const now = new Date();
-        const fullName = this._computeFullName(sanitizedFirstName || 'New', sanitizedLastName || '');
+        const fullName = this._computeFullName(
+            sanitizedFirstName || 'New',
+            sanitizedLastName || ''
+        );
         const user = {
             firstName: sanitizedFirstName || 'New',
             lastName: sanitizedLastName || '',
@@ -266,7 +269,7 @@ class UserService {
             photoUrl: sanitizedPhotoUrl || null,
             passwordHash: this._hashPassword(password),
             createdAt: now,
-            lastLoginAt: null
+            lastLoginAt: null,
         };
 
         const result = await collection.insertOne(user);
@@ -320,8 +323,12 @@ class UserService {
     }
 
     generateToken(user) {
-        const fullName = user.fullName || this._computeFullName(user.firstName || '', user.lastName || '') || user.name || '';
-        
+        const fullName =
+            user.fullName ||
+            this._computeFullName(user.firstName || '', user.lastName || '') ||
+            user.name ||
+            '';
+
         return this._buildToken({
             userId: user.id,
             email: user.email,
@@ -329,7 +336,7 @@ class UserService {
             lastName: user.lastName || '',
             fullName: fullName,
             name: fullName, // Keep for backward compatibility
-            photoUrl: user.photoUrl || null
+            photoUrl: user.photoUrl || null,
         });
     }
 
@@ -339,12 +346,12 @@ class UserService {
         const collection = db.collection(this.collectionName);
 
         const logger = require('../utils/logger');
-        
-        logger.debug('updateProfile called', { 
-            userId, 
+
+        logger.debug('updateProfile called', {
+            userId,
             userIdType: typeof userId,
             hasEmail: !!updates.email,
-            updateKeys: Object.keys(updates)
+            updateKeys: Object.keys(updates),
         });
 
         // Check if userId is a valid ObjectId
@@ -355,10 +362,10 @@ class UserService {
         let existingUser = null;
         if (isValidObjectId) {
             existingUser = await collection.findOne({ _id: new ObjectId(userId) });
-            logger.debug('User existence check by _id', { 
+            logger.debug('User existence check by _id', {
                 found: !!existingUser,
                 userId,
-                foundUserId: existingUser?._id?.toString()
+                foundUserId: existingUser?._id?.toString(),
             });
         }
 
@@ -369,9 +376,10 @@ class UserService {
             const trimmed = updates.firstName.trim();
             updateDoc.firstName = trimmed;
             // Compute fullName
-            const lastName = updates.lastName !== undefined 
-                ? (updates.lastName || '') 
-                : (existingUser?.lastName || '');
+            const lastName =
+                updates.lastName !== undefined
+                    ? updates.lastName || ''
+                    : existingUser?.lastName || '';
             updateDoc.fullName = this._computeFullName(trimmed, lastName);
             updateDoc.name = updateDoc.fullName; // Keep name for backward compatibility
         }
@@ -381,9 +389,10 @@ class UserService {
             const trimmed = updates.lastName.trim();
             updateDoc.lastName = trimmed;
             // Compute fullName
-            const firstName = updates.firstName !== undefined 
-                ? (updates.firstName || '') 
-                : (existingUser?.firstName || updateDoc.firstName || '');
+            const firstName =
+                updates.firstName !== undefined
+                    ? updates.firstName || ''
+                    : existingUser?.firstName || updateDoc.firstName || '';
             updateDoc.fullName = this._computeFullName(firstName, trimmed);
             updateDoc.name = updateDoc.fullName; // Keep name for backward compatibility
         }
@@ -421,14 +430,14 @@ class UserService {
 
         // If not found by _id, try by email (case-insensitive)
         if (!existingUser && updateDoc.email) {
-            existingUser = await collection.findOne({ 
-                email: { $regex: new RegExp(`^${updateDoc.email}$`, 'i') } 
+            existingUser = await collection.findOne({
+                email: { $regex: new RegExp(`^${updateDoc.email}$`, 'i') },
             });
-            logger.debug('User existence check by email', { 
+            logger.debug('User existence check by email', {
                 found: !!existingUser,
                 email: updateDoc.email,
                 foundEmail: existingUser?.email,
-                foundUserId: existingUser?._id?.toString()
+                foundUserId: existingUser?._id?.toString(),
             });
         }
 
@@ -439,51 +448,51 @@ class UserService {
             if (updateDoc.email) {
                 try {
                     const emailPrefix = updateDoc.email.split('@')[0];
-                    similarUsers = await collection.find({ 
-                        email: { $regex: emailPrefix, $options: 'i' } 
-                    }).limit(3).toArray();
-                    similarUsers = similarUsers.map(u => ({ 
-                        id: u._id.toString(), 
-                        email: u.email 
+                    similarUsers = await collection
+                        .find({
+                            email: { $regex: emailPrefix, $options: 'i' },
+                        })
+                        .limit(3)
+                        .toArray();
+                    similarUsers = similarUsers.map((u) => ({
+                        id: u._id.toString(),
+                        email: u.email,
                     }));
                 } catch (debugError) {
                     // Ignore debug query errors
                 }
             }
 
-            logger.error('User not found in database', { 
+            logger.error('User not found in database', {
                 userId,
                 isValidObjectId,
                 email: updateDoc.email,
-                similarUsers
+                similarUsers,
             });
             throw new Error('User not found');
         }
 
         // Now perform the update - use the found user's _id
         const updateFilter = { _id: existingUser._id };
-        
+
         // Perform the update
-        await collection.updateOne(
-            updateFilter,
-            { $set: updateDoc }
-        );
+        await collection.updateOne(updateFilter, { $set: updateDoc });
 
         // Fetch the updated user
         const updatedUser = await collection.findOne({ _id: existingUser._id });
-        
-        logger.debug('Update result', { 
+
+        logger.debug('Update result', {
             found: !!updatedUser,
             updatedUserId: updatedUser?._id?.toString(),
-            updatedFields: updatedUser ? Object.keys(updateDoc) : []
+            updatedFields: updatedUser ? Object.keys(updateDoc) : [],
         });
 
         // If update didn't return a document, something went wrong
         if (!updatedUser) {
-            logger.error('Update operation failed - user not found after update', { 
+            logger.error('Update operation failed - user not found after update', {
                 userId,
                 existingUserId: existingUser._id.toString(),
-                updateDoc
+                updateDoc,
             });
             throw new Error('Failed to update user profile');
         }
@@ -499,23 +508,23 @@ class UserService {
             throw new Error('Token has expired');
         }
 
-        logger.debug('verifyToken - looking up user', { 
+        logger.debug('verifyToken - looking up user', {
             userIdFromToken: payload.userId,
-            emailFromToken: payload.email 
+            emailFromToken: payload.email,
         });
 
         const user = await this.findUserById(payload.userId);
         if (!user) {
-            logger.error('User not found in verifyToken', { 
+            logger.error('User not found in verifyToken', {
                 userIdFromToken: payload.userId,
-                emailFromToken: payload.email 
+                emailFromToken: payload.email,
             });
             throw new Error('User not found');
         }
 
-        logger.debug('verifyToken - user found', { 
+        logger.debug('verifyToken - user found', {
             userId: user.id,
-            email: user.email 
+            email: user.email,
         });
 
         return user;

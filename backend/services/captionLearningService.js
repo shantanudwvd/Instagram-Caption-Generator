@@ -24,7 +24,7 @@ class CaptionLearningService {
         this.userPreferenceCollection = 'user_preferences';
 
         this.openai = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY
+            apiKey: process.env.OPENAI_API_KEY,
         });
 
         // Connection options for production
@@ -32,7 +32,7 @@ class CaptionLearningService {
             maxPoolSize: 10,
             serverSelectionTimeoutMS: 5000,
             socketTimeoutMS: 45000,
-            connectTimeoutMS: 10000
+            connectTimeoutMS: 10000,
         };
 
         // Initialize connection
@@ -78,7 +78,6 @@ class CaptionLearningService {
 
                 // Set up indexes for better performance
                 await this._setupIndexes();
-
             } catch (error) {
                 retries++;
                 logger.error(`MongoDB connection attempt ${retries} failed:`, error);
@@ -91,7 +90,7 @@ class CaptionLearningService {
                 // Wait before retry (exponential backoff)
                 const waitTime = Math.min(1000 * Math.pow(2, retries), 30000);
                 logger.info(`Waiting ${waitTime}ms before retry...`);
-                await new Promise(resolve => setTimeout(resolve, waitTime));
+                await new Promise((resolve) => setTimeout(resolve, waitTime));
             }
         }
     }
@@ -148,7 +147,9 @@ class CaptionLearningService {
             await db.collection(this.fineTuningCollection).createIndex({ status: 1 });
 
             // User preference collection indexes
-            await db.collection(this.userPreferenceCollection).createIndex({ userId: 1 }, { unique: true });
+            await db
+                .collection(this.userPreferenceCollection)
+                .createIndex({ userId: 1 }, { unique: true });
             await db.collection(this.userPreferenceCollection).createIndex({ updatedAt: -1 });
 
             logger.info('MongoDB indexes set up successfully');
@@ -204,19 +205,23 @@ class CaptionLearningService {
                 imageUrl: captionData.imageUrl || null,
                 songAnalysis: this._sanitizeObject(captionData.songAnalysis || {}),
                 songFeatures: this._sanitizeObject(captionData.songFeatures || null),
-                relationshipAnalysis: this._sanitizeObject(captionData.relationshipAnalysis || null),
+                relationshipAnalysis: this._sanitizeObject(
+                    captionData.relationshipAnalysis || null
+                ),
                 userContext: this._sanitizeText(captionData.userContext || ''),
                 options: this._sanitizeObject(captionData.options || {}),
                 createdAt: new Date(),
                 feedbackCount: 0,
                 avgRating: 0,
                 status: 'active',
-                captionId: uuidv4() // Add a UUID for external reference
+                captionId: uuidv4(), // Add a UUID for external reference
             };
 
             const result = await collection.insertOne(sanitizedData);
 
-            logger.info(`Stored new caption with ID: ${result.insertedId} for user: ${captionData.userId}`);
+            logger.info(
+                `Stored new caption with ID: ${result.insertedId} for user: ${captionData.userId}`
+            );
             return result.insertedId.toString();
         } catch (error) {
             logger.error('Error storing caption:', error);
@@ -237,7 +242,12 @@ class CaptionLearningService {
             throw new Error('Caption ID is required');
         }
 
-        if (!feedback || typeof feedback.rating !== 'number' || feedback.rating < 1 || feedback.rating > 5) {
+        if (
+            !feedback ||
+            typeof feedback.rating !== 'number' ||
+            feedback.rating < 1 ||
+            feedback.rating > 5
+        ) {
             throw new Error('Valid rating (1-5) is required');
         }
 
@@ -285,16 +295,16 @@ class CaptionLearningService {
                 clientInfo: {
                     userAgent: feedback.userAgent || '',
                     ipHash: feedback.ipHash || '', // Store hashed IP for analytics
-                    timestamp: new Date()
+                    timestamp: new Date(),
                 },
-                createdAt: new Date()
+                createdAt: new Date(),
             };
 
             await feedbackColl.insertOne(feedbackDoc);
 
             // Update the caption's feedback stats with atomic operations
             const newFeedbackCount = captionDoc.feedbackCount + 1;
-            const totalRating = (captionDoc.avgRating * captionDoc.feedbackCount) + feedback.rating;
+            const totalRating = captionDoc.avgRating * captionDoc.feedbackCount + feedback.rating;
             const newAvgRating = totalRating / newFeedbackCount;
 
             await captionColl.updateOne(
@@ -303,9 +313,9 @@ class CaptionLearningService {
                     $set: {
                         feedbackCount: newFeedbackCount,
                         avgRating: newAvgRating,
-                        lastFeedbackAt: new Date()
+                        lastFeedbackAt: new Date(),
                     },
-                    $inc: { totalRatingSum: feedback.rating }
+                    $inc: { totalRatingSum: feedback.rating },
                 }
             );
 
@@ -328,12 +338,7 @@ class CaptionLearningService {
      * @returns {Promise<Array>} Array of training examples
      */
     async generateTrainingData(options = {}) {
-        const {
-            minFeedbackCount = 3,
-            minRating = 4,
-            limit = 1000,
-            includeEdits = true
-        } = options;
+        const { minFeedbackCount = 3, minRating = 4, limit = 1000, includeEdits = true } = options;
 
         try {
             await this._initializeConnection();
@@ -342,11 +347,12 @@ class CaptionLearningService {
             const feedbackColl = db.collection(this.feedbackCollection);
 
             // Find captions with sufficient feedback and high ratings
-            const highQualityCaptions = await captionColl.find({
-                feedbackCount: { $gte: minFeedbackCount },
-                avgRating: { $gte: minRating },
-                status: 'active'
-            })
+            const highQualityCaptions = await captionColl
+                .find({
+                    feedbackCount: { $gte: minFeedbackCount },
+                    avgRating: { $gte: minRating },
+                    status: 'active',
+                })
                 .sort({ avgRating: -1, feedbackCount: -1 })
                 .limit(limit)
                 .toArray();
@@ -356,7 +362,9 @@ class CaptionLearningService {
                 return [];
             }
 
-            logger.info(`Found ${highQualityCaptions.length} high-quality captions for training data`);
+            logger.info(
+                `Found ${highQualityCaptions.length} high-quality captions for training data`
+            );
             const trainingData = [];
             const userProfileCache = new Map();
 
@@ -369,18 +377,25 @@ class CaptionLearningService {
                         styleProfile = userProfileCache.get(captionUserId);
                     } else {
                         try {
-                            styleProfile = await this.getUserPreferenceProfile(captionUserId, { forceRefresh: false });
+                            styleProfile = await this.getUserPreferenceProfile(captionUserId, {
+                                forceRefresh: false,
+                            });
                             userProfileCache.set(captionUserId, styleProfile);
                         } catch (profileError) {
-                            logger.warn('Unable to load user style profile for training data', { error: profileError.message, userId: captionUserId });
+                            logger.warn('Unable to load user style profile for training data', {
+                                error: profileError.message,
+                                userId: captionUserId,
+                            });
                         }
                     }
                 }
 
                 // Get all feedback for this caption to find user edits
-                const allFeedback = await feedbackColl.find({
-                    captionId: caption._id
-                }).toArray();
+                const allFeedback = await feedbackColl
+                    .find({
+                        captionId: caption._id,
+                    })
+                    .toArray();
 
                 // Use the caption with edits if available and requested
                 let finalCaption = caption.caption;
@@ -389,7 +404,7 @@ class CaptionLearningService {
                 if (includeEdits) {
                     // Get feedback with edits, sorted by rating (highest first)
                     const feedbackWithEdits = allFeedback
-                        .filter(f => f.userEdits && f.userEdits.trim().length > 0)
+                        .filter((f) => f.userEdits && f.userEdits.trim().length > 0)
                         .sort((a, b) => b.rating - a.rating);
 
                     if (feedbackWithEdits.length > 0) {
@@ -408,7 +423,7 @@ class CaptionLearningService {
                         relationshipAnalysis: caption.relationshipAnalysis || null,
                         userContext: caption.userContext,
                         options: caption.options,
-                        styleProfile: styleProfile || null
+                        styleProfile: styleProfile || null,
                     },
                     caption: finalCaption,
                     originalCaption: caption.caption,
@@ -416,10 +431,12 @@ class CaptionLearningService {
                     metrics: {
                         avgRating: caption.avgRating,
                         feedbackCount: caption.feedbackCount,
-                        editCount: allFeedback.filter(f => f.userEdits && f.userEdits.trim().length > 0).length
+                        editCount: allFeedback.filter(
+                            (f) => f.userEdits && f.userEdits.trim().length > 0
+                        ).length,
                     },
                     captionId: caption._id.toString(),
-                    createdAt: caption.createdAt
+                    createdAt: caption.createdAt,
                 });
             }
 
@@ -434,8 +451,8 @@ class CaptionLearningService {
                         minFeedbackCount,
                         minRating,
                         limit,
-                        includeEdits
-                    }
+                        includeEdits,
+                    },
                 });
 
                 logger.info(`Generated ${trainingData.length} training examples`);
@@ -461,7 +478,7 @@ class CaptionLearningService {
         const {
             trainingOptions = {},
             baseModel = 'gpt-4o', // Use the latest model as base
-            epochs = 3
+            epochs = 3,
         } = options;
 
         try {
@@ -470,31 +487,34 @@ class CaptionLearningService {
             const trainingData = await this.generateTrainingData(trainingOptions);
 
             if (trainingData.length < 10) {
-                logger.warn(`Insufficient training data: ${trainingData.length} examples (minimum 10 required)`);
+                logger.warn(
+                    `Insufficient training data: ${trainingData.length} examples (minimum 10 required)`
+                );
                 return {
                     success: false,
                     reason: 'insufficient_data',
-                    count: trainingData.length
+                    count: trainingData.length,
                 };
             }
 
             // Step 2: Format data for OpenAI fine-tuning
             logger.info('Formatting training data for OpenAI fine-tuning...');
-            const formattedData = trainingData.map(item => ({
+            const formattedData = trainingData.map((item) => ({
                 messages: [
                     {
-                        role: "system",
-                        content: "You are a skilled social media copywriter who creates authentic, human Instagram captions."
+                        role: 'system',
+                        content:
+                            'You are a skilled social media copywriter who creates authentic, human Instagram captions.',
                     },
                     {
-                        role: "user",
-                        content: this._formatPrompt(item)
+                        role: 'user',
+                        content: this._formatPrompt(item),
                     },
                     {
-                        role: "assistant",
-                        content: item.caption
-                    }
-                ]
+                        role: 'assistant',
+                        content: item.caption,
+                    },
+                ],
             }));
 
             // Step 3: Create a temporary JSONL file for the training data
@@ -510,7 +530,7 @@ class CaptionLearningService {
 
             fs.writeFileSync(
                 tempFilePath,
-                formattedData.map(item => JSON.stringify(item)).join('\n')
+                formattedData.map((item) => JSON.stringify(item)).join('\n')
             );
 
             logger.info(`Training data file created: ${tempFilePath}`);
@@ -519,7 +539,7 @@ class CaptionLearningService {
             logger.info('Uploading training data to OpenAI...');
             const file = await this.openai.files.create({
                 file: fs.createReadStream(tempFilePath),
-                purpose: 'fine-tune'
+                purpose: 'fine-tune',
             });
 
             logger.info(`File uploaded to OpenAI: ${file.id}`);
@@ -533,8 +553,8 @@ class CaptionLearningService {
                 model: baseModel,
                 suffix: modelSuffix,
                 hyperparameters: {
-                    n_epochs: epochs
-                }
+                    n_epochs: epochs,
+                },
             });
 
             logger.info(`Fine-tuning job started: ${fineTune.id}`);
@@ -555,11 +575,11 @@ class CaptionLearningService {
                 baseModel: baseModel,
                 exampleCount: trainingData.length,
                 hyperparameters: {
-                    n_epochs: epochs
+                    n_epochs: epochs,
                 },
                 trainingCriteria: trainingOptions,
                 createdAt: new Date(),
-                modelSuffix: modelSuffix
+                modelSuffix: modelSuffix,
             });
 
             return {
@@ -567,14 +587,14 @@ class CaptionLearningService {
                 jobId: fineTune.id,
                 fileId: file.id,
                 exampleCount: trainingData.length,
-                baseModel: baseModel
+                baseModel: baseModel,
             };
         } catch (error) {
             logger.error('Error fine-tuning model:', error);
             return {
                 success: false,
                 error: error.message,
-                details: error.response?.data || {}
+                details: error.response?.data || {},
             };
         }
     }
@@ -605,7 +625,7 @@ class CaptionLearningService {
                 trainedTokens: job.trained_tokens || 0,
                 trainingFile: job.training_file,
                 validationFile: job.validation_file,
-                error: job.error
+                error: job.error,
             };
 
             // Update status in database
@@ -622,8 +642,8 @@ class CaptionLearningService {
                         fineTunedModel: job.fine_tuned_model,
                         trainedTokens: job.trained_tokens || 0,
                         lastCheckedAt: new Date(),
-                        error: job.error
-                    }
+                        error: job.error,
+                    },
                 }
             );
 
@@ -645,11 +665,7 @@ class CaptionLearningService {
      * @returns {Promise<Array>} Array of fine-tuning jobs
      */
     async getFineTuningJobs(options = {}) {
-        const {
-            limit = 50,
-            status = null,
-            sort = { createdAt: -1 }
-        } = options;
+        const { limit = 50, status = null, sort = { createdAt: -1 } } = options;
 
         try {
             await this._initializeConnection();
@@ -662,10 +678,7 @@ class CaptionLearningService {
                 query.status = status;
             }
 
-            const jobs = await fineTuneColl.find(query)
-                .sort(sort)
-                .limit(limit)
-                .toArray();
+            const jobs = await fineTuneColl.find(query).sort(sort).limit(limit).toArray();
 
             logger.info(`Retrieved ${jobs.length} fine-tuning jobs`);
             return jobs;
@@ -683,9 +696,7 @@ class CaptionLearningService {
      * @returns {Promise<string|null>} Model ID of the latest fine-tuned model
      */
     async getLatestFineTunedModel(options = {}) {
-        const {
-            onlySucceeded = true
-        } = options;
+        const { onlySucceeded = true } = options;
 
         try {
             await this._initializeConnection();
@@ -700,7 +711,8 @@ class CaptionLearningService {
             }
 
             // Find completed fine-tuning jobs
-            const completedJobs = await fineTuneColl.find(query)
+            const completedJobs = await fineTuneColl
+                .find(query)
                 .sort({ finishedAt: -1 })
                 .limit(1)
                 .toArray();
@@ -749,51 +761,64 @@ class CaptionLearningService {
             const totalCaptions = await captionColl.countDocuments(userCaptionMatch);
 
             // Get user's caption IDs for feedback filtering
-            const userCaptionIds = await captionColl.find(userCaptionMatch)
+            const userCaptionIds = await captionColl
+                .find(userCaptionMatch)
                 .project({ _id: 1 })
                 .toArray();
-            const captionIdArray = userCaptionIds.map(c => c._id);
+            const captionIdArray = userCaptionIds.map((c) => c._id);
 
             // Get total feedback count for this user's captions
-            const totalFeedback = captionIdArray.length > 0
-                ? await feedbackColl.countDocuments({ captionId: { $in: captionIdArray } })
-                : 0;
+            const totalFeedback =
+                captionIdArray.length > 0
+                    ? await feedbackColl.countDocuments({
+                          captionId: { $in: captionIdArray },
+                      })
+                    : 0;
 
             // Get average rating for this user's captions
-            const ratingAgg = await captionColl.aggregate([
-                { $match: { ...userCaptionMatch, feedbackCount: { $gt: 0 } } },
-                { $group: { _id: null, avgRating: { $avg: '$avgRating' } } }
-            ]).toArray();
+            const ratingAgg = await captionColl
+                .aggregate([
+                    { $match: { ...userCaptionMatch, feedbackCount: { $gt: 0 } } },
+                    { $group: { _id: null, avgRating: { $avg: '$avgRating' } } },
+                ])
+                .toArray();
 
             const avgRating = ratingAgg.length > 0 ? ratingAgg[0].avgRating : 0;
 
             // Get rating distribution for this user's feedback
-            const ratingDistribution = captionIdArray.length > 0
-                ? await feedbackColl.aggregate([
-                    { $match: { captionId: { $in: captionIdArray } } },
-                    { $group: { _id: '$rating', count: { $sum: 1 } } },
-                    { $sort: { _id: 1 } },
-                    { $project: { rating: '$_id', count: 1, _id: 0 } }
-                ]).toArray()
-                : [];
+            const ratingDistribution =
+                captionIdArray.length > 0
+                    ? await feedbackColl
+                          .aggregate([
+                              { $match: { captionId: { $in: captionIdArray } } },
+                              { $group: { _id: '$rating', count: { $sum: 1 } } },
+                              { $sort: { _id: 1 } },
+                              { $project: { rating: '$_id', count: 1, _id: 0 } },
+                          ])
+                          .toArray()
+                    : [];
 
             // Get caption generation history (last 30 days) for this user
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-            const generationHistory = await captionColl.aggregate([
-                { $match: { ...userCaptionMatch, createdAt: { $gte: thirtyDaysAgo } } },
-                {
-                    $group: {
-                        _id: {
-                            $dateToString: { format: '%Y-%m-%d', date: '$createdAt' }
+            const generationHistory = await captionColl
+                .aggregate([
+                    {
+                        $match: { ...userCaptionMatch, createdAt: { $gte: thirtyDaysAgo } },
+                    },
+                    {
+                        $group: {
+                            _id: {
+                                $dateToString: { format: '%Y-%m-%d', date: '$createdAt' },
+                            },
+                            count: { $sum: 1 },
                         },
-                        count: { $sum: 1 }
-                    }
-                },
-                { $sort: { _id: 1 } },
-                { $project: { date: '$_id', count: 1, _id: 0 } }
-            ]).toArray();
+                    },
+                    { $sort: { _id: 1 } },
+                    { $project: { date: '$_id', count: 1, _id: 0 } },
+                ])
+                .toArray();
 
             // Fine-tuning stats are global (not user-specific)
             const fineTuningStats = {
@@ -801,27 +826,32 @@ class CaptionLearningService {
                 succeeded: await fineTuneColl.countDocuments({ status: 'succeeded' }),
                 failed: await fineTuneColl.countDocuments({ status: 'failed' }),
                 inProgress: await fineTuneColl.countDocuments({
-                    status: { $in: ['created', 'running', 'validating'] }
-                })
+                    status: { $in: ['created', 'running', 'validating'] },
+                }),
             };
 
             // Get feedback trends over time (rating averages by week) for this user's captions
-            const feedbackTrends = captionIdArray.length > 0
-                ? await feedbackColl.aggregate([
-                    { $match: { captionId: { $in: captionIdArray } } },
-                    {
-                        $group: {
-                            _id: {
-                                $dateToString: { format: '%Y-%U', date: '$createdAt' } // Group by year and week
-                            },
-                            avgRating: { $avg: '$rating' },
-                            count: { $sum: 1 }
-                        }
-                    },
-                    { $sort: { _id: 1 } },
-                    { $project: { period: '$_id', avgRating: 1, count: 1, _id: 0 } }
-                ]).toArray()
-                : [];
+            const feedbackTrends =
+                captionIdArray.length > 0
+                    ? await feedbackColl
+                          .aggregate([
+                              { $match: { captionId: { $in: captionIdArray } } },
+                              {
+                                  $group: {
+                                      _id: {
+                                          $dateToString: { format: '%Y-%U', date: '$createdAt' }, // Group by year and week
+                                      },
+                                      avgRating: { $avg: '$rating' },
+                                      count: { $sum: 1 },
+                                  },
+                              },
+                              { $sort: { _id: 1 } },
+                              {
+                                  $project: { period: '$_id', avgRating: 1, count: 1, _id: 0 },
+                              },
+                          ])
+                          .toArray()
+                    : [];
 
             return {
                 totalCaptions,
@@ -830,7 +860,7 @@ class CaptionLearningService {
                 ratingDistribution,
                 generationHistory,
                 fineTuningStats,
-                feedbackTrends
+                feedbackTrends,
             };
         } catch (error) {
             logger.error('Error getting dashboard stats:', error);
@@ -861,7 +891,8 @@ class CaptionLearningService {
             const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 5, 1), 50);
             const userObjectId = new ObjectId(userId);
 
-            const captions = await captionColl.find({ userId: userObjectId, status: 'active' })
+            const captions = await captionColl
+                .find({ userId: userObjectId, status: 'active' })
                 .sort({ createdAt: -1 })
                 .limit(safeLimit)
                 .project({
@@ -870,11 +901,11 @@ class CaptionLearningService {
                     avgRating: 1,
                     feedbackCount: 1,
                     options: 1,
-                    imageUrl: 1
+                    imageUrl: 1,
                 })
                 .toArray();
 
-            return captions.map(caption => ({
+            return captions.map((caption) => ({
                 id: caption._id.toString(),
                 caption: caption.caption,
                 createdAt: caption.createdAt,
@@ -882,7 +913,7 @@ class CaptionLearningService {
                 feedbackCount: caption.feedbackCount || 0,
                 tone: caption?.options?.tone || null,
                 length: caption?.options?.length || null,
-                imageUrl: caption.imageUrl || null
+                imageUrl: caption.imageUrl || null,
             }));
         } catch (error) {
             logger.error('Error fetching recent captions:', error);
@@ -950,7 +981,8 @@ class CaptionLearningService {
             const totalCount = await captionColl.countDocuments(query);
 
             // Fetch captions
-            const captions = await captionColl.find(query)
+            const captions = await captionColl
+                .find(query)
                 .sort(sort)
                 .skip(offset)
                 .limit(limit)
@@ -960,12 +992,12 @@ class CaptionLearningService {
                     avgRating: 1,
                     feedbackCount: 1,
                     options: 1,
-                    imageUrl: 1
+                    imageUrl: 1,
                 })
                 .toArray();
 
             return {
-                captions: captions.map(caption => ({
+                captions: captions.map((caption) => ({
                     id: caption._id.toString(),
                     caption: caption.caption,
                     createdAt: caption.createdAt,
@@ -973,12 +1005,12 @@ class CaptionLearningService {
                     feedbackCount: caption.feedbackCount || 0,
                     tone: caption?.options?.tone || null,
                     length: caption?.options?.length || null,
-                    imageUrl: caption.imageUrl || null
+                    imageUrl: caption.imageUrl || null,
                 })),
                 totalCount,
                 limit,
                 offset,
-                hasMore: offset + limit < totalCount
+                hasMore: offset + limit < totalCount,
             };
         } catch (error) {
             logger.error('Error fetching filtered captions:', error);
@@ -996,11 +1028,7 @@ class CaptionLearningService {
      * @returns {Promise<Object|null>} Preference profile or null if no history
      */
     async getUserPreferenceProfile(userId, options = {}) {
-        const {
-            historyLimit = 12,
-            feedbackLimit = 20,
-            forceRefresh = false
-        } = options;
+        const { historyLimit = 12, feedbackLimit = 20, forceRefresh = false } = options;
 
         if (!userId) {
             throw new Error('User ID is required to build preference profile');
@@ -1024,13 +1052,14 @@ class CaptionLearningService {
                 if (existing) {
                     return this._sanitizeObject({
                         ...existing,
-                        id: existing._id?.toString()
+                        id: existing._id?.toString(),
                     });
                 }
             }
 
             // Recent captions for this user
-            const captions = await captionColl.find({ userId: userObjectId, status: 'active' })
+            const captions = await captionColl
+                .find({ userId: userObjectId, status: 'active' })
                 .sort({ createdAt: -1 })
                 .limit(historyLimit)
                 .project({
@@ -1039,7 +1068,7 @@ class CaptionLearningService {
                     avgRating: 1,
                     feedbackCount: 1,
                     createdAt: 1,
-                    userContext: 1
+                    userContext: 1,
                 })
                 .toArray();
 
@@ -1047,11 +1076,12 @@ class CaptionLearningService {
                 return null;
             }
 
-            const captionIds = captions.map(c => c._id);
-            const feedback = await feedbackColl.find({
-                captionId: { $in: captionIds },
-                userId: userObjectId
-            })
+            const captionIds = captions.map((c) => c._id);
+            const feedback = await feedbackColl
+                .find({
+                    captionId: { $in: captionIds },
+                    userId: userObjectId,
+                })
                 .sort({ createdAt: -1 })
                 .limit(feedbackLimit)
                 .project({
@@ -1059,7 +1089,7 @@ class CaptionLearningService {
                     rating: 1,
                     comments: 1,
                     userEdits: 1,
-                    createdAt: 1
+                    createdAt: 1,
                 })
                 .toArray();
 
@@ -1069,7 +1099,7 @@ class CaptionLearningService {
                 length: this._topOption(optionStats.length, 'medium'),
                 emoji: this._topOption(optionStats.emoji, 'moderate'),
                 hashtags: this._topOption(optionStats.hashtags, 'moderate'),
-                language: this._topOption(optionStats.language, 'english')
+                language: this._topOption(optionStats.language, 'english'),
             };
 
             // Pick top-rated or most recent captions as examples
@@ -1082,9 +1112,13 @@ class CaptionLearningService {
                 return scoreB - scoreA;
             });
 
-            const topCaptions = scoredCaptions.slice(0, 5).map(caption => {
-                const relatedFeedback = feedback.filter(f => f.captionId.toString() === caption._id.toString());
-                const bestEdit = relatedFeedback.find(f => f.userEdits && f.userEdits.trim().length > 0);
+            const topCaptions = scoredCaptions.slice(0, 5).map((caption) => {
+                const relatedFeedback = feedback.filter(
+                    (f) => f.captionId.toString() === caption._id.toString()
+                );
+                const bestEdit = relatedFeedback.find(
+                    (f) => f.userEdits && f.userEdits.trim().length > 0
+                );
 
                 return {
                     captionId: caption._id?.toString(),
@@ -1095,11 +1129,11 @@ class CaptionLearningService {
                     options: caption.options || {},
                     userContext: caption.userContext || '',
                     userEdits: bestEdit?.userEdits || null,
-                    feedbackSample: relatedFeedback.slice(0, 2).map(fb => ({
+                    feedbackSample: relatedFeedback.slice(0, 2).map((fb) => ({
                         rating: fb.rating,
                         comments: fb.comments || '',
-                        userEdits: fb.userEdits || ''
-                    }))
+                        userEdits: fb.userEdits || '',
+                    })),
                 };
             });
 
@@ -1108,24 +1142,29 @@ class CaptionLearningService {
             if (process.env.OPENAI_API_KEY) {
                 try {
                     const response = await this.openai.chat.completions.create({
-                        model: "gpt-4o-mini",
+                        model: 'gpt-4o-mini',
                         messages: [
                             {
-                                role: "system",
-                                content: "You are a social media strategist who summarizes a user's captioning style from examples and feedback."
+                                role: 'system',
+                                content:
+                                    "You are a social media strategist who summarizes a user's captioning style from examples and feedback.",
                             },
                             {
-                                role: "user",
+                                role: 'user',
                                 content: `
 Review these past Instagram captions, their options, and feedback. Extract what the user likes, avoids, and how they typically sound. Keep it concise and actionable.
 
 EXAMPLES:
-${topCaptions.map((c, idx) => `${idx + 1}. Caption: "${c.caption}"
+${topCaptions
+    .map(
+        (c, idx) => `${idx + 1}. Caption: "${c.caption}"
 - Options: ${JSON.stringify(c.options)}
 - Avg rating: ${c.avgRating} (feedback count: ${c.feedbackCount})
 - User edits: ${c.userEdits || 'none'}
-- Feedback: ${c.feedbackSample.map(f => `rating ${f.rating}${f.comments ? `, comment: ${f.comments}` : ''}${f.userEdits ? `, edits: ${f.userEdits}` : ''}`).join(' | ') || 'none'}
-`).join('\n')}
+- Feedback: ${c.feedbackSample.map((f) => `rating ${f.rating}${f.comments ? `, comment: ${f.comments}` : ''}${f.userEdits ? `, edits: ${f.userEdits}` : ''}`).join(' | ') || 'none'}
+`
+    )
+    .join('\n')}
 
 Return a JSON object with:
 - summary: short sentence describing their vibe
@@ -1134,44 +1173,49 @@ Return a JSON object with:
 - donts: 2-4 things to avoid
 - examplePhrases: 2-4 short snippets of wording they like (do not repeat captions verbatim)
 - preferredOptions: optional overrides for tone/length/emoji/hashtags/language if obvious
-`
-                            }
+`,
+                            },
                         ],
                         temperature: 0.35,
                         max_tokens: 400,
-                        response_format: { type: "json_object" }
+                        response_format: { type: 'json_object' },
                     });
 
                     aiProfile = JSON.parse(response.choices[0].message.content);
                 } catch (aiError) {
-                    logger.warn('Failed to build AI preference profile, using heuristics', { error: aiError.message });
+                    logger.warn('Failed to build AI preference profile, using heuristics', {
+                        error: aiError.message,
+                    });
                 }
             }
 
             const profile = {
-                summary: aiProfile?.summary || `Prefers ${preferredOptions.tone} captions of ${preferredOptions.length} length with ${preferredOptions.emoji} emoji use.`,
+                summary:
+                    aiProfile?.summary ||
+                    `Prefers ${preferredOptions.tone} captions of ${preferredOptions.length} length with ${preferredOptions.emoji} emoji use.`,
                 stylePrinciples: aiProfile?.stylePrinciples || [
                     'Keep captions specific to the moment',
                     'Maintain a natural, non-robotic tone',
-                    'Blend feelings with concise observations'
+                    'Blend feelings with concise observations',
                 ],
                 dos: aiProfile?.dos || [
                     'Reference concrete details from the scene',
-                    'Keep language relaxed and personable'
+                    'Keep language relaxed and personable',
                 ],
                 donts: aiProfile?.donts || [
                     'Avoid generic inspirational filler',
-                    'Avoid repetitive phrasing'
+                    'Avoid repetitive phrasing',
                 ],
                 preferredOptions: {
                     tone: aiProfile?.preferredOptions?.tone || preferredOptions.tone,
                     length: aiProfile?.preferredOptions?.length || preferredOptions.length,
                     emoji: aiProfile?.preferredOptions?.emoji || preferredOptions.emoji,
                     hashtags: aiProfile?.preferredOptions?.hashtags || preferredOptions.hashtags,
-                    language: aiProfile?.preferredOptions?.language || preferredOptions.language
+                    language: aiProfile?.preferredOptions?.language || preferredOptions.language,
                 },
-                examplePhrases: aiProfile?.examplePhrases || topCaptions.map(c => c.caption).slice(0, 3),
-                samplesUsed: topCaptions
+                examplePhrases:
+                    aiProfile?.examplePhrases || topCaptions.map((c) => c.caption).slice(0, 3),
+                samplesUsed: topCaptions,
             };
 
             // Persist the preference profile for reuse and fine-tuning
@@ -1190,11 +1234,11 @@ Return a JSON object with:
                     feedbackCount: feedback.length,
                     historyLimit,
                     feedbackLimit,
-                    aiGenerated: !!aiProfile
+                    aiGenerated: !!aiProfile,
                 },
                 version: 1,
                 createdAt: now,
-                updatedAt: now
+                updatedAt: now,
             };
 
             await preferenceColl.updateOne(
@@ -1205,7 +1249,7 @@ Return a JSON object with:
 
             return {
                 ...profile,
-                sourceStats: profileDoc.sourceStats
+                sourceStats: profileDoc.sourceStats,
             };
         } catch (error) {
             logger.error('Error building user preference profile:', error);
@@ -1339,7 +1383,7 @@ ${item.context.userContext ? `ADDITIONAL CONTEXT: ${item.context.userContext}` :
         if (!Array.isArray(arr)) return [];
 
         return arr
-            .map(item => {
+            .map((item) => {
                 if (typeof item === 'string') return this._sanitizeText(item);
                 if (typeof item === 'number' || typeof item === 'boolean') return item;
                 if (item === null) return null;
@@ -1347,7 +1391,7 @@ ${item.context.userContext ? `ADDITIONAL CONTEXT: ${item.context.userContext}` :
                 if (typeof item === 'object') return this._sanitizeObject(item);
                 return null;
             })
-            .filter(item => item !== undefined);
+            .filter((item) => item !== undefined);
     }
 
     /**
@@ -1360,12 +1404,12 @@ ${item.context.userContext ? `ADDITIONAL CONTEXT: ${item.context.userContext}` :
             length: {},
             emoji: {},
             hashtags: {},
-            language: {}
+            language: {},
         };
 
-        captions.forEach(caption => {
+        captions.forEach((caption) => {
             const options = caption.options || {};
-            ['tone', 'length', 'emoji', 'hashtags', 'language'].forEach(key => {
+            ['tone', 'length', 'emoji', 'hashtags', 'language'].forEach((key) => {
                 const value = options[key];
                 if (value) {
                     stats[key][value] = (stats[key][value] || 0) + 1;
@@ -1386,6 +1430,67 @@ ${item.context.userContext ? `ADDITIONAL CONTEXT: ${item.context.userContext}` :
 
         entries.sort((a, b) => b[1] - a[1]);
         return entries[0][0] || fallback;
+    }
+
+    /**
+     * Soft-delete a caption by marking it inactive for the owning user
+     * @param {string} captionId
+     * @param {string} userId
+     * @returns {Promise<string>} Deleted caption id
+     */
+    async deleteCaption(captionId, userId) {
+        if (!captionId || !userId) {
+            throw new Error('Invalid caption data: caption id and user id are required');
+        }
+
+        await this._initializeConnection();
+        const db = this.getDb();
+        const collection = db.collection(this.captionCollection);
+
+        let objectId;
+        try {
+            objectId = new ObjectId(captionId);
+        } catch (error) {
+            throw new Error('Invalid caption ID format');
+        }
+
+        if (!ObjectId.isValid(userId)) {
+            throw new Error('Invalid user ID format');
+        }
+        const userObjectId = new ObjectId(userId);
+
+        const existing = await collection.findOne({
+            _id: objectId,
+            status: 'active',
+        });
+        if (!existing) {
+            throw new Error('Caption is either already deleted or does not exist');
+        }
+
+        if (!existing.userId || existing.userId.toString() !== userId) {
+            logger.warn('Unauthorized caption delete attempt', { captionId, userId });
+            throw new Error('Unauthorized to delete this caption');
+        }
+
+        const result = await collection.updateOne(
+            { _id: objectId, userId: userObjectId, status: 'active' },
+            {
+                $set: {
+                    status: 'inactive',
+                    updatedAt: new Date(),
+                },
+            }
+        );
+
+        if (!result.matchedCount) {
+            throw new Error('Failed to delete caption');
+        }
+
+        logger.info(`Deleted caption ${captionId}`, {
+            modifiedCount: result.modifiedCount,
+            userId,
+        });
+        return captionId;
     }
 }
 

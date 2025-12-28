@@ -1,11 +1,22 @@
-import React, { useState } from 'react';
-import { Star, Copy, Check, Image as ImageIcon } from 'lucide-react';
-
-const CaptionCard = ({ caption, createdAt, avgRating, feedbackCount, tone, length, imageUrl, onImageClick }) => {
+import React, { useEffect, useState } from 'react';
+import { Star, Copy, Check, Trash, Loader2, Image as ImageIcon } from 'lucide-react';
+const CaptionCard = ({
+    id,
+    caption,
+    createdAt,
+    avgRating,
+    feedbackCount,
+    tone,
+    length,
+    imageUrl,
+    onImageClick,
+    onDelete,
+}) => {
+    const captionId = id;
     const [copied, setCopied] = useState(false);
+    const [deleting, setDeleting] = useState(false);
     const [imageLoaded, setImageLoaded] = useState(false);
     const [imageError, setImageError] = useState(false);
-
     const handleCopy = async () => {
         try {
             await navigator.clipboard.writeText(caption);
@@ -33,16 +44,17 @@ const CaptionCard = ({ caption, createdAt, avgRating, feedbackCount, tone, lengt
             return date.toLocaleDateString(undefined, {
                 month: 'short',
                 day: 'numeric',
-                year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+                year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
             });
         }
     };
 
-    const fullImageUrl = imageUrl && imageUrl.startsWith('http') 
-        ? imageUrl 
-        : imageUrl 
-            ? `${process.env.REACT_APP_BACKEND_URL}${imageUrl}`
-            : null;
+    const fullImageUrl =
+        imageUrl && imageUrl.startsWith('http')
+            ? imageUrl
+            : imageUrl
+              ? `${process.env.REACT_APP_BACKEND_URL}${imageUrl}`
+              : null;
 
     const handleImageClick = (e) => {
         e.preventDefault();
@@ -58,7 +70,9 @@ const CaptionCard = ({ caption, createdAt, avgRating, feedbackCount, tone, lengt
                 {/* Caption Section */}
                 <div className="flex-1 p-5">
                     <div className="flex items-start justify-between mb-3 gap-3">
-                        <p className="text-slate-800 dark:text-slate-100 leading-relaxed flex-1 pr-2">{caption}</p>
+                        <p className="text-slate-800 dark:text-slate-100 leading-relaxed flex-1 pr-2">
+                            {caption}
+                        </p>
                         <button
                             onClick={handleCopy}
                             className="flex-shrink-0 p-2 rounded-lg bg-white/80 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-slate-700/80 transition-all duration-200 transform hover:scale-110"
@@ -70,17 +84,44 @@ const CaptionCard = ({ caption, createdAt, avgRating, feedbackCount, tone, lengt
                                 <Copy className="w-4 h-4 text-purple-600 dark:text-purple-300" />
                             )}
                         </button>
+                        {onDelete && (
+                            <button
+                                onClick={async () => {
+                                    if (deleting) return;
+                                    try {
+                                        setDeleting(true);
+                                        await onDelete(captionId);
+                                    } finally {
+                                        setDeleting(false);
+                                    }
+                                }}
+                                className="flex-shrink-0 p-2 rounded-lg bg-white/80 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-slate-700/80 transition-all duration-200 transform hover:scale-110"
+                                title="Delete caption"
+                            >
+                                {deleting ? (
+                                    <Loader2 className="w-4 h-4 text-purple-600 dark:text-purple-300 animate-spin" />
+                                ) : (
+                                    <Trash className="w-4 h-4 text-purple-600 dark:text-purple-300" />
+                                )}
+                            </button>
+                        )}
                     </div>
                     <div className="flex flex-wrap items-center gap-3 text-sm">
-                        <span className="text-slate-500 dark:text-slate-300">{formatDate(createdAt)}</span>
+                        <span className="text-slate-500 dark:text-slate-300">
+                            {formatDate(createdAt)}
+                        </span>
                         {avgRating > 0 && (
                             <div className="flex items-center gap-1">
                                 <Star className="w-4 h-4 text-yellow-400 dark:text-yellow-300 fill-yellow-400 dark:fill-yellow-300" />
-                                <span className="text-slate-700 dark:text-slate-200 font-medium">{avgRating.toFixed(1)}</span>
+                                <span className="text-slate-700 dark:text-slate-200 font-medium">
+                                    {avgRating.toFixed(1)}
+                                </span>
                             </div>
                         )}
                         {feedbackCount > 0 && (
-                            <span className="text-slate-500 dark:text-slate-400">({feedbackCount} feedback)</span>
+                            <span className="text-slate-500 dark:text-slate-400">
+                                ({feedbackCount} feedback)
+                            </span>
                         )}
                         {tone && (
                             <span className="px-2 py-1 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/60 dark:text-purple-200 text-xs font-medium">
@@ -97,7 +138,7 @@ const CaptionCard = ({ caption, createdAt, avgRating, feedbackCount, tone, lengt
 
                 {/* Image Section - Right Side */}
                 {fullImageUrl && (
-                    <div 
+                    <div
                         className="relative w-full md:w-64 md:min-w-[256px] h-48 md:h-full bg-slate-100 dark:bg-slate-900/60 overflow-hidden cursor-pointer group flex-shrink-0 border-t border-slate-200 dark:border-slate-800 md:border-l md:border-t-0"
                         onClick={handleImageClick}
                     >
@@ -110,7 +151,9 @@ const CaptionCard = ({ caption, createdAt, avgRating, feedbackCount, tone, lengt
                             <div className="absolute inset-0 flex items-center justify-center bg-slate-100 dark:bg-slate-900">
                                 <div className="text-center">
                                     <ImageIcon className="w-8 h-8 text-slate-400 dark:text-slate-500 mx-auto mb-2" />
-                                    <p className="text-xs text-slate-400 dark:text-slate-500">Image unavailable</p>
+                                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                                        Image unavailable
+                                    </p>
                                 </div>
                             </div>
                         ) : (

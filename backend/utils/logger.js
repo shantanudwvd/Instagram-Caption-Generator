@@ -34,22 +34,22 @@ const consoleFormat = winston.format.combine(
     winston.format.timestamp({ format: 'HH:mm:ss' }),
     winston.format.printf(({ timestamp, level, message, ...meta }) => {
         let log = `${timestamp} [${level}]: ${message}`;
-        
+
         // Add metadata if present
         if (Object.keys(meta).length > 0) {
             // Filter out internal winston properties
             const cleanMeta = Object.keys(meta)
-                .filter(key => !key.startsWith('Symbol('))
+                .filter((key) => !key.startsWith('Symbol('))
                 .reduce((obj, key) => {
                     obj[key] = meta[key];
                     return obj;
                 }, {});
-            
+
             if (Object.keys(cleanMeta).length > 0) {
                 log += ` ${JSON.stringify(cleanMeta, null, 2)}`;
             }
         }
-        
+
         return log;
     })
 );
@@ -65,7 +65,7 @@ transports.push(
         format: jsonFormat,
         maxsize: 10485760, // 10MB
         maxFiles: 10,
-        tailable: true
+        tailable: true,
     }),
     // Error log file - errors only
     new winston.transports.File({
@@ -74,7 +74,7 @@ transports.push(
         format: jsonFormat,
         maxsize: 10485760, // 10MB
         maxFiles: 10,
-        tailable: true
+        tailable: true,
     })
 );
 
@@ -83,7 +83,7 @@ if (isDevelopment) {
     transports.push(
         new winston.transports.Console({
             format: consoleFormat,
-            level: 'debug'
+            level: 'debug',
         })
     );
 } else if (isProduction) {
@@ -91,7 +91,7 @@ if (isDevelopment) {
     transports.push(
         new winston.transports.Console({
             format: jsonFormat,
-            level: 'info'
+            level: 'info',
         })
     );
 }
@@ -101,30 +101,30 @@ const logger = winston.createLogger({
     level: getLogLevel(),
     defaultMeta: {
         service: 'caption-generator',
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV || 'development',
     },
     transports: transports,
     // Handle exceptions and rejections
     exceptionHandlers: [
         new winston.transports.File({
             filename: path.join(logsDir, 'exceptions.log'),
-            format: jsonFormat
-        })
+            format: jsonFormat,
+        }),
     ],
     rejectionHandlers: [
         new winston.transports.File({
             filename: path.join(logsDir, 'rejections.log'),
-            format: jsonFormat
-        })
+            format: jsonFormat,
+        }),
     ],
     // Exit on error set to false to prevent winston from exiting the process
-    exitOnError: false
+    exitOnError: false,
 });
 
 // Log startup message
 logger.info('Logger initialized', {
     environment: process.env.NODE_ENV || 'development',
-    logLevel: getLogLevel()
+    logLevel: getLogLevel(),
 });
 
 module.exports = logger;

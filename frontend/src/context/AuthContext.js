@@ -24,8 +24,8 @@ export const AuthProvider = ({ children }) => {
             try {
                 const response = await fetch(`${backendUrl}/api/auth/me`, {
                     headers: {
-                        Authorization: `Bearer ${token}`
-                    }
+                        Authorization: `Bearer ${token}`,
+                    },
                 });
 
                 if (!response.ok) {
@@ -63,9 +63,9 @@ export const AuthProvider = ({ children }) => {
         const response = await fetch(`${backendUrl}/api/auth/login`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email, password }),
         });
 
         const data = await response.json();
@@ -83,9 +83,9 @@ export const AuthProvider = ({ children }) => {
         const response = await fetch(`${backendUrl}/api/auth/register`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ firstName, lastName, email, password })
+            body: JSON.stringify({ firstName, lastName, email, password }),
         });
 
         const data = await response.json();
@@ -104,9 +104,9 @@ export const AuthProvider = ({ children }) => {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
+                Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
         });
 
         const data = await response.json();
@@ -127,9 +127,9 @@ export const AuthProvider = ({ children }) => {
         const response = await fetch(`${backendUrl}/api/auth/photo`, {
             method: 'POST',
             headers: {
-                Authorization: `Bearer ${token}`
+                Authorization: `Bearer ${token}`,
             },
-            body: formData
+            body: formData,
         });
 
         const data = await response.json();
@@ -156,7 +156,7 @@ export const AuthProvider = ({ children }) => {
         register,
         logout,
         updateProfile,
-        uploadPhoto
+        uploadPhoto,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

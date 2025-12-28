@@ -5,10 +5,12 @@ const SongRecommendations = ({ recommendations, onTrackSelect, loading }) => {
     if (loading) {
         return (
             <div className="space-y-4">
-            <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
-                <Music className="h-5 w-5 text-purple-500 animate-pulse" />
-                <h2 className="text-lg font-semibold bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent">Curating soundscapes…</h2>
-            </div>
+                <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                    <Music className="h-5 w-5 text-purple-500 animate-pulse" />
+                    <h2 className="text-lg font-semibold bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent">
+                        Curating soundscapes…
+                    </h2>
+                </div>
                 <div className="space-y-3">
                     {[...Array(3)].map((_, index) => (
                         <div
@@ -36,7 +38,9 @@ const SongRecommendations = ({ recommendations, onTrackSelect, loading }) => {
         <div className="space-y-4 animate-fade-in-up">
             <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
                 <Music className="h-5 w-5 text-purple-500 transform transition-transform duration-200 hover:scale-110" />
-                <h2 className="text-lg font-semibold bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent">Similar songs you might love</h2>
+                <h2 className="text-lg font-semibold bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent">
+                    Similar songs you might love
+                </h2>
             </div>
             <div className="space-y-3">
                 {recommendations.map((track, index) => (
@@ -59,9 +63,15 @@ const SongRecommendations = ({ recommendations, onTrackSelect, loading }) => {
                             </div>
                         )}
                         <div className="text-left flex-1">
-                            <p className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors">{track.name}</p>
-                            <p className="text-sm text-slate-500 dark:text-slate-300">{track.artist}</p>
-                            <p className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wide">{track.album}</p>
+                            <p className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors">
+                                {track.name}
+                            </p>
+                            <p className="text-sm text-slate-500 dark:text-slate-300">
+                                {track.artist}
+                            </p>
+                            <p className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wide">
+                                {track.album}
+                            </p>
                         </div>
                     </button>
                 ))}

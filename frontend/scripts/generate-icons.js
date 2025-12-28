@@ -16,7 +16,7 @@ if (!fs.existsSync(svgPath)) {
 const pngTargets = [
     { size: 64, filename: 'favicon-64.png' },
     { size: 192, filename: 'logo192.png' },
-    { size: 512, filename: 'logo512.png' }
+    { size: 512, filename: 'logo512.png' },
 ];
 
 async function generatePngs() {
@@ -25,10 +25,7 @@ async function generatePngs() {
     await Promise.all(
         pngTargets.map(async ({ size, filename }) => {
             const outputPath = path.join(publicDir, filename);
-            await sharp(svgBuffer)
-                .resize(size, size, { fit: 'contain' })
-                .png()
-                .toFile(outputPath);
+            await sharp(svgBuffer).resize(size, size, { fit: 'contain' }).png().toFile(outputPath);
             console.log(`Generated ${filename}`);
         })
     );
@@ -47,10 +44,7 @@ async function generateFaviconIco() {
 
     for (const size of icoSizes) {
         const tempPath = path.join(tempPngDir, `icon-${size}.png`);
-        await sharp(svgBuffer)
-            .resize(size, size, { fit: 'contain' })
-            .png()
-            .toFile(tempPath);
+        await sharp(svgBuffer).resize(size, size, { fit: 'contain' }).png().toFile(tempPath);
         tempPngPaths.push(tempPath);
     }
 

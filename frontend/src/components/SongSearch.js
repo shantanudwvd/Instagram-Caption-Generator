@@ -2,16 +2,16 @@ import React from 'react';
 import { Search } from 'lucide-react';
 
 const SongSearch = ({
-                        searchQuery,
-                        setSearchQuery,
-                        searchResults,
-                        selectedTrack,
-                        onTrackSelect,
-                        onSearch,
-                        showIntro = true,
-                        introTitle = 'Choose an optional soundtrack',
-                        introDescription = 'Search Spotify to pair a track that guides the caption’s energy.'
-                    }) => {
+    searchQuery,
+    setSearchQuery,
+    searchResults,
+    selectedTrack,
+    onTrackSelect,
+    onSearch,
+    showIntro = true,
+    introTitle = 'Choose an optional soundtrack',
+    introDescription = 'Search Spotify to pair a track that guides the caption’s energy.',
+}) => {
     const handleChange = (event) => {
         const value = event.target.value;
         setSearchQuery(value);
@@ -24,8 +24,12 @@ const SongSearch = ({
         <div className="space-y-5">
             {showIntro && (
                 <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-indigo-500 font-semibold">Step 2</p>
-                    <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{introTitle}</h2>
+                    <p className="text-xs uppercase tracking-[0.2em] text-indigo-500 font-semibold">
+                        Step 2
+                    </p>
+                    <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                        {introTitle}
+                    </h2>
                     <p className="text-sm text-slate-500 dark:text-slate-400">{introDescription}</p>
                 </div>
             )}
@@ -60,8 +64,12 @@ const SongSearch = ({
                                 />
                             )}
                             <div className="flex-1">
-                                <p className="font-medium text-slate-900 dark:text-slate-100 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors">{track.name}</p>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">{track.artist}</p>
+                                <p className="font-medium text-slate-900 dark:text-slate-100 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors">
+                                    {track.name}
+                                </p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                    {track.artist}
+                                </p>
                             </div>
                         </button>
                     ))}
@@ -78,9 +86,13 @@ const SongSearch = ({
                         />
                     )}
                     <div>
-                        <p className="font-semibold text-slate-900 dark:text-slate-100">{selectedTrack.name}</p>
+                        <p className="font-semibold text-slate-900 dark:text-slate-100">
+                            {selectedTrack.name}
+                        </p>
                         <p className="text-slate-600 dark:text-slate-300">{selectedTrack.artist}</p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">{selectedTrack.album}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                            {selectedTrack.album}
+                        </p>
                     </div>
                 </div>
             )}

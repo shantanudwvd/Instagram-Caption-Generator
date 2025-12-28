@@ -18,7 +18,7 @@ const requestLogger = (req, res, next) => {
         url: req.originalUrl || req.url,
         ip: req.ip || req.connection.remoteAddress,
         userAgent: req.get('user-agent'),
-        userId: req.user?.id || 'anonymous'
+        userId: req.user?.id || 'anonymous',
     });
 
     // Capture response finish event
@@ -31,7 +31,7 @@ const requestLogger = (req, res, next) => {
             statusCode: res.statusCode,
             duration: `${duration}ms`,
             ip: req.ip || req.connection.remoteAddress,
-            userId: req.user?.id || 'anonymous'
+            userId: req.user?.id || 'anonymous',
         };
 
         // Log based on status code
@@ -48,4 +48,3 @@ const requestLogger = (req, res, next) => {
 };
 
 module.exports = requestLogger;
-

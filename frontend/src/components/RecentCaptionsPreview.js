@@ -19,11 +19,14 @@ const RecentCaptionsPreview = () => {
             setLoading(true);
             setError('');
             try {
-                const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/dashboard/overview`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
+                const response = await fetch(
+                    `${process.env.REACT_APP_BACKEND_URL}/api/dashboard/overview`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
                     }
-                });
+                );
 
                 if (!response.ok) {
                     throw new Error('Unable to load recent captions.');
@@ -64,7 +67,7 @@ const RecentCaptionsPreview = () => {
             return date.toLocaleDateString(undefined, {
                 month: 'short',
                 day: 'numeric',
-                year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+                year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
             });
         }
     };
@@ -138,13 +141,19 @@ const RecentCaptionsPreview = () => {
                             style={{ animationDelay: `${index * 100}ms` }}
                         >
                             <div className="p-4 flex flex-col gap-3">
-                                <p className="text-slate-800 dark:text-slate-100 leading-relaxed">{truncateText(caption.caption)}</p>
+                                <p className="text-slate-800 dark:text-slate-100 leading-relaxed">
+                                    {truncateText(caption.caption)}
+                                </p>
                                 <div className="flex flex-wrap items-center gap-3 text-sm">
-                                    <span className="text-slate-500 dark:text-slate-300">{formatDate(caption.createdAt)}</span>
+                                    <span className="text-slate-500 dark:text-slate-300">
+                                        {formatDate(caption.createdAt)}
+                                    </span>
                                     {caption.avgRating && caption.avgRating > 0 && (
                                         <div className="flex items-center gap-1">
                                             <Star className="w-4 h-4 text-yellow-400 dark:text-yellow-300 fill-yellow-400 dark:fill-yellow-300" />
-                                            <span className="text-slate-700 dark:text-slate-200 font-medium">{caption.avgRating.toFixed(1)}</span>
+                                            <span className="text-slate-700 dark:text-slate-200 font-medium">
+                                                {caption.avgRating.toFixed(1)}
+                                            </span>
                                         </div>
                                     )}
                                     {caption.tone && (

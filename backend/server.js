@@ -15,15 +15,17 @@ const app = express();
 // CORS configuration - allows frontend origins to access the backend
 const getAllowedOrigins = () => {
     const origins = [
-        "https://www.captionmuse.shop",
-        "https://instagram-caption-generator-shantanudwvds-projects.vercel.app",
-        "http://localhost:3000", // Frontend development URL
+        'https://www.captionmuse.shop',
+        'https://instagram-caption-generator-shantanudwvds-projects.vercel.app',
+        'http://localhost:3000', // Frontend development URL
     ];
 
     // Add origins from environment variable if provided (comma-separated)
     // Example: CORS_ORIGINS=https://myapp.vercel.app,https://myapp.netlify.app
     if (process.env.CORS_ORIGINS) {
-        const envOrigins = process.env.CORS_ORIGINS.split(',').map(origin => origin.trim()).filter(Boolean);
+        const envOrigins = process.env.CORS_ORIGINS.split(',')
+            .map((origin) => origin.trim())
+            .filter(Boolean);
         origins.push(...envOrigins);
         logger.info('Added CORS origins from environment', { envOrigins });
     }
@@ -51,14 +53,17 @@ const corsOptions = {
         }
 
         const allowedOrigins = getAllowedOrigins();
-        
+
         // Normalize origin (remove trailing slash, lowercase for comparison)
         const normalizedOrigin = origin.toLowerCase().replace(/\/$/, '');
-        const normalizedAllowed = allowedOrigins.map(o => o.toLowerCase().replace(/\/$/, ''));
-        
+        const normalizedAllowed = allowedOrigins.map((o) => o.toLowerCase().replace(/\/$/, ''));
+
         // Check if origin is in allowed list (case-insensitive)
         if (normalizedAllowed.indexOf(normalizedOrigin) !== -1) {
-            logger.debug('CORS allowed origin (exact match)', { origin, normalizedOrigin });
+            logger.debug('CORS allowed origin (exact match)', {
+                origin,
+                normalizedOrigin,
+            });
             return callback(null, true);
         }
 
@@ -80,23 +85,23 @@ const corsOptions = {
             return callback(null, true);
         }
 
-        logger.warn('CORS blocked origin', { 
-            origin, 
+        logger.warn('CORS blocked origin', {
+            origin,
             normalizedOrigin,
             allowedOrigins,
-            normalizedAllowed 
+            normalizedAllowed,
         });
         callback(new Error('Not allowed by CORS'));
     },
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: true,
-    optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
+    optionsSuccessStatus: 200, // Some legacy browsers (IE11, various SmartTVs) choke on 204
 };
 
 app.use(cors(corsOptions));
 
-app.options("*", cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Middleware
 app.use(express.json());
@@ -127,18 +132,16 @@ app.use((err, req, res, next) => {
         stack: err.stack,
         method: req.method,
         url: req.originalUrl || req.url,
-        userId: req.user?.id || 'anonymous'
+        userId: req.user?.id || 'anonymous',
     });
 
     // Don't leak error details in production
     const statusCode = err.statusCode || 500;
-    const message = process.env.NODE_ENV === 'production' 
-        ? 'Internal server error' 
-        : err.message;
+    const message = process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message;
 
     res.status(statusCode).json({
         error: message,
-        ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
+        ...(process.env.NODE_ENV !== 'production' && { stack: err.stack }),
     });
 });
 
@@ -147,7 +150,7 @@ app.use((req, res) => {
     logger.warn('Route not found', {
         requestId: req.requestId,
         method: req.method,
-        url: req.originalUrl || req.url
+        url: req.originalUrl || req.url,
     });
     res.status(404).json({ error: 'Route not found' });
 });
@@ -156,6 +159,6 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, '0.0.0.0', () => {
     logger.info('Server started', {
         port: PORT,
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV || 'development',
     });
 });

@@ -106,7 +106,9 @@ const ImageContext = ({ onContextChange }) => {
             };
 
             mediaRecorder.onstop = () => {
-                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                const audioBlob = new Blob(audioChunksRef.current, {
+                    type: 'audio/webm',
+                });
                 const audioUrl = URL.createObjectURL(audioBlob);
                 setAudioBlob(audioBlob);
                 setAudioURL(audioUrl);
@@ -174,7 +176,7 @@ const ImageContext = ({ onContextChange }) => {
             }
 
             // Stop all audio tracks
-            mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+            mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
         }
         if (timerRef.current) {
             clearInterval(timerRef.current);
@@ -201,7 +203,7 @@ const ImageContext = ({ onContextChange }) => {
             }
             if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
                 mediaRecorderRef.current.stop();
-                mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+                mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
             }
             if (timerRef.current) {
                 clearInterval(timerRef.current);
@@ -231,9 +233,15 @@ const ImageContext = ({ onContextChange }) => {
         <div className="space-y-6">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div className="space-y-1">
-                    <p className="text-xs uppercase tracking-[0.3em] text-purple-500 font-semibold">Step 1b</p>
-                    <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Add context to your image</h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Choose to type or record—your vibe guides the caption.</p>
+                    <p className="text-xs uppercase tracking-[0.3em] text-purple-500 font-semibold">
+                        Step 1b
+                    </p>
+                    <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                        Add context to your image
+                    </h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                        Choose to type or record—your vibe guides the caption.
+                    </p>
                 </div>
                 <div className="inline-flex items-center rounded-full bg-slate-100/80 dark:bg-slate-900/70 p-1 shadow-inner dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] border border-transparent dark:border-slate-800">
                     <button
@@ -281,7 +289,9 @@ const ImageContext = ({ onContextChange }) => {
                         <div className="flex flex-col gap-5 md:flex-row md:items-center">
                             <div className="flex flex-col items-center justify-center gap-3">
                                 <div className="relative">
-                                    <div className={`absolute inset-0 rounded-full blur-xl transition-opacity ${isRecording ? 'opacity-80 bg-red-200/60' : 'opacity-40 bg-purple-200/60'}`}></div>
+                                    <div
+                                        className={`absolute inset-0 rounded-full blur-xl transition-opacity ${isRecording ? 'opacity-80 bg-red-200/60' : 'opacity-40 bg-purple-200/60'}`}
+                                    ></div>
                                     {isRecording && (
                                         <>
                                             <div className="absolute inset-[-6px] rounded-full border border-orange-200 animate-ping" />
@@ -295,7 +305,9 @@ const ImageContext = ({ onContextChange }) => {
                                                 ? 'bg-gradient-to-r from-red-500 to-orange-500 animate-pulse'
                                                 : 'bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 hover:scale-105'
                                         }`}
-                                        aria-label={isRecording ? 'Stop recording' : 'Start recording'}
+                                        aria-label={
+                                            isRecording ? 'Stop recording' : 'Start recording'
+                                        }
                                     >
                                         {isRecording ? (
                                             <MicOff className="w-6 h-6" />
@@ -312,12 +324,24 @@ const ImageContext = ({ onContextChange }) => {
                             <div className="flex-1 w-full space-y-3">
                                 <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
                                     <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 font-semibold dark:bg-slate-800/80 dark:text-slate-100">
-                                        {renderStatusDot(isRecording ? 'bg-red-500 animate-pulse' : 'bg-emerald-500')}
-                                        {isRecording ? 'Recording… tap to stop' : audioURL ? 'Recorded' : 'Ready to record'}
+                                        {renderStatusDot(
+                                            isRecording
+                                                ? 'bg-red-500 animate-pulse'
+                                                : 'bg-emerald-500'
+                                        )}
+                                        {isRecording
+                                            ? 'Recording… tap to stop'
+                                            : audioURL
+                                              ? 'Recorded'
+                                              : 'Ready to record'}
                                     </span>
                                     <span className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">
                                         {isRecording || recordedDurationMs
-                                            ? formatDuration(isRecording ? elapsedMs : recordedDurationMs || elapsedMs)
+                                            ? formatDuration(
+                                                  isRecording
+                                                      ? elapsedMs
+                                                      : recordedDurationMs || elapsedMs
+                                              )
                                             : '00:00'}
                                     </span>
                                 </div>
@@ -350,15 +374,19 @@ const ImageContext = ({ onContextChange }) => {
                                             className="w-full"
                                             onLoadedMetadata={() => {
                                                 if (audioElementRef.current?.duration) {
-                                                    setRecordedDurationMs(Math.floor(audioElementRef.current.duration * 1000));
+                                                    setRecordedDurationMs(
+                                                        Math.floor(
+                                                            audioElementRef.current.duration * 1000
+                                                        )
+                                                    );
                                                 }
                                             }}
                                         />
                                     </div>
                                 ) : (
                                     <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
-                                        We record in a web-friendly format for fast Whisper transcriptions. Keep it
-                                        concise and conversational.
+                                        We record in a web-friendly format for fast Whisper
+                                        transcriptions. Keep it concise and conversational.
                                     </div>
                                 )}
 
@@ -403,7 +431,9 @@ const ImageContext = ({ onContextChange }) => {
                                             <MicOff className="w-4 h-4" />
                                             Delete &amp; record again
                                         </button>
-                                        <span className="text-xs text-slate-400 dark:text-slate-500">Formats: webm (auto), wav, mp3 supported</span>
+                                        <span className="text-xs text-slate-400 dark:text-slate-500">
+                                            Formats: webm (auto), wav, mp3 supported
+                                        </span>
                                     </div>
                                 )}
                             </div>

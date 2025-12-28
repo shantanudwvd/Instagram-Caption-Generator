@@ -42,18 +42,21 @@ const CaptionFeedback = ({ caption, captionId, onCaptionEdit }) => {
         setError('');
 
         try {
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/caption-feedback/${captionId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    rating,
-                    comments: feedback,
-                    userEdits: editMode ? editedCaption : null,
-                }),
-            });
+            const response = await fetch(
+                `${process.env.REACT_APP_BACKEND_URL}/api/caption-feedback/${captionId}`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        rating,
+                        comments: feedback,
+                        userEdits: editMode ? editedCaption : null,
+                    }),
+                }
+            );
 
             if (!response.ok) {
                 throw new Error('Failed to submit feedback');
@@ -89,7 +92,9 @@ const CaptionFeedback = ({ caption, captionId, onCaptionEdit }) => {
 
     return (
         <div className="border-2 border-slate-200 rounded-xl p-4 space-y-4 bg-white/80 backdrop-blur-sm shadow-md transform transition-all duration-300 hover:shadow-lg animate-fade-in-up">
-            <h2 className="text-lg font-semibold bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent">How's this caption?</h2>
+            <h2 className="text-lg font-semibold bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent">
+                How's this caption?
+            </h2>
 
             {/* Star Rating */}
             <div className="space-y-2">
@@ -100,10 +105,15 @@ const CaptionFeedback = ({ caption, captionId, onCaptionEdit }) => {
                             key={star}
                             onClick={() => handleRatingChange(star)}
                             className={`p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 transform transition-all duration-200 hover:scale-125 ${
-                                star <= rating ? 'text-yellow-400' : 'text-gray-300 hover:text-yellow-300'
+                                star <= rating
+                                    ? 'text-yellow-400'
+                                    : 'text-gray-300 hover:text-yellow-300'
                             }`}
                         >
-                            <Star className="w-6 h-6 transform transition-transform duration-200" fill={star <= rating ? 'currentColor' : 'none'} />
+                            <Star
+                                className="w-6 h-6 transform transition-transform duration-200"
+                                fill={star <= rating ? 'currentColor' : 'none'}
+                            />
                         </button>
                     ))}
                 </div>
@@ -153,7 +163,9 @@ const CaptionFeedback = ({ caption, captionId, onCaptionEdit }) => {
                 disabled={submitting}
                 className="w-full py-2.5 px-4 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:transform-none relative overflow-hidden group"
             >
-                <span className="relative z-10">{submitting ? 'Submitting...' : 'Submit Feedback'}</span>
+                <span className="relative z-10">
+                    {submitting ? 'Submitting...' : 'Submit Feedback'}
+                </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-700 via-pink-600 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
             </button>
         </div>

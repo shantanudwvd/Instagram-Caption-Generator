@@ -29,18 +29,18 @@ router.post('/caption-feedback/:captionId', async (req, res) => {
             comments,
             userEdits,
             userAgent: req.headers['user-agent'],
-            ipHash: hashIP(req.ip) // Anonymize IP
+            ipHash: hashIP(req.ip), // Anonymize IP
         };
 
         const success = await captionLearningService.recordFeedback(captionId, feedback);
 
         res.json({ success });
     } catch (error) {
-        logger.error('Error recording feedback', { 
-            error: error.message, 
+        logger.error('Error recording feedback', {
+            error: error.message,
             stack: error.stack,
             captionId: req.params.captionId,
-            userId: req.user?.id 
+            userId: req.user?.id,
         });
         res.status(500).json({ error: 'Failed to record feedback' });
     }
