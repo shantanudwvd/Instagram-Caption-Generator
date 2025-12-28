@@ -70,25 +70,27 @@ const CaptionCard = ({ id, caption, createdAt, avgRating, feedbackCount, tone, l
                                 <Copy className="w-4 h-4 text-purple-600 dark:text-purple-300" />
                             )}
                         </button>
-                        <button
-                            onClick={async () => {
-                                if (deleting) return;
-                                try {
-                                    setDeleting(true);
-                                    await onDelete(captionId);
-                                } finally {
-                                    setDeleting(false);
-                                }
-                            }}
-                            className="flex-shrink-0 p-2 rounded-lg bg-white/80 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-slate-700/80 transition-all duration-200 transform hover:scale-110"
-                            title="Delete caption"
-                        >
-                            {deleting ? (
-                                <Loader2 className="w-4 h-4 text-purple-600 dark:text-purple-300 animate-spin" />
-                            ) : (
-                                <Trash className="w-4 h-4 text-purple-600 dark:text-purple-300" />
-                            )}
-                        </button>
+                        {onDelete && (
+                            <button
+                                onClick={async () => {
+                                    if (deleting) return;
+                                    try {
+                                        setDeleting(true);
+                                        await onDelete(captionId);
+                                    } finally {
+                                        setDeleting(false);
+                                    }
+                                }}
+                                className="flex-shrink-0 p-2 rounded-lg bg-white/80 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-slate-700/80 transition-all duration-200 transform hover:scale-110"
+                                title="Delete caption"
+                            >
+                                {deleting ? (
+                                    <Loader2 className="w-4 h-4 text-purple-600 dark:text-purple-300 animate-spin" />
+                                ) : (
+                                    <Trash className="w-4 h-4 text-purple-600 dark:text-purple-300" />
+                                )}
+                            </button>
+                        )}
                     </div>
                     <div className="flex flex-wrap items-center gap-3 text-sm">
                         <span className="text-slate-500 dark:text-slate-300">{formatDate(createdAt)}</span>
