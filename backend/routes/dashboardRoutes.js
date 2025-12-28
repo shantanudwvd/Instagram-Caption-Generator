@@ -2,11 +2,9 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const fs = require('fs');
-const CaptionLearningService = require('../services/captionLearningService');
+const captionLearningService = require('../services/captionLearningServiceInstance');
 const authMiddleware = require('../middleware/auth');
 const logger = require('../utils/logger');
-
-const captionLearningService = new CaptionLearningService();
 
 router.use(authMiddleware);
 
@@ -21,79 +19,66 @@ router.get('/overview', async (req, res) => {
             recentCaptions,
         });
     } catch (error) {
-        logger.error('Error loading dashboard overview:', error);
-        res.status(500).json({ error: 'Failed to load dashboard overview' });
+        logger.error('Error fetching dashboard overview', {
+            error: error.message,
+            stack: error.stack,
+            userId: req.user?.id,
+        });
+        res.status(500).json({ error: 'Failed to fetch dashboard overview' });
     }
 });
 
-router.get('/stats', async (req, res) => {
+router.get('/recent', async (req, res) => {
     try {
-        const stats = await captionLearningService.getDashboardStats(req.user.id);
-        res.json(stats);
+        const limit = parseInt(req.query.limit, 10) || 10;
+        const recentCaptions = await captionLearningService.getRecentCaptions(limit, req.user.id);
+        res.json({ recentCaptions });
     } catch (error) {
-        logger.error('Error loading dashboard stats:', error);
-        res.status(500).json({ error: 'Failed to load dashboard stats' });
+        logger.error('Error fetching recent captions', {
+            error: error.message,
+            stack: error.stack,
+            userId: req.user?.id,
+        });
+        res.status(500).json({ error: 'Failed to fetch recent captions' });
     }
 });
 
-router.get('/captions', async (req, res) => {
+// Export captions as CSV (basic implementation)
+router.get('/export', async (req, res) => {
     try {
-        const filters = {
-            userId: req.user.id,
-            search: req.query.search || '',
-            tone: req.query.tone || '',
-            length: req.query.length || '',
-            sortBy: req.query.sortBy || 'createdAt',
-            sortOrder: req.query.sortOrder || 'desc',
-            limit: req.query.limit || 50,
-            offset: req.query.offset || 0,
-        };
+        const limit = parseInt(req.query.limit, 10) || 100;
+        const captions = await captionLearningService.getRecentCaptions(limit, req.user.id);
 
-        const result = await captionLearningService.getFilteredCaptions(filters);
-        res.json(result);
-    } catch (error) {
-        logger.error('Error loading filtered captions:', error);
-        res.status(500).json({ error: 'Failed to load captions' });
-    }
-});
+        const csvHeader = 'caption,createdAt,avgRating,feedbackCount\n';
+        const csvRows = captions
+            .map((c) => {
+                const captionSafe = (c.caption || '').replace(/"/g, '""');
+                return `"${captionSafe}",${c.createdAt?.toISOString?.() || ''},${c.avgRating || 0},${c.feedbackCount || 0}`;
+            })
+            .join('\n');
 
-router.get('/images/:imageId', async (req, res) => {
-    try {
-        const imageId = req.params.imageId;
-        const imagePath = path.join(process.cwd(), 'uploads', 'captions', imageId);
-
-        // Security: Check if file exists and is within uploads directory
-        if (!fs.existsSync(imagePath)) {
-            return res.status(404).json({ error: 'Image not found' });
+        const csvContent = csvHeader + csvRows;
+        const filePath = path.join(process.cwd(), 'exports', `captions_${Date.now()}.csv`);
+        const dirName = path.dirname(filePath);
+        if (!fs.existsSync(dirName)) {
+            fs.mkdirSync(dirName, { recursive: true });
         }
+        fs.writeFileSync(filePath, csvContent);
 
-        // Security: Prevent directory traversal
-        const resolvedPath = path.resolve(imagePath);
-        const uploadsPath = path.resolve(path.join(process.cwd(), 'uploads', 'captions'));
-        if (!resolvedPath.startsWith(uploadsPath)) {
-            return res.status(403).json({ error: 'Access denied' });
-        }
-
-        // Set appropriate content type
-        const ext = path.extname(imageId).toLowerCase();
-        const contentTypes = {
-            '.jpg': 'image/jpeg',
-            '.jpeg': 'image/jpeg',
-            '.png': 'image/png',
-            '.gif': 'image/gif',
-            '.webp': 'image/webp',
-        };
-        const contentType = contentTypes[ext] || 'image/jpeg';
-
-        res.setHeader('Content-Type', contentType);
-        res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
-
-        // Stream the file
-        const fileStream = fs.createReadStream(imagePath);
-        fileStream.pipe(res);
+        res.download(filePath, (err) => {
+            if (err) {
+                logger.error('Error sending export file', { error: err.message, stack: err.stack });
+            }
+            // Clean up the file after sending
+            fs.unlink(filePath, () => {});
+        });
     } catch (error) {
-        logger.error('Error serving image:', error);
-        res.status(500).json({ error: 'Failed to serve image' });
+        logger.error('Error exporting captions', {
+            error: error.message,
+            stack: error.stack,
+            userId: req.user?.id,
+        });
+        res.status(500).json({ error: 'Failed to export captions' });
     }
 });
 
