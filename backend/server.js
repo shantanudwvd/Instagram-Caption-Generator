@@ -7,6 +7,9 @@ const logger = require('./utils/logger');
 const requestLogger = require('./middleware/requestLogger');
 const path = require('path');
 const fs = require('fs');
+const { initializeSpotifyClient } = require('./services/spotifyClient');
+const userService = require('./services/userService');
+const captionLearningService = require('./services/captionLearningServiceInstance');
 
 dotenv.config();
 
@@ -156,9 +159,40 @@ app.use((req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, '0.0.0.0', () => {
-    logger.info('Server started', {
-        port: PORT,
-        environment: process.env.NODE_ENV || 'development',
+async function startServer() {
+    try {
+        await initializeSpotifyClient();
+        logger.info('Spotify client initialized at startup');
+    } catch (error) {
+        logger.error('Failed to initialize Spotify client', {
+            error: error.message,
+            stack: error.stack,
+        });
+    }
+
+    try {
+        if (typeof userService.init === 'function') {
+            await userService.init();
+            logger.info('MongoDB connection initialized for user service');
+        }
+        if (typeof captionLearningService.init === 'function') {
+            await captionLearningService.init();
+            logger.info('MongoDB connection initialized for caption learning service');
+        }
+    } catch (error) {
+        logger.error('Failed to initialize MongoDB connection', {
+            error: error.message,
+            stack: error.stack,
+        });
+        process.exit(1);
+    }
+
+    app.listen(PORT, '0.0.0.0', () => {
+        logger.info('Server started', {
+            port: PORT,
+            environment: process.env.NODE_ENV || 'development',
+        });
     });
-});
+}
+
+startServer();

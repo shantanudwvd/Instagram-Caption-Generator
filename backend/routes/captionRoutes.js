@@ -1,73 +1,51 @@
 const express = require('express');
 const router = express.Router();
 const OpenAI = require('openai');
-const SpotifyWebApi = require('spotify-web-api-node');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-const CaptionLearningService = require('../services/captionLearningService');
-const captionLearningService = new CaptionLearningService();
+const captionLearningService = require('../services/captionLearningServiceInstance');
 const authMiddleware = require('../middleware/auth');
 const SongRecommendationService = require('../services/songRecommendationService');
 const logger = require('../utils/logger');
 const { uploadImage, deleteImage, extractPublicId } = require('../utils/cloudinary');
+const {
+    initializeSpotifyClient,
+    ensureSpotifyToken,
+    getSpotifyApi,
+} = require('../services/spotifyClient');
 
 // Initialize OpenAI
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Initialize Spotify
-const spotifyApi = new SpotifyWebApi({
-    clientId: process.env.SPOTIFY_CLIENT_ID,
-    clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-    redirectUri: process.env.SPOTIFY_REDIRECT_URI,
-});
+// Prepare Spotify and recommendation services lazily but initialize at startup
+let spotifyReadyPromise = null;
+let recommendationServicePromise = null;
 
-// Initialize the recommendation service after initializing Spotify API
-const recommendationService = new SongRecommendationService(spotifyApi);
-
-// Token management
-let spotifyTokenExpirationTime = null;
-
-async function ensureSpotifyToken() {
-    // Check if token is expired or will expire in the next minute
-    if (!spotifyTokenExpirationTime || Date.now() >= spotifyTokenExpirationTime - 60000) {
-        try {
-            const data = await spotifyApi.clientCredentialsGrant();
-            spotifyApi.setAccessToken(data.body['access_token']);
-
-            // Set expiration time (convert seconds to milliseconds)
-            spotifyTokenExpirationTime = Date.now() + data.body['expires_in'] * 1000;
-            logger.info('Spotify token refreshed successfully');
-        } catch (error) {
-            logger.error('Failed to refresh Spotify token', {
-                error: error.message,
-                stack: error.stack,
-            });
-            throw new Error('Failed to authenticate with Spotify');
-        }
+function ensureSpotifyReady() {
+    if (!spotifyReadyPromise) {
+        spotifyReadyPromise = initializeSpotifyClient();
     }
+    return spotifyReadyPromise;
 }
 
-// Refresh Spotify access token
-async function refreshSpotifyToken() {
-    try {
-        const data = await spotifyApi.clientCredentialsGrant();
-        spotifyApi.setAccessToken(data.body['access_token']);
-        logger.info('Spotify token refreshed');
-    } catch (error) {
-        logger.error('Error refreshing Spotify token', {
-            error: error.message,
-            stack: error.stack,
-        });
-    }
+async function getSpotify() {
+    await ensureSpotifyReady();
+    return getSpotifyApi();
 }
 
-// Refresh token initially and every 50 minutes
-refreshSpotifyToken();
-setInterval(refreshSpotifyToken, 50 * 60 * 1000);
+async function getRecommendationService() {
+    if (!recommendationServicePromise) {
+        recommendationServicePromise = getSpotify().then(
+            (api) => new SongRecommendationService(api)
+        );
+    }
+    return recommendationServicePromise;
+}
+
 
 // Configure multer for file uploads
 const uploadDir = path.join(process.cwd(), 'uploads');
@@ -529,6 +507,8 @@ router.post('/captions/:captionId', async (req, res) => {
 router.get('/search-tracks', async (req, res) => {
     try {
         const { query } = req.query;
+        const spotifyApi = await getSpotify();
+        await ensureSpotifyToken();
         const data = await spotifyApi.searchTracks(query, { limit: 10 });
         const tracks = data.body.tracks.items.map((track) => ({
             id: track.id,
@@ -1685,6 +1665,8 @@ function mapSpotifyFeaturesToSchema(audioFeatures) {
  */
 async function analyzeSong(trackId) {
     try {
+        const spotifyApi = await getSpotify();
+
         // Ensure valid token before making API calls
         await ensureSpotifyToken();
 
