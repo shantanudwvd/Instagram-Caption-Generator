@@ -34,9 +34,10 @@ class CaptionLearningService {
             socketTimeoutMS: 45000,
             connectTimeoutMS: 10000,
         };
+    }
 
-        // Initialize connection
-        this._initializeConnection();
+    async init() {
+        await this._initializeConnection();
     }
 
     /**
@@ -455,7 +456,7 @@ class CaptionLearningService {
                     },
                 });
 
-                logger.info(`Generated ${trainingData.length} training examples`);
+            logger.info(`Generated ${trainingData.length} training examples`);
             }
 
             return trainingData;
